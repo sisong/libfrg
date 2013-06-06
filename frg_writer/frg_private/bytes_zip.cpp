@@ -93,7 +93,7 @@ namespace frg {
                 LCP=&m_sstring.LCP[it_cur-1];
             }
 
-            const int kMaxForwardOffsert=1*1024*1024; //增大该值可能增大匹配机率(从而增大压缩率),但会降低压缩速度.
+            const int kMaxForwardOffsert=16*1024*1024; 
             const int kMaxValue_lcp=((TUInt32)1<<31)-1;
             int lcp=kMaxValue_lcp;
             for (;it!=it_end;it+=it_inc,LCP+=it_inc){

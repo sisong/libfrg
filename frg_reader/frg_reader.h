@@ -50,8 +50,8 @@ enum frg_TColorType {
     //todo: other ?  8bit_A8 24bit_R8G8B8 24bit_B8G8R8 32bit_X8B8G8R8 32bit_A8B8G8R8 32bit_X8R8G8B8 32bit_R8G8B8A8
 };
 
+//你可以修改kFrg_outColor32_*这4个值以支持你需要的rgba32bit颜色输出格式(需要重新编译解码器源代码).
 //outColor32 = (b8<<blue_shl) | (g8<<green_shl) | (r8<<red_shl) | (a8<<alpha_shl);
-//你可以修改这4个值以支持你需要的rgba32bit颜色输出格式(并重新编译解码器源代码).
 enum {
     kFrg_outColor32_blue_shl    =0,
     kFrg_outColor32_green_shl   =8,

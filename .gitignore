@@ -8,3 +8,5 @@ Release
 *.depend
 *.layout
 *.filters
+demo/builds
+
