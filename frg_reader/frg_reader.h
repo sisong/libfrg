@@ -42,7 +42,7 @@
 extern "C" {
 #endif
     
-//FRG_READER_RUN_MEM_SAFE_CHECK用来启动内存访问越界检查. 速度影响较小.
+//FRG_READER_RUN_MEM_SAFE_CHECK用来启动内存访问越界检查,用以避免frg损坏或构造特殊编码攻击;速度影响较小(<3%).
 //#define FRG_READER_RUN_MEM_SAFE_CHECK
 
 enum frg_TColorType {
