@@ -38,9 +38,8 @@ namespace frg {
         }
 
         void  saveCodeTo(std::vector<TByte>& out_code,int zip_parameter){
-            assert(zip_parameter>=TBytesZip::kZip_bestSize);
+            assert(zip_parameter>=TBytesZip::kZip_bestSize);//增大该值,则压缩率变小,解压稍快  0时，压缩率最大.
             //assert(zip_parameter<=TBytesZiper::kZip_bestUnZipSpeed);
-            const int kMinZipLength=zip_parameter; //增大该值,则压缩率变小,解压稍快  0时，压缩率最大.
             const int sstrSize=(int)m_sstring.size();
 
             std::vector<TByte> codeBuf;
@@ -52,7 +51,7 @@ namespace frg {
                 TInt32 matchLength;
                 TInt32 matchPos;
                 TInt32 zipLength;
-                if (getBestMatch(curIndex,&matchLength,&matchPos,&zipLength,pack32BitWithTagOutSize(curIndex-nozipBegin,0),kMinZipLength)){
+                if (getBestMatch(curIndex,&matchLength,&matchPos,&zipLength,zip_parameter)){
                     if (curIndex!=nozipBegin){//out no zip data
                         pushNoZipData(codeBuf,ctrlBuf,nozipBegin,curIndex);
                     }
@@ -78,22 +77,22 @@ namespace frg {
     private:
         TSuffixString m_sstring;
 
-        void _getBestMatch(TSuffixIndex curString,TInt32& curBestZipLength,TInt32& curBestMatchString,TInt32& curMatchLength,int it_inc)const{
+        void _getBestMatch(TSuffixIndex curString,TInt32& curBestZipLength,TInt32& curBestMatchString,TInt32& curBestMatchLength,int it_inc)const{
             //const TInt32 it_cur=m_sstring.lower_bound(m_sstring.ssbegin+curString,m_sstring.ssend);
-            const TInt32 it_cur=m_sstring.lower_bound_withR(curString);
+            const TInt32 it_cur=m_sstring.lower_bound_withR(curString);//查找curString自己的位置.
             int it=it_cur+it_inc;
             int it_end;
-            const TInt32* LCP;
+            const TInt32* LCP;//当前的后缀字符串和下一个后缀字符串的相等长度.
             if (it_inc==1){
                 it_end=(int)m_sstring.size();
                 LCP=&m_sstring.LCP[it_cur];
             }else{
                 assert(it_inc==-1);
                 it_end=-1;
-                LCP=&m_sstring.LCP[it_cur-1];
+                LCP=&m_sstring.LCP[it_cur]-1;
             }
 
-            const int kMaxForwardOffsert=16*1024*1024; 
+            const int kMaxForwardOffsert=480*1024;//增大可以提高压缩率但可能会减慢解压速度(缓存命中降低).
             const int kMaxValue_lcp=((TUInt32)1<<31)-1;
             int lcp=kMaxValue_lcp;
             for (;it!=it_end;it+=it_inc,LCP+=it_inc){
@@ -101,30 +100,32 @@ namespace frg {
                 if (curLCP<lcp)
                     lcp=curLCP;
 
-                if ((lcp-2)<=curBestZipLength)
+                if ((lcp-2)<=curBestZipLength)//不可能压缩了.
                     return;
 
                 TSuffixIndex matchString=m_sstring.SA[it];
                 const int curForwardOffsert=(curString-matchString);
                 if ((curForwardOffsert>0)&&(curForwardOffsert<=kMaxForwardOffsert)){
-                    TInt32 zipLength=lcp-pack32BitWithTagOutSize(curForwardOffsert,1)-pack32BitWithTagOutSize(lcp,0);
-                    if (zipLength>curBestZipLength){
-                        curBestZipLength=zipLength;
-                        curBestMatchString=matchString;
-                        curMatchLength=lcp;
+                    TInt32 zipedLength=lcp-pack32BitOutSize(curForwardOffsert-1)-pack32BitWithTagOutSize(lcp-1,kBytesZipType_bit);
+                    if (zipedLength>=curBestZipLength){
+                        if((zipedLength>curBestZipLength)||(matchString>curBestMatchString)){
+                            curBestZipLength=zipedLength;
+                            curBestMatchString=matchString;
+                            curBestMatchLength=lcp;
+                        }
                     }
                 }
             }
         }
 
-        inline bool getBestMatch(TSuffixIndex curString,TInt32* out_matchLength,TInt32* out_matchPos,TInt32* out_zipLength,int unzipLengthPackSize,int kMinZipLength)const{
-            *out_zipLength=kMinZipLength-1+unzipLengthPackSize;
-            *out_matchPos=-1;
-            *out_matchLength=0;
-            _getBestMatch(curString,*out_zipLength,*out_matchPos,*out_matchLength,1);
-            _getBestMatch(curString,*out_zipLength,*out_matchPos,*out_matchLength,-1);
+        inline bool getBestMatch(TSuffixIndex curString,TInt32* out_curBestMatchLength,TInt32* out_curBestMatchPos,TInt32* out_curBestZipLength,int zip_parameter)const{
+            *out_curBestZipLength=zip_parameter+1;//最少要压缩的字节数.
+            *out_curBestMatchPos=-1;
+            *out_curBestMatchLength=0;
+            _getBestMatch(curString,*out_curBestZipLength,*out_curBestMatchPos,*out_curBestMatchLength,1);
+            _getBestMatch(curString,*out_curBestZipLength,*out_curBestMatchPos,*out_curBestMatchLength,-1);
 
-            if ((*out_matchPos)<0)
+            if ((*out_curBestMatchPos)<0)
                 return false;
             return true;
         }
@@ -149,51 +150,7 @@ namespace frg {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 0
-//测试其他压缩算法:lzo
-//#include "other_lib/liblzo/minilzo.h"
-//#define HEAP_ALLOC(var,size) lzo_align_t __LZO_MMODEL var [ ((size) + (sizeof(lzo_align_t) - 1)) / sizeof(lzo_align_t) ]
-//#include "other_lib/liblzo/lzo1x.h"
-
-    void TBytesZiper::load(TByte* out_dst,TByte* out_dstEnd,const TByte* zip_code,const TByte* zip_code_end){
-        /*//lzo
-        Int _isNeedRle=*zip_code; ++zip_code;
-                int ir=lzo_init();
-        assert (ir== LZO_E_OK);
-        lzo_uint dstLength=out_dstEnd-out_dst;
-        lzo1x_decompress(zip_code,zip_code_end-zip_code,out_dst,&dstLength,0);
-        return;
-        //*/
-
-        TBytesZiper_suffix::load(out_dst,out_dstEnd, zip_code, zip_code_end);
-    }
-#endif
-
-
     void TBytesZip::save(std::vector<TByte>& out_code,const TByte* src,const TByte* src_end,int zip_parameter){
-        /*//lzo
-        //static HEAP_ALLOC(wrkmem,LZO1X_1_MEM_COMPRESS);
-        char wrkmem[LZO1X_999_MEM_COMPRESS];
-        if (isUseRleFirst){
-            out_code.push_back(1);
-        }else{
-            out_code.push_back(0);
-        }
-        int ir=lzo_init();
-        assert (ir== LZO_E_OK);
-
-        std::vector<TByte> tempCode;
-        lzo_uint inLen=src_end-src;
-        lzo_uint outLen= (inLen + inLen / 16 + 64 + 3);
-        tempCode.resize(outLen);
-
-        int r = lzo1x_999_compress(src,inLen,&tempCode[0],&outLen,wrkmem);
-        assert(r==LZO_E_OK);
-        tempCode.resize(outLen);
-        out_code.insert(out_code.end(), tempCode.begin(),tempCode.end());
-        return;
-        //*/
-
         //int pos0_forTest=(int)out_code.size();  //for test check load
         TBytesZiper_suffix ssZiper(src,src_end);
         ssZiper.saveCodeTo(out_code,zip_parameter);
