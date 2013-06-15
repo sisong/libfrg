@@ -28,7 +28,14 @@
 #include "suffix_string.h"
 
 namespace frg {
-
+    
+    static const int _kMaxForwardOffsert_zip_parameter_table_size=8+1;
+    static const int _kMaxForwardOffsert_zip_parameter_table[_kMaxForwardOffsert_zip_parameter_table_size]={
+        8*1024*1024, 6*1024*1024, 4*1024*1024, 2*1024*1024, 1*1024*1024, //0..4
+        880*1024,780*1024,700*1024,600*1024//5..8
+    };
+    static const int _kMaxForwardOffsert_zip_parameter_table_minValue=200*1024;
+   
     class TBytesZiper_suffix{
     public:
         TBytesZiper_suffix(const TByte* src,const TByte* src_end)
@@ -52,6 +59,7 @@ namespace frg {
                 TInt32 matchPos;
                 TInt32 zipLength;
                 if (getBestMatch(curIndex,&matchLength,&matchPos,&zipLength,zip_parameter)){
+                    ++m_forwardOffsert_memcache[memcacheKey(matchPos)];
                     if (curIndex!=nozipBegin){//out no zip data
                         pushNoZipData(codeBuf,ctrlBuf,nozipBegin,curIndex);
                     }
@@ -76,8 +84,10 @@ namespace frg {
         }
     private:
         TSuffixString m_sstring;
+        std::map<int,int> m_forwardOffsert_memcache;
+        inline static int memcacheKey(int matchpos){ return matchpos>>3; }
 
-        void _getBestMatch(TSuffixIndex curString,TInt32& curBestZipLength,TInt32& curBestMatchString,TInt32& curBestMatchLength,int it_inc)const{
+        void _getBestMatch(TSuffixIndex curString,TInt32& curBestZipLength,TInt32& curBestMatchString,TInt32& curBestMatchLength,int it_inc,int kMaxForwardOffsert){
             //const TInt32 it_cur=m_sstring.lower_bound(m_sstring.ssbegin+curString,m_sstring.ssend);
             const TInt32 it_cur=m_sstring.lower_bound_withR(curString);//查找curString自己的位置.
             int it=it_cur+it_inc;
@@ -92,7 +102,6 @@ namespace frg {
                 LCP=&m_sstring.LCP[it_cur]-1;
             }
 
-            const int kMaxForwardOffsert=480*1024;//增大可以提高压缩率但可能会减慢解压速度(缓存命中降低).
             const int kMaxValue_lcp=((TUInt32)1<<31)-1;
             int lcp=kMaxValue_lcp;
             for (;it!=it_end;it+=it_inc,LCP+=it_inc){
@@ -101,14 +110,16 @@ namespace frg {
                     lcp=curLCP;
 
                 if ((lcp-2)<=curBestZipLength)//不可能压缩了.
-                    return;
+                    break;
 
                 TSuffixIndex matchString=m_sstring.SA[it];
                 const int curForwardOffsert=(curString-matchString);
                 if ((curForwardOffsert>0)&&(curForwardOffsert<=kMaxForwardOffsert)){
                     TInt32 zipedLength=lcp-pack32BitOutSize(curForwardOffsert-1)-pack32BitWithTagOutSize(lcp-1,kBytesZipType_bit);
                     if (zipedLength>=curBestZipLength){
-                        if((zipedLength>curBestZipLength)||(matchString>curBestMatchString)){
+                        if( (curBestMatchString<0) || (zipedLength>curBestZipLength)
+                           ||(m_forwardOffsert_memcache[memcacheKey(matchString)]>m_forwardOffsert_memcache[memcacheKey(curBestMatchString)])
+                           ||((m_forwardOffsert_memcache[memcacheKey(matchString)]==m_forwardOffsert_memcache[memcacheKey(curBestMatchString)])&&(matchString>curBestMatchString))){
                             curBestZipLength=zipedLength;
                             curBestMatchString=matchString;
                             curBestMatchLength=lcp;
@@ -118,12 +129,25 @@ namespace frg {
             }
         }
 
-        inline bool getBestMatch(TSuffixIndex curString,TInt32* out_curBestMatchLength,TInt32* out_curBestMatchPos,TInt32* out_curBestZipLength,int zip_parameter)const{
+        inline bool getBestMatch(TSuffixIndex curString,TInt32* out_curBestMatchLength,TInt32* out_curBestMatchPos,TInt32* out_curBestZipLength,int zip_parameter){
+            int kMaxForwardOffsert;//增大可以提高压缩率但可能会减慢解压速度(缓存命中降低).
+            const int kS=_kMaxForwardOffsert_zip_parameter_table_size;
+            if (zip_parameter<kS){
+                kMaxForwardOffsert=_kMaxForwardOffsert_zip_parameter_table[zip_parameter];
+            }else{
+                const int kMax=_kMaxForwardOffsert_zip_parameter_table[kS-1];
+                const int kMin=_kMaxForwardOffsert_zip_parameter_table_minValue;
+                if (zip_parameter>=TBytesZip::kZip_bestUnZipSpeed)
+                    kMaxForwardOffsert=kMin;
+                else
+                    kMaxForwardOffsert=kMax-(kMax-kMin)*(zip_parameter-kS)/(TBytesZip::kZip_bestUnZipSpeed-kS);
+            }
+
             *out_curBestZipLength=zip_parameter+1;//最少要压缩的字节数.
             *out_curBestMatchPos=-1;
             *out_curBestMatchLength=0;
-            _getBestMatch(curString,*out_curBestZipLength,*out_curBestMatchPos,*out_curBestMatchLength,1);
-            _getBestMatch(curString,*out_curBestZipLength,*out_curBestMatchPos,*out_curBestMatchLength,-1);
+            _getBestMatch(curString,*out_curBestZipLength,*out_curBestMatchPos,*out_curBestMatchLength,1,kMaxForwardOffsert);
+            _getBestMatch(curString,*out_curBestZipLength,*out_curBestMatchPos,*out_curBestMatchLength,-1,kMaxForwardOffsert);
 
             if ((*out_curBestMatchPos)<0)
                 return false;

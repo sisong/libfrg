@@ -53,14 +53,14 @@ namespace frg{
             quality=0;
         
         isMustFitColorTable=(quality<=kFrg_quality_default);
-        //bgr+alpha  bzip 1-8
+        //bgr+alpha  bzip 0-8
         //only alpha bzip 1--16   //8 -> kFrg_size_default
         //only alpha rle 3--15
         const int param_alpha_rle_count=15-3+1;
         const int param_alpha_zip_count=16-1+1;
-        const int param_bgra_zip_count=8-1+1;
+        const int param_bgra_zip_count=8-0+1;
         const int param_count=param_alpha_rle_count+param_alpha_zip_count+param_bgra_zip_count;
-        const int param_default_index=8+8-1;
+        const int param_default_index=8+8-0;
         int ssp; 
         if (_compressSizeParameter<=kFrg_size_default)
             ssp=0+(int)(_compressSizeParameter*(2*(param_default_index+0.5)/100));
@@ -72,7 +72,7 @@ namespace frg{
             ssp=param_count;
         
         if (ssp<param_bgra_zip_count){
-            zip_parameter=ssp+1;
+            zip_parameter=ssp;
             rle_parameter=TBytesRle::kRle_size_bestUnRleSpeed;
             isAlphaDataUseBytesZip=true;
             isRGBDataUseBytesZip=true;
@@ -82,7 +82,7 @@ namespace frg{
             isAlphaDataUseBytesZip=true;
             isRGBDataUseBytesZip=false;
         }else {
-            zip_parameter=-1;
+            zip_parameter=-1;//null 
             rle_parameter=(ssp-(param_bgra_zip_count+param_alpha_zip_count))+3;
             isAlphaDataUseBytesZip=false;
             isRGBDataUseBytesZip=false;
