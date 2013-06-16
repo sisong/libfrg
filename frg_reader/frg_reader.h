@@ -42,8 +42,11 @@
 extern "C" {
 #endif
     
-//FRG_READER_RUN_MEM_SAFE_CHECK用来启动内存访问越界检查,用以避免frg损坏或构造特殊编码攻击;速度影响较小(<3%).
+//用来启动内存访问越界检查,用以避免frg损坏或构造特殊编码攻击;速度影响较小(打开可能慢3%).
 //#define FRG_READER_RUN_MEM_SAFE_CHECK
+     
+//用来启用针对小内存的memcpy优化,要求允许CPU读写未对齐内存;速度影响较小(打开可能快5%,CPU平台是否可用和效果需要测试).
+//#define FRG_READER_USE_MEMCPY_TINY__MEM_NOTMUST_ALIGN
 
 enum frg_TColorType {
     kFrg_ColorType_32bit_A8R8G8B8  =1

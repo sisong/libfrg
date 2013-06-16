@@ -197,7 +197,7 @@ static TUInt32 unpack32BitWithTag(const TByte** src_code,const TByte* src_code_e
     if ((code&(1<<(7-kTagBit)))!=0){
         do {
 #ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-            assert((value>>(sizeof(value)*8-7))==0);
+            //assert((value>>(sizeof(value)*8-7))==0);
             if (src_code_end==pcode) break;
 #endif
             code=*pcode; ++pcode;
@@ -428,23 +428,146 @@ static frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,const TByte* r
 }
 
 //按顺序拷贝内存数据.
-static void copyDataOrder(TByte* dst,const TByte* src,TUInt32 length){
+inline static void copyDataOrder(TByte* dst,const TByte* src,TUInt32 length){
     TUInt32 length_fast,i;
 
-    length_fast=length&(~7);
-    for (i=0;i<length_fast;i+=8){
+    length_fast=length&(~3);
+    for (i=0;i<length_fast;i+=4){
         dst[i  ]=src[i  ];
         dst[i+1]=src[i+1];
         dst[i+2]=src[i+2];
         dst[i+3]=src[i+3];
-        dst[i+4]=src[i+4];
-        dst[i+5]=src[i+5];
-        dst[i+6]=src[i+6];
-        dst[i+7]=src[i+7];
     }
     for (;i<length;++i)
         dst[i]=src[i];
 }
+
+#ifdef FRG_READER_USE_MEMCPY_TINY__MEM_NOTMUST_ALIGN
+
+#define _memcpy_tiny_COPYBYTE(i,IType) *(IType*)(d-i) = *(const IType*)(s-i)
+//#define _memcpy_tiny_COPYBYTE(i,IType) *(IType*)(dst+(i-sizeof(IType))) = *(const IType*)(src+(i-sizeof(IType)))
+#define _memcpy_tiny_COPY_BYTE_8(i) _memcpy_tiny_COPYBYTE(i,int64_t)
+#define _memcpy_tiny_COPY_BYTE_4(i) _memcpy_tiny_COPYBYTE(i,int32_t)
+#define _memcpy_tiny_COPY_BYTE_2(i) _memcpy_tiny_COPYBYTE(i,int16_t)
+#define _memcpy_tiny_COPY_BYTE_1(i) _memcpy_tiny_COPYBYTE(i,int8_t)
+
+#define _memcpy_tiny_case_COPY_BYTE_8(i) case i: _memcpy_tiny_COPY_BYTE_8(i)
+#define _memcpy_tiny_case_COPY_BYTE_4(i) case i: _memcpy_tiny_COPY_BYTE_4(i)
+#define _memcpy_tiny_case_COPY_BYTE_2(i) case i: _memcpy_tiny_COPY_BYTE_2(i)
+#define _memcpy_tiny_case_COPY_BYTE_1(i) case i: _memcpy_tiny_COPY_BYTE_1(i)
+
+static void memcpy_tiny(unsigned char* dst,const unsigned char* src, size_t len){
+    if (len <= 64){
+        register unsigned char *d =dst + len;
+        register const unsigned char *s =src + len;
+        switch(len){
+            _memcpy_tiny_case_COPY_BYTE_8(64);
+            _memcpy_tiny_case_COPY_BYTE_8(56);
+            _memcpy_tiny_case_COPY_BYTE_8(48);
+            _memcpy_tiny_case_COPY_BYTE_8(40);
+            _memcpy_tiny_case_COPY_BYTE_8(32);
+            _memcpy_tiny_case_COPY_BYTE_8(24);
+            _memcpy_tiny_case_COPY_BYTE_8(16);
+            _memcpy_tiny_case_COPY_BYTE_8(8);
+            return;
+            
+            _memcpy_tiny_case_COPY_BYTE_8(63);
+            _memcpy_tiny_case_COPY_BYTE_8(55);
+            _memcpy_tiny_case_COPY_BYTE_8(47);
+            _memcpy_tiny_case_COPY_BYTE_8(39);
+            _memcpy_tiny_case_COPY_BYTE_8(31);
+            _memcpy_tiny_case_COPY_BYTE_8(23);
+            _memcpy_tiny_case_COPY_BYTE_8(15);
+            _memcpy_tiny_COPY_BYTE_8(8);
+              return;
+              case 7:
+                _memcpy_tiny_COPY_BYTE_4(7);
+                _memcpy_tiny_COPY_BYTE_4(4);
+            return;
+                
+            _memcpy_tiny_case_COPY_BYTE_8(62);
+            _memcpy_tiny_case_COPY_BYTE_8(54);
+            _memcpy_tiny_case_COPY_BYTE_8(46);
+            _memcpy_tiny_case_COPY_BYTE_8(38);
+            _memcpy_tiny_case_COPY_BYTE_8(30);
+            _memcpy_tiny_case_COPY_BYTE_8(22);
+            _memcpy_tiny_case_COPY_BYTE_8(14);
+            _memcpy_tiny_COPY_BYTE_8(8);
+              return;
+              case 6:
+                _memcpy_tiny_COPY_BYTE_4(6);
+                _memcpy_tiny_COPY_BYTE_2(2);
+            return;
+                
+            _memcpy_tiny_case_COPY_BYTE_8(61);
+            _memcpy_tiny_case_COPY_BYTE_8(53);
+            _memcpy_tiny_case_COPY_BYTE_8(45);
+            _memcpy_tiny_case_COPY_BYTE_8(37);
+            _memcpy_tiny_case_COPY_BYTE_8(29);
+            _memcpy_tiny_case_COPY_BYTE_8(21);
+            _memcpy_tiny_case_COPY_BYTE_8(13);
+            _memcpy_tiny_COPY_BYTE_8(8);
+              return;
+              case 5:
+                _memcpy_tiny_COPY_BYTE_4(5);
+                _memcpy_tiny_COPY_BYTE_1(1);
+            return;
+                
+            _memcpy_tiny_case_COPY_BYTE_8(60);
+            _memcpy_tiny_case_COPY_BYTE_8(52);
+            _memcpy_tiny_case_COPY_BYTE_8(44);
+            _memcpy_tiny_case_COPY_BYTE_8(36);
+            _memcpy_tiny_case_COPY_BYTE_8(28);
+            _memcpy_tiny_case_COPY_BYTE_8(20);
+            _memcpy_tiny_case_COPY_BYTE_8(12);
+            _memcpy_tiny_case_COPY_BYTE_4(4);
+            return;
+            
+            _memcpy_tiny_case_COPY_BYTE_8(59);
+            _memcpy_tiny_case_COPY_BYTE_8(51);
+            _memcpy_tiny_case_COPY_BYTE_8(43);
+            _memcpy_tiny_case_COPY_BYTE_8(35);
+            _memcpy_tiny_case_COPY_BYTE_8(27);
+            _memcpy_tiny_case_COPY_BYTE_8(19);
+            _memcpy_tiny_case_COPY_BYTE_8(11);
+            _memcpy_tiny_COPY_BYTE_4(4);
+              return;
+              case  3:
+                _memcpy_tiny_COPY_BYTE_2(3);
+                _memcpy_tiny_COPY_BYTE_1(1);
+            return;
+                
+            _memcpy_tiny_case_COPY_BYTE_8(58);
+            _memcpy_tiny_case_COPY_BYTE_8(50);
+            _memcpy_tiny_case_COPY_BYTE_8(42);
+            _memcpy_tiny_case_COPY_BYTE_8(34);
+            _memcpy_tiny_case_COPY_BYTE_8(26);
+            _memcpy_tiny_case_COPY_BYTE_8(18);
+            _memcpy_tiny_case_COPY_BYTE_8(10);
+            _memcpy_tiny_case_COPY_BYTE_2(2);
+            return;
+            
+            _memcpy_tiny_case_COPY_BYTE_8(57);
+            _memcpy_tiny_case_COPY_BYTE_8(49);
+            _memcpy_tiny_case_COPY_BYTE_8(41);
+            _memcpy_tiny_case_COPY_BYTE_8(33);
+            _memcpy_tiny_case_COPY_BYTE_8(25);
+            _memcpy_tiny_case_COPY_BYTE_8(17);
+            _memcpy_tiny_case_COPY_BYTE_8(9);
+            _memcpy_tiny_case_COPY_BYTE_1(1);
+            return;
+                
+            case 0:
+                return;
+        }
+    }else{
+        memcpy(dst, src, len);
+    }
+}
+
+#else
+    #define memcpy_tiny memcpy
+#endif
 
 static frg_BOOL _bytesZiper_load(TByte* out_data,TByte* out_dataEnd,const TByte* zip_code,const TByte* zip_code_end){
     TUInt32 ctrlSize= unpack32Bit(&zip_code,zip_code_end);
@@ -469,18 +592,20 @@ static frg_BOOL _bytesZiper_load(TByte* out_data,TByte* out_dataEnd,const TByte*
                 if (frontMatchPos>(TUInt32)(out_data-_out_data_begin)) return frg_FALSE;
 #endif
                 if (length<=frontMatchPos)
-                    memcpy(out_data,out_data-frontMatchPos,length);
+                    memcpy_tiny(out_data,out_data-frontMatchPos,length);
                 else
                     copyDataOrder(out_data,out_data-frontMatchPos,length);//warning!! can not use memmove
                 out_data+=length;
+                continue; //while 
             }break;
             case kBytesZipType_nozip:{
 #ifdef FRG_READER_RUN_MEM_SAFE_CHECK
                 if (length>(TUInt32)(zip_code_end-zip_code)) return frg_FALSE;
 #endif
-                memcpy(out_data,zip_code,length);
+                memcpy_tiny(out_data,zip_code,length);
                 zip_code+=length;
                 out_data+=length;
+                continue; //while
             }break;
         }
     }
