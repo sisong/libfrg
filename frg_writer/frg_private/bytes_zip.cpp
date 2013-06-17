@@ -58,7 +58,7 @@ namespace frg {
                 TInt32 matchLength;
                 TInt32 matchPos;
                 TInt32 zipLength;
-                if (getBestMatch(curIndex,&matchLength,&matchPos,&zipLength,zip_parameter)){
+                if (getBestMatch(curIndex,&matchLength,&matchPos,&zipLength,zip_parameter,nozipBegin,sstrSize)){
                     ++m_forwardOffsert_memcache[memcacheKey(matchPos)];
                     if (curIndex!=nozipBegin){//out no zip data
                         pushNoZipData(codeBuf,ctrlBuf,nozipBegin,curIndex);
@@ -86,8 +86,9 @@ namespace frg {
         TSuffixString m_sstring;
         std::map<int,int> m_forwardOffsert_memcache;
         inline static int memcacheKey(int matchpos){ return matchpos>>3; }
+        inline static int getCtrlLengthOutSize(int ctrlLength){ return pack32BitWithTagOutSize(ctrlLength-1,kBytesZipType_bit); }
 
-        void _getBestMatch(TSuffixIndex curString,TInt32& curBestZipLength,TInt32& curBestMatchString,TInt32& curBestMatchLength,int it_inc,int kMaxForwardOffsert){
+        void _getBestMatch(TSuffixIndex curString,TInt32& curBestZipLength,TInt32& curBestMatchString,TInt32& curBestMatchLength,int it_inc,int kMaxForwardOffsert,int kStringLength,int kPkSizeAllLength){
             //const TInt32 it_cur=m_sstring.lower_bound(m_sstring.ssbegin+curString,m_sstring.ssend);
             const TInt32 it_cur=m_sstring.lower_bound_withR(curString);//查找curString自己的位置.
             int it=it_cur+it_inc;
@@ -109,13 +110,13 @@ namespace frg {
                 if (curLCP<lcp)
                     lcp=curLCP;
 
-                if ((lcp-2)<=curBestZipLength)//不可能压缩了.
+                if ((lcp-2)<curBestZipLength)//不可能压缩了.
                     break;
 
                 TSuffixIndex matchString=m_sstring.SA[it];
                 const int curForwardOffsert=(curString-matchString);
                 if ((curForwardOffsert>0)&&(curForwardOffsert<=kMaxForwardOffsert)){
-                    TInt32 zipedLength=lcp-pack32BitOutSize(curForwardOffsert-1)-pack32BitWithTagOutSize(lcp-1,kBytesZipType_bit);
+                    TInt32 zipedLength=lcp-pack32BitOutSize(curForwardOffsert-1)-getCtrlLengthOutSize(lcp)-getCtrlLengthOutSize(kStringLength-lcp)+kPkSizeAllLength;
                     if (zipedLength>=curBestZipLength){
                         if( (curBestMatchString<0) || (zipedLength>curBestZipLength)
                            ||(m_forwardOffsert_memcache[memcacheKey(matchString)]>m_forwardOffsert_memcache[memcacheKey(curBestMatchString)])
@@ -129,7 +130,7 @@ namespace frg {
             }
         }
 
-        inline bool getBestMatch(TSuffixIndex curString,TInt32* out_curBestMatchLength,TInt32* out_curBestMatchPos,TInt32* out_curBestZipLength,int zip_parameter){
+        inline bool getBestMatch(TSuffixIndex curString,TInt32* out_curBestMatchLength,TInt32* out_curBestMatchPos,TInt32* out_curBestZipLength,int zip_parameter,int nozipBegin,int endString){
             int kMaxForwardOffsert;//增大可以提高压缩率但可能会减慢解压速度(缓存命中降低).
             const int kS=_kMaxForwardOffsert_zip_parameter_table_size;
             if (zip_parameter<kS){
@@ -142,12 +143,22 @@ namespace frg {
                 else
                     kMaxForwardOffsert=kMax-(kMax-kMin)*(zip_parameter-kS)/(TBytesZip::kZip_bestUnZipSpeed-kS);
             }
-
-            *out_curBestZipLength=zip_parameter+1;//最少要压缩的字节数.
+            
+            const int noZipLength=curString-nozipBegin;
+            const int allLength=endString-nozipBegin;
+            const int kPkSizeAllLength=getCtrlLengthOutSize(allLength);
+            //   psize(noZipLength)+noZipLength
+            // + psize(zipLength)+psize(ForwardOffsert)
+            // + psize(allLength-noZipLength-zipLength)+ allLength-noZipLength-zipLength
+            // <  psize(allLength)+allLength + zip_parameter
+            int minZipLength=zip_parameter+1;//最少要压缩的字节数.
+            if (noZipLength>0)
+                ++minZipLength;
+            *out_curBestZipLength=minZipLength;
             *out_curBestMatchPos=-1;
             *out_curBestMatchLength=0;
-            _getBestMatch(curString,*out_curBestZipLength,*out_curBestMatchPos,*out_curBestMatchLength,1,kMaxForwardOffsert);
-            _getBestMatch(curString,*out_curBestZipLength,*out_curBestMatchPos,*out_curBestMatchLength,-1,kMaxForwardOffsert);
+            _getBestMatch(curString,*out_curBestZipLength,*out_curBestMatchPos,*out_curBestMatchLength,1,kMaxForwardOffsert,allLength-noZipLength,kPkSizeAllLength);
+            _getBestMatch(curString,*out_curBestZipLength,*out_curBestMatchPos,*out_curBestMatchLength,-1,kMaxForwardOffsert,allLength-noZipLength,kPkSizeAllLength);
 
             if ((*out_curBestMatchPos)<0)
                 return false;
