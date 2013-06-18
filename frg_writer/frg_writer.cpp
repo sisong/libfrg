@@ -29,7 +29,7 @@
 #include "frg_writer.h"
 #include "frg_private/frg_color_tools.h"
 #include "frg_private/bytes_rle.h"
-#include "frg_private/bytes_zip.h"
+#include "FRZ1_compress.h"
 #include "frg_private/bgr_zip/frg_color_zip.h"
 
 namespace frg{
@@ -130,7 +130,7 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
         TBytesRle::save(rleCode, &alphaBuf[0],&alphaBuf[0]+alphaBuf.size(),parameter.rle_parameter);
         if (parameter.isAlphaDataUseBytesZip){
             std::vector<TByte> zipCode;
-            TBytesZip::save(zipCode,&rleCode[0],&rleCode[0]+rleCode.size(),parameter.zip_parameter);
+            FRZ1_compress(zipCode,&rleCode[0],&rleCode[0]+rleCode.size(),parameter.zip_parameter);
             writeUInt32(code_alpha, (TUInt32)rleCode.size());
             code_alpha.insert(code_alpha.end(),zipCode.begin(),zipCode.end());
             
@@ -159,7 +159,7 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
             
             std::vector<TByte> color_temp;
             writeUInt32(color_temp, (TInt32)code_bgr.size());
-            TBytesZip::save(color_temp,&code_bgr[0],&code_bgr[0]+code_bgr.size(),parameter.zip_parameter);
+            FRZ1_compress(color_temp,&code_bgr[0],&code_bgr[0]+code_bgr.size(),parameter.zip_parameter);
             code_bgr.swap(color_temp);
             
         }

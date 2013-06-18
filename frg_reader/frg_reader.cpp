@@ -30,6 +30,7 @@
 #include "string.h" //memset memcpy
 #include "assert.h" //assert
 #include "frg_draw.h"
+#include "FRZ1_decompress.h"
 
     inline static TUInt32 readUInt32(const void* _codeData){
         const TByte* codeData=(const TByte*)_codeData;
@@ -76,8 +77,13 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const TByte* frgCode_begin,const
 
 ////
 static frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,const TByte* rle_code,const TByte* rle_code_end);//rle解码.
-static frg_BOOL _bytesZiper_load(TByte* out_data,TByte* out_dataEnd,const TByte* zip_code,const TByte* zip_code_end);//byteZip解码.
 static frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TByte* code,const TByte* code_end,const TByte* alpha,int alpha_byte_width,TByte* tempMemory,TByte* tempMemory_end);
+
+#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
+#   define _FRZ1_decompress_NAME FRZ1_decompress_safe
+#else
+#   define _FRZ1_decompress_NAME FRZ1_decompress
+#endif
 
 frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TByte* frgCode_end,const struct frg_TPixelsRef* dst_image,TByte* tempMemory,TByte* tempMemory_end){
     struct frg_TFrgImageInfo frgInfo;
@@ -136,7 +142,7 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TBy
             const TInt32 alpha_code_size=readUInt32(&code);
             if (tempMemory_end-tempMemory<alpha_code_size) return frg_FALSE;
             TByte* _alpha_code_buf=tempMemory; tempMemory+=alpha_code_size;
-            if (!_bytesZiper_load(_alpha_code_buf,_alpha_code_buf+alpha_code_size,code,code_end))
+            if (!_FRZ1_decompress_NAME(_alpha_code_buf,_alpha_code_buf+alpha_code_size,code,code_end))
                 return frg_FALSE;
             code=_alpha_code_buf;
             code_end=_alpha_code_buf+alpha_code_size;
@@ -163,7 +169,7 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TBy
             const TInt32 bgr_code_size=readUInt32(&code);
             if (tempMemory_end-tempMemory<bgr_code_size) return frg_FALSE;
             TByte* _bgr_code_buf=tempMemory; tempMemory+=bgr_code_size;
-            if (!_bytesZiper_load(_bgr_code_buf,_bgr_code_buf+bgr_code_size,code,code_end))
+            if (!_FRZ1_decompress_NAME(_bgr_code_buf,_bgr_code_buf+bgr_code_size,code,code_end))
                 return frg_FALSE;
             code=_bgr_code_buf;
             code_end=_bgr_code_buf+bgr_code_size;
@@ -197,7 +203,7 @@ static TUInt32 unpack32BitWithTag(const TByte** src_code,const TByte* src_code_e
     if ((code&(1<<(7-kTagBit)))!=0){
         do {
 #ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-            assert((value>>(sizeof(value)*8-7))==0);
+            //assert((value>>(sizeof(value)*8-7))==0);
             if (src_code_end==pcode) break;
 #endif
             code=*pcode; ++pcode;
@@ -426,64 +432,3 @@ static frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,const TByte* r
     }
     return (ctrlBuf==ctrlBuf_end)&&(rle_code==rle_code_end)&&(out_data==out_dataEnd);
 }
-
-//按顺序拷贝内存数据.
-static void copyDataOrder(TByte* dst,const TByte* src,TUInt32 length){
-    TUInt32 length_fast,i;
-
-    length_fast=length&(~7);
-    for (i=0;i<length_fast;i+=8){
-        dst[i  ]=src[i  ];
-        dst[i+1]=src[i+1];
-        dst[i+2]=src[i+2];
-        dst[i+3]=src[i+3];
-        dst[i+4]=src[i+4];
-        dst[i+5]=src[i+5];
-        dst[i+6]=src[i+6];
-        dst[i+7]=src[i+7];
-    }
-    for (;i<length;++i)
-        dst[i]=src[i];
-}
-
-static frg_BOOL _bytesZiper_load(TByte* out_data,TByte* out_dataEnd,const TByte* zip_code,const TByte* zip_code_end){
-    TUInt32 ctrlSize= unpack32Bit(&zip_code,zip_code_end);
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-    TByte* _out_data_begin=out_data;
-    if (ctrlSize>(TUInt32)(zip_code_end-zip_code)) return frg_FALSE;
-#endif
-    const TByte* ctrlBuf=zip_code;
-    zip_code+=ctrlSize;
-    const TByte* ctrlBuf_end=zip_code;
-
-    while (ctrlBuf<ctrlBuf_end){
-        const enum TBytesZipType type=(enum TBytesZipType)((*ctrlBuf)>>(8-kBytesZipType_bit));
-        const TUInt32 length= 1 + unpack32BitWithTag(&ctrlBuf,ctrlBuf_end,kBytesZipType_bit);
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-        if (length>(TUInt32)(out_dataEnd-out_data)) return frg_FALSE;
-#endif
-        switch (type){
-            case kBytesZipType_zip:{
-                const TUInt32 frontMatchPos= 1 + unpack32Bit(&ctrlBuf,ctrlBuf_end);
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-                if (frontMatchPos>(TUInt32)(out_data-_out_data_begin)) return frg_FALSE;
-#endif
-                if (length<=frontMatchPos)
-                    memcpy(out_data,out_data-frontMatchPos,length);
-                else
-                    copyDataOrder(out_data,out_data-frontMatchPos,length);//warning!! can not use memmove
-                out_data+=length;
-            }break;
-            case kBytesZipType_nozip:{
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-                if (length>(TUInt32)(zip_code_end-zip_code)) return frg_FALSE;
-#endif
-                memcpy(out_data,zip_code,length);
-                zip_code+=length;
-                out_data+=length;
-            }break;
-        }
-    }
-    return (ctrlBuf==ctrlBuf_end)&&(zip_code==zip_code_end)&&(out_data==out_dataEnd);
-}
-

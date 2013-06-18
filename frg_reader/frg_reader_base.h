@@ -159,12 +159,6 @@ enum TByteRleType{
     kByteRleType_unrle = 3     //11表示后面存的未压缩数据 (包中连续储存多个字节数据)
 };
 static const int kByteRleType_bit=2;
-
-enum TBytesZipType{
-    kBytesZipType_nozip = 0,    //0表示后面存的未压缩数据 (包中连续储存多个字节数据)
-    kBytesZipType_zip   = 1     //1表示后面存的压缩(替代)数据.
-};
-static const int kBytesZipType_bit=1;
     
 #ifdef __cplusplus
 }
