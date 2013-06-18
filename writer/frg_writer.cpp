@@ -29,8 +29,8 @@
 #include "frg_writer.h"
 #include "frg_private/frg_color_tools.h"
 #include "frg_private/bytes_rle.h"
-#include "FRZ1_compress.h"
 #include "frg_private/bgr_zip/frg_color_zip.h"
+#include "FRZ1_compress.h"
 
 namespace frg{
         

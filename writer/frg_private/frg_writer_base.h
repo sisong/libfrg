@@ -29,7 +29,7 @@
 #ifndef _LIBFRG_frg_writer_base_h
 #define _LIBFRG_frg_writer_base_h
 
-#include "../../frg_reader/frg_reader_base.h"
+#include "../../reader/frg_reader_base.h"
 #include "assert.h" //assert
 #include "string.h" //memset
 #include <vector>
