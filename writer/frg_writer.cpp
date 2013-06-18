@@ -30,7 +30,7 @@
 #include "frg_private/frg_color_tools.h"
 #include "frg_private/bytes_rle.h"
 #include "frg_private/bgr_zip/frg_color_zip.h"
-#include "FRZ1_compress.h"
+#include "FRZ1_compress.h" //source code: https://github.com/sisong/FRZ 
 
 namespace frg{
         

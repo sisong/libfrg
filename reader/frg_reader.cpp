@@ -30,7 +30,7 @@
 #include "string.h" //memset memcpy
 #include "assert.h" //assert
 #include "frg_draw.h"
-#include "FRZ1_decompress.h"
+#include "FRZ1_decompress.h" //source code: https://github.com/sisong/FRZ 
 
     inline static TUInt32 readUInt32(const void* _codeData){
         const TByte* codeData=(const TByte*)_codeData;
