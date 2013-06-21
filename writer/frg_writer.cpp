@@ -158,10 +158,9 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
             if (tempMemoryByteSize_cur>tempMemoryByteSize_max) tempMemoryByteSize_max=tempMemoryByteSize_cur;
             
             std::vector<TByte> color_temp;
-            writeUInt32(color_temp, (TInt32)code_bgr.size());
+            writeUInt32(color_temp, (TUInt32)code_bgr.size());
             FRZ1_compress(color_temp,&code_bgr[0],&code_bgr[0]+code_bgr.size(),parameter.zip_parameter);
             code_bgr.swap(color_temp);
-            
         }
     }
     

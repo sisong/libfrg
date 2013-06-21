@@ -139,8 +139,8 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TBy
         TByte* _tempMemory_back=tempMemory;
         if (isAlphaDataUseBytesZip){
             if (codeSize<4) return frg_FALSE;
-            const TInt32 alpha_code_size=readUInt32(&code);
-            if (tempMemory_end-tempMemory<alpha_code_size) return frg_FALSE;
+            const TUInt32 alpha_code_size=readUInt32(&code);
+            if ((TUInt32)(tempMemory_end-tempMemory)<alpha_code_size) return frg_FALSE;
             TByte* _alpha_code_buf=tempMemory; tempMemory+=alpha_code_size;
             if (!_FRZ1_decompress_NAME(_alpha_code_buf,_alpha_code_buf+alpha_code_size,code,code_end))
                 return frg_FALSE;
@@ -158,7 +158,7 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TBy
     }else{
         if (frgCode_end-frgCodeData<4) return frg_FALSE;
         const TUInt32 codeSize=readUInt32(&frgCodeData);
-        if (frgCode_end-frgCodeData<codeSize) return frg_FALSE;
+        if ((TUInt32)(frgCode_end-frgCodeData)<codeSize) return frg_FALSE;
         const TByte* code=frgCodeData;
         frgCodeData+=codeSize;
         const TByte* code_end=frgCodeData;
@@ -166,8 +166,8 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TBy
         //TByte* _tempMemory_back=tempMemory;
         if (isRGBDataUseBytesZip){
             if (codeSize<4) return frg_FALSE;
-            const TInt32 bgr_code_size=readUInt32(&code);
-            if (tempMemory_end-tempMemory<bgr_code_size) return frg_FALSE;
+            const TUInt32 bgr_code_size=readUInt32(&code);
+            if ((TUInt32)(tempMemory_end-tempMemory)<bgr_code_size) return frg_FALSE;
             TByte* _bgr_code_buf=tempMemory; tempMemory+=bgr_code_size;
             if (!_FRZ1_decompress_NAME(_bgr_code_buf,_bgr_code_buf+bgr_code_size,code,code_end))
                 return frg_FALSE;

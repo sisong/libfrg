@@ -6,8 +6,8 @@
 //
 
 #include <iostream>
-#include "../frg_writer/frg_writer.h"
-#include "../frg_reader/frg_reader.h"
+#include "../writer/frg_writer.h"
+#include "../reader/frg_reader.h"
 
 void readFile(std::vector<unsigned char>& dstData,const char* srcFileName){
     FILE	* file=fopen(srcFileName, "rb");
@@ -54,8 +54,8 @@ void loadBmpImage(frg::TFrgPixels32Ref& image){
 }
 
 void bmpImage_encodeTo_frgImage(const frg::TFrgPixels32Ref& bmpImage,std::vector<unsigned char>& out_frgImageCode){
-    frg::TFrgParameter frg_encode_parameter(80);
-    //frg::TFrgParameter frg_encode_parameter(100); //lossless
+    frg::TFrgParameter frg_encode_parameter(80,50);
+    //frg::TFrgParameter frg_encode_parameter(100,0); //lossless and minsize
     writeFrgImage(out_frgImageCode, bmpImage, frg_encode_parameter);
 }
 
@@ -95,7 +95,7 @@ int main(int argc, const char * argv[]){
         std::cout << "read frg image error!\n";
         result=1;
     }
-    
+
     delete [](unsigned char*)dstImage.pColor;
     delete []srcImage.pColor;
     std::cout << "\ndone!\n";

@@ -99,21 +99,13 @@ static void pack32BitWithTag(std::vector<TByte>& out_code,TUInt32 iValue,int hig
 }
 
 inline static int pack32BitWithTagOutSize(TUInt32 iValue,int kTagBit){//返回pack后字节大小.
-    if (iValue<(TUInt32)(1<<(7+7-kTagBit))){
-        if (iValue<(TUInt32)(1<<(7-kTagBit))){
-            return 1;
-        }else{
-            return 2;
-        }
-    }else{
-        if (iValue<(TUInt32)(1<<(7+7+7-kTagBit))){
-            return 3;
-        }else if (iValue<(TUInt32)(1<<(7+7+7+7-kTagBit))){
-            return 4;
-        }else {//if (iValue<(TUInt32)(1<<(7+7+7+7+7-kTagBit))){
-            return 5;
-        }
+    const unsigned int kMaxValueWithTag=(1<<(7-kTagBit))-1;
+    int result=0;
+    while (iValue>kMaxValueWithTag) {
+        ++result;
+        iValue>>=7;
     }
+    return (result+1);
 }
 
 static inline void pack32Bit(std::vector<TByte>& out_code,TUInt32 iValue){
