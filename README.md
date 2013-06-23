@@ -1,6 +1,6 @@
 libfrg
 ========
-Version  1.0.1 
+Version  1.0.2 
 libfrg: C\C++ codec of FRG  
 
 ---
@@ -13,7 +13,7 @@ _FRG是一种优化从磁盘加载和解码到显示需要的时间的图像文�
   
 ---
 ```
-version 1.0 performance test:
+version 1.0.0 performance test:
   macosx10.8.3 ,  CPU:i7 2.3G (single thread), memory: 8G DDR3 1600MHz  ,  7zip use LZMA2 , load image file from Disk 236MB/s;
   1160 bmp files: ARGB32bit color 863,990,576 bytes and 215,980,447 pixels;
   note: .jpg no alpha color
