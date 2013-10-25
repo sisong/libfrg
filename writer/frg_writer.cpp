@@ -30,7 +30,16 @@
 #include "frg_private/frg_color_tools.h"
 #include "frg_private/bytes_rle.h"
 #include "frg_private/bgr_zip/frg_color_zip.h"
-#include "FRZ1_compress.h" //source code: https://github.com/sisong/FRZ 
+#include "../../lz4/lz4hc.h" //http://code.google.com/p/lz4/
+
+static void frgZip_compress(std::vector<unsigned char>& out_code,
+                   const unsigned char* src,const unsigned char* src_end,int zip_parameter){
+    int oldSize=(int)out_code.size();
+    out_code.resize(oldSize+(src_end-src)*1.2+32);
+    int codeSize=LZ4_compressHC((const char*)src,(char*)&out_code[oldSize],(int)(src_end-src));
+    out_code.resize(oldSize+codeSize);
+}
+
 
 namespace frg{
         
@@ -130,7 +139,7 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
         TBytesRle::save(rleCode, &alphaBuf[0],&alphaBuf[0]+alphaBuf.size(),parameter.rle_parameter);
         if (parameter.isAlphaDataUseBytesZip){
             std::vector<TByte> zipCode;
-            FRZ1_compress(zipCode,&rleCode[0],&rleCode[0]+rleCode.size(),parameter.zip_parameter);
+            frgZip_compress(zipCode,&rleCode[0],&rleCode[0]+rleCode.size(),parameter.zip_parameter);
             writeUInt32(code_alpha, (TUInt32)rleCode.size());
             code_alpha.insert(code_alpha.end(),zipCode.begin(),zipCode.end());
             
@@ -159,7 +168,7 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
             
             std::vector<TByte> color_temp;
             writeUInt32(color_temp, (TUInt32)code_bgr.size());
-            FRZ1_compress(color_temp,&code_bgr[0],&code_bgr[0]+code_bgr.size(),parameter.zip_parameter);
+            frgZip_compress(color_temp,&code_bgr[0],&code_bgr[0]+code_bgr.size(),parameter.zip_parameter);
             code_bgr.swap(color_temp);
         }
     }

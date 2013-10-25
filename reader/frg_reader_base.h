@@ -86,7 +86,7 @@ struct TFrgFileHead{ //frg文件头数据布局(小端格式读写).
 static const int kFrgFileHeadSize=sizeof(struct TFrgFileHead);
 
 static const int  kFrgTagAndVersionSize =4;
-static const char kFrgTagAndVersion[kFrgTagAndVersionSize]={'F','R','G',13};
+static const char kFrgTagAndVersion[kFrgTagAndVersionSize]={'F','R','G',14};
 
 //8bit 存储颜色的相关信息.
 enum TFrgHeadColorInfo{

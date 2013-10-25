@@ -87,7 +87,10 @@ int FRG_READER_EXPORT_API getFrgHeadSize();
 //获得frg图片基本信息. //must(frgCode_end-frgCode_begin>=frgHeadSize) ;  out_frgImageInfo can null;
 frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const unsigned char* frgCode_begin,const unsigned char* frgCode_end,struct frg_TFrgImageInfo* out_frgImageInfo);
 
+
 //解码frg格式的图片数据.
+//13版用的FRZ1压缩算法,14版后采用了LZ4; 定义FRG_IS_NEED_FRZ1_decompress用于兼容以前储存的图片.
+//#define FRG_IS_NEED_FRZ1_decompress
 frg_BOOL FRG_READER_EXPORT_API readFrgImage(const unsigned char* frgCode_begin,const unsigned char* frgCode_end,const struct frg_TPixelsRef* dst_image,unsigned char* tempMemory,unsigned char* tempMemory_end);
 
 #ifdef __cplusplus

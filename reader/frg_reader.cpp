@@ -30,7 +30,9 @@
 #include "string.h" //memset memcpy
 #include "assert.h" //assert
 #include "frg_draw.h"
-#include "FRZ1_decompress.h" //source code: https://github.com/sisong/FRZ 
+#include "../../lz4/lz4.h"//http://code.google.com/p/lz4/
+
+
 
     inline static TUInt32 readUInt32(const void* _codeData){
         const TByte* codeData=(const TByte*)_codeData;
@@ -49,6 +51,36 @@
         return (const TByte*)0+( ((const TByte*)pointer-(const TByte*)0+3)>>2<<2 );
     }
 
+
+
+#ifdef FRG_IS_NEED_FRZ1_decompress
+    #include "../../FRZ/reader/FRZ1_decompress.h" //source code: https://github.com/sisong/FRZ/
+    static const char kFrgTagAndVersion_frz1[kFrgTagAndVersionSize]={'F','R','G',13};
+#endif
+
+static inline bool frgZip_decompress(unsigned char* out_data,unsigned char* out_data_end,
+                              const unsigned char* frgZip_code,const unsigned char* frgZip_code_end,const char* frgTagAndVersion){
+#ifdef FRG_IS_NEED_FRZ1_decompress
+    if (readUInt32(frgTagAndVersion)==readUInt32(kFrgTagAndVersion_frz1)) {
+        return FRZ1_decompress(out_data,out_data_end,frgZip_code,frgZip_code_end);
+    }
+#endif
+    int size=LZ4_decompress_fast((const char*)frgZip_code,(char*)out_data,(int)(out_data_end-out_data));
+    return (size>=0);
+}
+
+static inline bool frgZip_decompress_safe(unsigned char* out_data,unsigned char* out_data_end,
+                                   const unsigned char* frgZip_code,const unsigned char* frgZip_code_end,const char* frgTagAndVersion){
+#ifdef FRG_IS_NEED_FRZ1_decompress
+    if (readUInt32(frgTagAndVersion)==readUInt32(kFrgTagAndVersion_frz1)) {
+        return FRZ1_decompress_safe(out_data,out_data_end,frgZip_code,frgZip_code_end);
+    }
+#endif
+    int size=LZ4_decompress_safe((const char*)frgZip_code,(char*)out_data,(int)(frgZip_code_end-frgZip_code),(int)(out_data_end-out_data));
+    return (size>=0);
+}
+
+
 int FRG_READER_EXPORT_API getFrgHeadSize(){
     return kFrgFileHeadSize;
 }
@@ -59,8 +91,13 @@ int FRG_READER_EXPORT_API getFrgHeadSize(){
 frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const TByte* frgCode_begin,const TByte* frgCode_end,struct frg_TFrgImageInfo* out_frgImageInfo){
     if (frgCode_end-frgCode_begin<kFrgFileHeadSize) return frg_FALSE;
     const struct TFrgFileHead& fhead=*(const struct TFrgFileHead*)frgCode_begin;
-    if (  readUInt32(&fhead.frgTagAndVersion[0])!=readUInt32(&kFrgTagAndVersion[0]))
+    if (   (readUInt32(&fhead.frgTagAndVersion[0])!=readUInt32(&kFrgTagAndVersion[0]))
+#ifdef FRG_IS_NEED_FRZ1_decompress
+        && (readUInt32(&fhead.frgTagAndVersion[0])!=readUInt32(&kFrgTagAndVersion_frz1[0]))
+#endif
+       )
         return frg_FALSE;
+    
     if (out_frgImageInfo==0) return frg_TRUE;
     
     out_frgImageInfo->imageFileSize=readUInt32(&fhead.imageFileSize);
@@ -80,9 +117,9 @@ static frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,const TByte* r
 static frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TByte* code,const TByte* code_end,const TByte* alpha,int alpha_byte_width,TByte* tempMemory,TByte* tempMemory_end);
 
 #ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-#   define _FRZ1_decompress_NAME FRZ1_decompress_safe
+#   define _frgZip_decompress_NAME frgZip_decompress_safe
 #else
-#   define _FRZ1_decompress_NAME FRZ1_decompress
+#   define _frgZip_decompress_NAME frgZip_decompress
 #endif
 
 frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TByte* frgCode_end,const struct frg_TPixelsRef* dst_image,TByte* tempMemory,TByte* tempMemory_end){
@@ -142,13 +179,14 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TBy
             const TUInt32 alpha_code_size=readUInt32(&code);
             if ((TUInt32)(tempMemory_end-tempMemory)<alpha_code_size) return frg_FALSE;
             TByte* _alpha_code_buf=tempMemory; tempMemory+=alpha_code_size;
-            if (!_FRZ1_decompress_NAME(_alpha_code_buf,_alpha_code_buf+alpha_code_size,code,code_end))
+            if (!_frgZip_decompress_NAME(_alpha_code_buf,_alpha_code_buf+alpha_code_size,code,code_end,fhead.frgTagAndVersion))
                 return frg_FALSE;
             code=_alpha_code_buf;
             code_end=_alpha_code_buf+alpha_code_size;
         }
         if (!_bytesRle_load(alphaBuf,alphaBuf+alphaBufSize,code,code_end))
             return frg_FALSE;
+        
         tempMemory=_tempMemory_back;
     }
 
@@ -169,7 +207,7 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TBy
             const TUInt32 bgr_code_size=readUInt32(&code);
             if ((TUInt32)(tempMemory_end-tempMemory)<bgr_code_size) return frg_FALSE;
             TByte* _bgr_code_buf=tempMemory; tempMemory+=bgr_code_size;
-            if (!_FRZ1_decompress_NAME(_bgr_code_buf,_bgr_code_buf+bgr_code_size,code,code_end))
+            if (!_frgZip_decompress_NAME(_bgr_code_buf,_bgr_code_buf+bgr_code_size,code,code_end,fhead.frgTagAndVersion))
                 return frg_FALSE;
             code=_bgr_code_buf;
             code_end=_bgr_code_buf+bgr_code_size;
