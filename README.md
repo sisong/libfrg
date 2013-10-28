@@ -1,16 +1,15 @@
 libfrg
 ========
-Version  1.0.2 
+Version  1.1.0 
 libfrg: C\C++ codec of FRG  
-
+   
 ---
 FRG: "Fast Read Graphics" or "Fast Resource Graphics"  
-
-FRG is an image format(like PNG or JPG etc.),for saving time loading from disk and decoding to display; It supports 32-bit ARGB color image.  
-
-_FRG是一种优化从磁盘加载和解码到显示需要的时间的图像文件格式,它支持32-bit ARGB颜色的图像。_  
-
   
+FRG is an image format(like PNG or JPG etc.),for optimize load image time(loading from disk and decoding to display). It supports 32-bit ARGB color image. 
+   
+_FRG是一种优化从磁盘加载和解码到显示需要的时间的图像文件格式,它支持32-bit ARGB颜色的图像。_  
+   
 ---
 ```
 version 1.0.2 performance test:
@@ -35,7 +34,7 @@ load+decode time (ms)  3,590.7 6,241.4 5,148.0 3,710.1  3,324.9  1,539.4 1,404.5
 =====================================================================================================================================
 ```
    
-test DEMO png<->frg : https://github.com/sisong/png2frg_app   
+test v1.0.2 DEMO png<->frg : https://github.com/sisong/png2frg_app   
    
 ---
 by HouSisong@Gmail.com
