@@ -33,9 +33,11 @@
 #define _BCC32_OBJ_FOR_DELPHI
 //uses bcc32 compile out ".obj" file for link with Delphi App.
 #pragma option push -V?-
-#define FRG_READER_EXPORT_API __stdcall
+  #define FRG_READER_EXPORT_API __stdcall
+  #define FRG_READER_STATIC     static
 #else
-#define FRG_READER_EXPORT_API 
+  #define FRG_READER_EXPORT_API
+  #define FRG_READER_STATIC
 #endif
 
 #ifdef __cplusplus

@@ -67,7 +67,7 @@ namespace frg{
                 //case kFrg_ClipType_match_index:
                 case kFrg_ClipType_index:
                 case kFrg_ClipType_index_single_a_w8:
-                    return (type<<4)|(sub_table.size()-1);
+                    return (type<<4)|((TByte)(sub_table.size()-1));
                     break;
                 case kFrg_ClipType_single_bgr:
                 case kFrg_ClipType_single_bgra_w8:

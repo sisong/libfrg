@@ -88,21 +88,22 @@ static const int kFrgFileHeadSize=sizeof(struct TFrgFileHead);
 static const int  kFrgTagAndVersionSize =4;
 static const char kFrgTagAndVersion[kFrgTagAndVersionSize]={'F','R','G',14};
 
-//8bit 存储颜色的相关信息.
+//占用8bit 存储颜色的相关信息.
 enum TFrgHeadColorInfo{
     kColorInfo_isSingleAlpha             = 1<<0,
     kColorInfo_isSingleBGR               = 1<<1,
     kColorInfo_isAlphaDataUseBytesZip    = 1<<2,
-    kColorInfo_isRGBDataUseBytesZip      = 1<<3
+    kColorInfo_isRGBDataUseBytesZip      = 1<<3,
+    kColorInfo_isAlphaDataNotUseBytesRLE = 1<<4,
 };
 
-//8bit 编码数据储存方式.
+//占用8bit 编码数据储存方式.
 enum TEncodingFormat{
     kEncodingFormat_stream =1  //字节流.
     //todo:支持允许直接映射到内存或显存的储存格式 kEncodingFormat_memoryMapping? .
 };
 
-//8bit 储存的颜色的格式和位数.
+//占用8bit 储存的颜色的格式和位数.
 enum TSavedColorFormat{
     kSavedColorFormat_A8R8G8B8 =32
     //todo:支持 kSavedColorFormat_ xxx ? .
