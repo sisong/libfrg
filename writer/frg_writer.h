@@ -71,13 +71,13 @@ void writeFrgImage(std::vector<unsigned char>& outFrgCode,const TFrgPixels32Ref&
     
     struct TFrgParameter{
         //frg支持的几个压缩调节参数. 
-        float   quality;                //质量设置,值域[0--100].
-        bool    isMustFitColorTable;    //对于颜色较多的块,是否也必须使用调色板(这样的话文件会更小但质量可能变差).
-        bool    isAlphaDataUseBytesZip; //是否对alpha通道的rle编码进一步使用bytesZip压缩.
-        bool    isRGBDataUseBytesZip;   //是否对rgb通道的编码进一步使用bytesZip压缩.
-        int     rle_parameter;          //alpha通道的rle压缩参数(这里的rle压缩算法是一种为alpha通道数据优化的行程压缩算法,压缩和解压都很快);值域[0--),一般小于32,建议值2,一般值越小压缩率越大. 
-        int     zip_parameter;          //bytesZip的压缩参数(bytesZip是一种为优化解压速度为目标设计的压缩算法);值域[0--),一般小于32,建议值4,一般值越小压缩率越大.
-        bool    isDeleteEmptyColor;     //全透明的区域,颜色会被忽略,设置为true
+        float  quality;                     //质量设置,值域[0--100].
+        float  compressRatio;               //=(压缩后大小/压缩前大小); 压缩时大于这个值就不使用数据压缩，而是直接存储. (最优值本质上=1-平台磁盘速度/平台解压速度).
+        bool   isMustFitColorTable;         //对于颜色较多的块,是否也必须使用调色板(这样的话文件会更小但质量可能变差).
+        bool   isDeleteEmptyColor;          //全透明的区域,颜色会被忽略,设置为true.
+        bool   isAlphaUseRleAdvance;        //alpha数据压缩前是否用rle预压缩(这样数据会被压缩的更小一些).
+        int    alphaRleAdvanceParameter;    //alpha数据rle预压缩参数,一般取6--16.
+        float  alphaRleAdvanceCompressRatio;//alpha数据rle预压缩压缩了要求.
         
         //setCtrlParameter将frg编码的多个控制参数映射到两个正交的控制参数上(质量和压缩大小;该函数的实现是按作者的经验设定的系数值,你也可以手工定制你的控制参数).
         explicit TFrgParameter(float _quality=kFrg_quality_default,float _compressSizeParameter=kFrg_size_default){

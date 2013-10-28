@@ -77,9 +77,9 @@ namespace frg{
         else
             gBit_f=4.0f+(colorQuality-60)*((6.0f-4.0f)/(60-0));
 
-        int gBit=(int)(gBit_f+0.5);
-        int rBit=(int)(8-((8-gBit_f)*1.5)+0.5);
-        int bBit=(int)(8-((8-gBit_f)*2)+0.5);
+        int gBit=(int)(gBit_f+0.5f);
+        int rBit=(int)(8-((8-gBit_f)*1.5f)+0.5f);
+        int bBit=(int)(8-((8-gBit_f)*2)+0.5f);
         if (gBit>8) gBit=8; else if (gBit<2) gBit=2;
         if (rBit>8) rBit=8; else if (rBit<2) rBit=2;
         if (bBit>8) bBit=8; else if (bBit<2) bBit=2;
@@ -94,11 +94,11 @@ namespace frg{
 
         const int kDiffuseCoeff0=(1<<kColorErrorDiffuseCoefficientIntFloatBit)*87/100;
         const int kDiffuseCoeff100=(1<<kColorErrorDiffuseCoefficientIntFloatBit)*97/100;
-        out_errorParameter->errorDiffuse_coefficient=kDiffuseCoeff0+(kDiffuseCoeff100-kDiffuseCoeff0)*colorQuality/100;
+        out_errorParameter->errorDiffuse_coefficient=(int)(0.5f+kDiffuseCoeff0+(kDiffuseCoeff100-kDiffuseCoeff0)*colorQuality/100);
 
         const int kMaxDiffuseValue0=(1<<kColorErrorDiffuseCoefficientIntFloatBit)*(1<<5);
         const int kMaxDiffuseValue100=(1<<kColorErrorDiffuseCoefficientIntFloatBit)*(1<<2);
-        out_errorParameter->maxErrorDiffuseValue=kMaxDiffuseValue0+(kMaxDiffuseValue100-kMaxDiffuseValue0)*colorQuality/100;
+        out_errorParameter->maxErrorDiffuseValue=(int)(0.5f+kMaxDiffuseValue0+(kMaxDiffuseValue100-kMaxDiffuseValue0)*colorQuality/100);
 
         out_errorParameter->isMustFitColorTable=isMustFitColorTable;//colorQuality<=80;
 
@@ -117,22 +117,19 @@ namespace frg{
         static TInt32 kTableSize80=16;
 
         if ((80<=colorQuality)&&(colorQuality<=100)){
-            out_errorParameter->minColorError=(colorQuality-80)*(kSingleColorError100-kSingleColorError80)/(100-80)+kSingleColorError80;
+            out_errorParameter->minColorError=(int)(0.5f+(colorQuality-80)*(kSingleColorError100-kSingleColorError80)/(100-80)+kSingleColorError80);
             out_errorParameter->minColorError_optimize=(out_errorParameter->minColorError)>>1;
-            //out_errorParameter->errorDiffuse_randError=(colorQuality-80)*(kRandDiffuse100-kRandDiffuse80)/(100-80)+kRandDiffuse80;
             out_errorParameter->maxTableSize=16;
             return;
         }else if ((60<=colorQuality)&&(colorQuality<80)){
-            out_errorParameter->minColorError=(colorQuality-60)*(kSingleColorError80-kSingleColorError60)/(80-60)+kSingleColorError60;
+            out_errorParameter->minColorError=(int)(0.5f+(colorQuality-60)*(kSingleColorError80-kSingleColorError60)/(80-60)+kSingleColorError60);
             out_errorParameter->minColorError_optimize=(out_errorParameter->minColorError)>>1;
-            //out_errorParameter->errorDiffuse_randError=(colorQuality-60)*(kRandDiffuse80-kRandDiffuse60)/(80-60)+kRandDiffuse60;
-            out_errorParameter->maxTableSize=(colorQuality-60)*(kTableSize80-kTableSize60)/(80-60)+kTableSize60;
+            out_errorParameter->maxTableSize=(int)(0.5f+(colorQuality-60)*(kTableSize80-kTableSize60)/(80-60)+kTableSize60);
             return;
         }else if ((0<=colorQuality)&&(colorQuality<60)){
-            out_errorParameter->minColorError=(colorQuality-0)*(kSingleColorError60-kSingleColorError0)/(60-0)+kSingleColorError0;
+            out_errorParameter->minColorError=(int)(0.5f+(colorQuality-0)*(kSingleColorError60-kSingleColorError0)/(60-0)+kSingleColorError0);
             out_errorParameter->minColorError_optimize=(out_errorParameter->minColorError)>>1;
-            //out_errorParameter->errorDiffuse_randError=(colorQuality-0)*(kRandDiffuse60-kRandDiffuse0)/(60-0)+kRandDiffuse0;
-            out_errorParameter->maxTableSize=(colorQuality-0)*(kTableSize60-kTableSize0)/(60-0)+kTableSize0;
+            out_errorParameter->maxTableSize=(int)(0.5f+(colorQuality-0)*(kTableSize60-kTableSize0)/(60-0)+kTableSize0);
             return;
         }
         assert(false);

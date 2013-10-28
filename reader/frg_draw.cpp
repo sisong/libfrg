@@ -117,8 +117,8 @@ void frg_copyPixels_32bit_single_bgra_w8(const struct frg_TPixelsRef* dst,TUInt3
 }
 
 void frg_copyPixels_32bit_single_bgr(const struct frg_TPixelsRef* dst,const TUInt32 color24,const TByte* alpha,int alpha_byte_width){
-    TInt32 byte_width=dst->byte_width;
     if (dst->width==kFrg_ClipWidth){
+        TInt32 byte_width=dst->byte_width;
         TUInt32* pline=(TUInt32*)dst->pColor;
         for (int y=0; y<dst->height; ++y) {
             pline[0]=color24 | (alpha[0]<<kFrg_outColor32_alpha_shl);
@@ -134,6 +134,7 @@ void frg_copyPixels_32bit_single_bgr(const struct frg_TPixelsRef* dst,const TUIn
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
         }
     }else{
+        TInt32 byte_width=dst->byte_width;
         TUInt32* pline=(TUInt32*)dst->pColor;
         for (int y=0; y<dst->height; ++y) {
             for (int x=0; x<dst->width; ++x){
@@ -171,8 +172,8 @@ void frg_copyPixels_32bit_index_single_a_w8_4bit(const struct frg_TPixelsRef* ds
 
 
 void frg_copyPixels_32bit_index_4bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,const TByte* alpha,TInt32 alpha_byte_width){
-    TInt32 byte_width=dst->byte_width;
     if (dst->width==kFrg_ClipWidth){
+        TInt32 byte_width=dst->byte_width;
         TUInt32* pline=(TUInt32*)dst->pColor;
         for (int y=0; y<dst->height; ++y) {
             int index01=index2List[0];
@@ -193,6 +194,7 @@ void frg_copyPixels_32bit_index_4bit(const struct frg_TPixelsRef* dst,const TUIn
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
         }
     }else{
+        TInt32 byte_width=dst->byte_width;
         TUInt32* pline=(TUInt32*)dst->pColor;
         int  indexPos=0;
         for (int y=0; y<dst->height; ++y) {
@@ -229,8 +231,8 @@ void frg_copyPixels_32bit_index_single_a_w8_3bit(const struct frg_TPixelsRef* ds
 }
 
 void frg_copyPixels_32bit_index_3bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,const TByte* alpha,TInt32 alpha_byte_width){
-    TInt32 byte_width=dst->byte_width;
     if (dst->width==kFrg_ClipWidth){
+        TInt32 byte_width=dst->byte_width;
         TUInt32* pline=(TUInt32*)dst->pColor;
         for (int y=0; y<dst->height; ++y) {
             int index0=index2List[0];
@@ -250,6 +252,7 @@ void frg_copyPixels_32bit_index_3bit(const struct frg_TPixelsRef* dst,const TUIn
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
         }
     }else{
+        TInt32 byte_width=dst->byte_width;
         TUInt32* pline=(TUInt32*)dst->pColor;
         int  curValue=0;
         int  curBit=0;
@@ -294,8 +297,8 @@ void frg_copyPixels_32bit_index_single_a_w8_2bit(const struct frg_TPixelsRef* ds
 }
 
 void frg_copyPixels_32bit_index_2bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,const TByte* alpha,TInt32 alpha_byte_width){
-    TInt32 byte_width=dst->byte_width;
     if (dst->width==kFrg_ClipWidth){
+        TInt32 byte_width=dst->byte_width;
         TUInt32* pline=(TUInt32*)dst->pColor;
         for (int y=0; y<dst->height; ++y) {
             int index0123=index2List[0];
@@ -314,6 +317,7 @@ void frg_copyPixels_32bit_index_2bit(const struct frg_TPixelsRef* dst,const TUIn
             alpha+=alpha_byte_width;
         }
     }else{
+        TInt32 byte_width=dst->byte_width;
         TUInt32* pline=(TUInt32*)dst->pColor;
         int  indexPos=0;
         for (int y=0; y<dst->height; ++y) {
@@ -352,8 +356,8 @@ void frg_copyPixels_32bit_index_single_a_w8_1bit(const struct frg_TPixelsRef* ds
 }
 
 void frg_copyPixels_32bit_index_1bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,const TByte* alpha,TInt32 alpha_byte_width){
-    TInt32 byte_width=dst->byte_width;
     if (dst->width==kFrg_ClipWidth){
+        TInt32 byte_width=dst->byte_width;
         TUInt32* pline=(TUInt32*)dst->pColor;
         for (int y=0; y<dst->height; ++y) {
             int indexs=index2List[0];
@@ -371,6 +375,7 @@ void frg_copyPixels_32bit_index_1bit(const struct frg_TPixelsRef* dst,const TUIn
             alpha+=alpha_byte_width;
         }
     }else{
+        TInt32 byte_width=dst->byte_width;
         TUInt32* pline=(TUInt32*)dst->pColor;
         int  indexPos=0;
         for (int y=0; y<dst->height; ++y) {
@@ -387,12 +392,12 @@ void frg_copyPixels_32bit_index_1bit(const struct frg_TPixelsRef* dst,const TUIn
 ////
 
 void frg_copyPixels_32bit_match(const struct frg_TPixelsRef* dst,const void* src_line0,enum frg_TMatchType matchType,const TByte* matchXY,const TByte* alpha,TInt32 alpha_byte_width){
-    TInt32 byte_width=dst->byte_width;
     const TUInt32* src_pline=(const TUInt32*)src_line0;
+    TInt32 byte_width=dst->byte_width;
     src_pline=(TUInt32*)( ((TByte*)src_pline)+byte_width*(matchXY[2]|(matchXY[3]<<8)) +(matchXY[0]|(matchXY[1]<<8))*sizeof(TUInt32) );
+    TUInt32* pline=(TUInt32*)dst->pColor;
     switch (matchType) {
         case kFrg_MatchType_move_bgra_w8:{
-            TUInt32* pline=(TUInt32*)dst->pColor;
             for (int y=0; y<dst->height; ++y) {
                 pline[0]=src_pline[0];
                 pline[1]=src_pline[1];
@@ -409,7 +414,6 @@ void frg_copyPixels_32bit_match(const struct frg_TPixelsRef* dst,const void* src
         } break;
         case kFrg_MatchType_left_right_bgra_w8:{
             src_pline+=dst->height-1;
-            TUInt32* pline=(TUInt32*)dst->pColor;
             for (int y=0; y<dst->height; ++y) {
                 pline[0]=src_pline[-0];
                 pline[1]=src_pline[-1];
@@ -426,7 +430,6 @@ void frg_copyPixels_32bit_match(const struct frg_TPixelsRef* dst,const void* src
         } break;
         case kFrg_MatchType_up_down_bgra_w8:{
             src_pline=(TUInt32*)( ((TByte*)src_pline)+byte_width*(dst->height-1) );
-            TUInt32* pline=(TUInt32*)dst->pColor;
             for (int y=0; y<dst->height; ++y) {
                 pline[0]=src_pline[0];
                 pline[1]=src_pline[1];
@@ -442,39 +445,90 @@ void frg_copyPixels_32bit_match(const struct frg_TPixelsRef* dst,const void* src
             }
         } break;
         case kFrg_MatchType_move_bgr:{
-            TUInt32* pline=(TUInt32*)dst->pColor;
-            for (int y=0; y<dst->height; ++y) {
-                for (int x=0; x<dst->width; ++x){
-                    pline[x]=(src_pline[x]&kBGRMask) | (alpha[x]<<kFrg_outColor32_alpha_shl);
+            if(dst->width==kFrg_ClipWidth){
+                for (int y=0; y<dst->height; ++y) {
+                    pline[0]=(src_pline[0]&kBGRMask) | (alpha[0]<<kFrg_outColor32_alpha_shl);
+                    pline[1]=(src_pline[1]&kBGRMask) | (alpha[1]<<kFrg_outColor32_alpha_shl);
+                    pline[2]=(src_pline[2]&kBGRMask) | (alpha[2]<<kFrg_outColor32_alpha_shl);
+                    pline[3]=(src_pline[3]&kBGRMask) | (alpha[3]<<kFrg_outColor32_alpha_shl);
+                    pline[4]=(src_pline[4]&kBGRMask) | (alpha[4]<<kFrg_outColor32_alpha_shl);
+                    pline[5]=(src_pline[5]&kBGRMask) | (alpha[5]<<kFrg_outColor32_alpha_shl);
+                    pline[6]=(src_pline[6]&kBGRMask) | (alpha[6]<<kFrg_outColor32_alpha_shl);
+                    pline[7]=(src_pline[7]&kBGRMask) | (alpha[7]<<kFrg_outColor32_alpha_shl);
+                    
+                    alpha+=alpha_byte_width;
+                    src_pline=(TUInt32*)( ((TByte*)src_pline)+byte_width );
+                    pline=(TUInt32*)( ((TByte*)pline)+byte_width );
                 }
-                alpha+=alpha_byte_width;
-                src_pline=(TUInt32*)( ((TByte*)src_pline)+byte_width );
-                pline=(TUInt32*)( ((TByte*)pline)+byte_width );
+            }else{
+                for (int y=0; y<dst->height; ++y) {
+                    for (int x=0; x<dst->width; ++x){
+                        pline[x]=(src_pline[x]&kBGRMask) | (alpha[x]<<kFrg_outColor32_alpha_shl);
+                    }
+                    alpha+=alpha_byte_width;
+                    src_pline=(TUInt32*)( ((TByte*)src_pline)+byte_width );
+                    pline=(TUInt32*)( ((TByte*)pline)+byte_width );
+                }
             }
         } break;
         case kFrg_MatchType_left_right_bgr:{
             src_pline+=dst->height-1;
-            TUInt32* pline=(TUInt32*)dst->pColor;
-            for (int y=0; y<dst->height; ++y) {
-                for (int x=0; x<dst->width; ++x){
-                    pline[x]=(src_pline[-x]&kBGRMask) | (alpha[x]<<kFrg_outColor32_alpha_shl);
+            if(dst->width==kFrg_ClipWidth){
+                for (int y=0; y<dst->height; ++y) {
+                    pline[0]=(src_pline[-0]&kBGRMask) | (alpha[0]<<kFrg_outColor32_alpha_shl);
+                    pline[1]=(src_pline[-1]&kBGRMask) | (alpha[1]<<kFrg_outColor32_alpha_shl);
+                    pline[2]=(src_pline[-2]&kBGRMask) | (alpha[2]<<kFrg_outColor32_alpha_shl);
+                    pline[3]=(src_pline[-3]&kBGRMask) | (alpha[3]<<kFrg_outColor32_alpha_shl);
+                    pline[4]=(src_pline[-4]&kBGRMask) | (alpha[4]<<kFrg_outColor32_alpha_shl);
+                    pline[5]=(src_pline[-5]&kBGRMask) | (alpha[5]<<kFrg_outColor32_alpha_shl);
+                    pline[6]=(src_pline[-6]&kBGRMask) | (alpha[6]<<kFrg_outColor32_alpha_shl);
+                    pline[7]=(src_pline[-7]&kBGRMask) | (alpha[7]<<kFrg_outColor32_alpha_shl);
+                    
+                    alpha+=alpha_byte_width;
+                    src_pline=(TUInt32*)( ((TByte*)src_pline)+byte_width );
+                    pline=(TUInt32*)( ((TByte*)pline)+byte_width );
                 }
-                alpha+=alpha_byte_width;
-                src_pline=(TUInt32*)( ((TByte*)src_pline)+byte_width );
-                pline=(TUInt32*)( ((TByte*)pline)+byte_width );
+            }else{
+                for (int y=0; y<dst->height; ++y) {
+                    for (int x=0; x<dst->width; ++x){
+                        pline[x]=(src_pline[-x]&kBGRMask) | (alpha[x]<<kFrg_outColor32_alpha_shl);
+                    }
+                    alpha+=alpha_byte_width;
+                    src_pline=(TUInt32*)( ((TByte*)src_pline)+byte_width );
+                    pline=(TUInt32*)( ((TByte*)pline)+byte_width );
+                }
             }
         } break;
         case kFrg_MatchType_up_down_bgr:{
             src_pline=(TUInt32*)( ((TByte*)src_pline)+byte_width*(dst->height-1) );
-            TUInt32* pline=(TUInt32*)dst->pColor;
-            for (int y=0; y<dst->height; ++y) {
-                for (int x=0; x<dst->width; ++x){
-                    pline[x]=(src_pline[x]&kBGRMask) | (alpha[x]<<kFrg_outColor32_alpha_shl);
+            if(dst->width==kFrg_ClipWidth){
+                for (int y=0; y<dst->height; ++y) {
+                    pline[0]=(src_pline[0]&kBGRMask) | (alpha[0]<<kFrg_outColor32_alpha_shl);
+                    pline[1]=(src_pline[1]&kBGRMask) | (alpha[1]<<kFrg_outColor32_alpha_shl);
+                    pline[2]=(src_pline[2]&kBGRMask) | (alpha[2]<<kFrg_outColor32_alpha_shl);
+                    pline[3]=(src_pline[3]&kBGRMask) | (alpha[3]<<kFrg_outColor32_alpha_shl);
+                    pline[4]=(src_pline[4]&kBGRMask) | (alpha[4]<<kFrg_outColor32_alpha_shl);
+                    pline[5]=(src_pline[5]&kBGRMask) | (alpha[5]<<kFrg_outColor32_alpha_shl);
+                    pline[6]=(src_pline[6]&kBGRMask) | (alpha[6]<<kFrg_outColor32_alpha_shl);
+                    pline[7]=(src_pline[7]&kBGRMask) | (alpha[7]<<kFrg_outColor32_alpha_shl);
+                    
+                    alpha+=alpha_byte_width;
+                    src_pline=(TUInt32*)( ((TByte*)src_pline)-byte_width );
+                    pline=(TUInt32*)( ((TByte*)pline)+byte_width );
                 }
-                alpha+=alpha_byte_width;
-                src_pline=(TUInt32*)( ((TByte*)src_pline)-byte_width );
-                pline=(TUInt32*)( ((TByte*)pline)+byte_width );
+            }else{
+                for (int y=0; y<dst->height; ++y) {
+                    for (int x=0; x<dst->width; ++x){
+                        pline[x]=(src_pline[x]&kBGRMask) | (alpha[x]<<kFrg_outColor32_alpha_shl);
+                    }
+                    alpha+=alpha_byte_width;
+                    src_pline=(TUInt32*)( ((TByte*)src_pline)-byte_width );
+                    pline=(TUInt32*)( ((TByte*)pline)+byte_width );
+                }
             }
+        } break;
+        default:{
+            assert(false);
         } break;
     }
 }
@@ -500,8 +554,8 @@ void frg_copyPixels_32bit_directColor_single_a_w8(const struct frg_TPixelsRef* d
 }
 
 void frg_copyPixels_32bit_directColor(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* alpha,TInt32 alpha_byte_width){
-    TInt32 byte_width=dst->byte_width;
     if (dst->width==kFrg_ClipWidth){
+        TInt32 byte_width=dst->byte_width;
         TUInt32* pline=(TUInt32*)dst->pColor;
         for (int y=0; y<dst->height; ++y) {
             pline[0]=colorTable[0] | (alpha[0]<<kFrg_outColor32_alpha_shl);
@@ -518,6 +572,7 @@ void frg_copyPixels_32bit_directColor(const struct frg_TPixelsRef* dst,const TUI
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
         }
     }else{
+        TInt32 byte_width=dst->byte_width;
         TUInt32* pline=(TUInt32*)dst->pColor;
         for (int y=0; y<dst->height; ++y) {
             for (int x=0; x<dst->width; ++x){

@@ -30,7 +30,17 @@
 #include "frg_private/frg_color_tools.h"
 #include "frg_private/bytes_rle.h"
 #include "frg_private/bgr_zip/frg_color_zip.h"
-#include "FRZ1_compress.h" //source code: https://github.com/sisong/FRZ 
+#include "../../lz4/lz4.h"
+#include "../../lz4/lz4hc.h" //http://code.google.com/p/lz4/
+
+static void frgZip_compress(std::vector<unsigned char>& out_code,
+                   const unsigned char* src,const unsigned char* src_end){
+    int oldSize=(int)out_code.size();
+    out_code.resize(oldSize+LZ4_compressBound((int)(src_end-src)));
+    int codeSize=LZ4_compressHC((const char*)src,(char*)&out_code[oldSize],(int)(src_end-src));
+    out_code.resize(oldSize+codeSize);
+}
+
 
 namespace frg{
         
@@ -43,50 +53,54 @@ namespace frg{
     }
     
     void TFrgParameter::setParameter(float _quality,float _compressSizeParameter){
-        isDeleteEmptyColor=true;
         assert(_quality<=kFrg_quality_max);
-        assert(_quality>=0);
+        assert(_quality>=kFrg_quality_min);
+        assert(_compressSizeParameter<=kFrg_size_maxUnZipSpeed);
+        assert(_compressSizeParameter>=kFrg_size_minSize);
+       
+        isDeleteEmptyColor=true;
+      
         quality=_quality;
         if (quality>kFrg_quality_max)
             quality=kFrg_quality_max;
-        else if (quality<0)
-            quality=0;
+        else if (quality<kFrg_quality_min)
+            quality=kFrg_quality_min;
+        
+        float compressSizeParameter=_compressSizeParameter;
+        if (compressSizeParameter>kFrg_size_maxUnZipSpeed)
+            compressSizeParameter=kFrg_size_maxUnZipSpeed;
+        else if (compressSizeParameter<kFrg_size_minSize)
+            compressSizeParameter=kFrg_size_minSize;
         
         isMustFitColorTable=(quality<=kFrg_quality_default);
-        //bgr+alpha  bzip 0-8
-        //only alpha bzip 1--16   //8 -> kFrg_size_default
-        //only alpha rle 3--15
-        const int param_alpha_rle_count=15-3+1;
-        const int param_alpha_zip_count=16-1+1;
-        const int param_bgra_zip_count=8-0+1;
-        const int param_count=param_alpha_rle_count+param_alpha_zip_count+param_bgra_zip_count;
-        const int param_default_index=8+8-0;
-        int ssp; 
-        if (_compressSizeParameter<=kFrg_size_default)
-            ssp=0+(int)(_compressSizeParameter*(2*(param_default_index+0.5)/100));
-        else
-            ssp=param_default_index+(int)((_compressSizeParameter-kFrg_size_default)*(2*(param_count-param_default_index+0.5)/100)+0.49999);
-        if (ssp<0)
-            ssp=0;
-        else if (ssp>param_count)
-            ssp=param_count;
         
-        if (ssp<param_bgra_zip_count){
-            zip_parameter=ssp;
-            rle_parameter=TBytesRle::kRle_size_bestUnRleSpeed;
-            isAlphaDataUseBytesZip=true;
-            isRGBDataUseBytesZip=true;
-        }else if (ssp<param_bgra_zip_count+param_alpha_zip_count){
-            zip_parameter=(ssp-param_bgra_zip_count)+1;
-            rle_parameter=TBytesRle::kRle_size_bestUnRleSpeed;
-            isAlphaDataUseBytesZip=true;
-            isRGBDataUseBytesZip=false;
-        }else {
-            zip_parameter=-1;//null 
-            rle_parameter=(ssp-(param_bgra_zip_count+param_alpha_zip_count))+3;
-            isAlphaDataUseBytesZip=false;
-            isRGBDataUseBytesZip=false;
-        }
+        //  0 -> ratio_min
+        // 50 -> ratio_default
+        //100 -> ratio_max
+        const float ratio_min=0.98f;
+        const float ratio_default=0.85f;
+        const float ratio_max=0.5f;
+        if (compressSizeParameter<=kFrg_size_default)
+            compressRatio=(compressSizeParameter-kFrg_size_minSize)*((ratio_default-ratio_min)/(kFrg_size_default-kFrg_size_minSize))+ratio_min;
+        else
+            compressRatio=(compressSizeParameter-kFrg_size_default)*((ratio_max-ratio_default)/(kFrg_size_maxUnZipSpeed-kFrg_size_default))+ratio_default;
+        
+        isAlphaUseRleAdvance=compressSizeParameter<(kFrg_size_default+kFrg_size_minSize)*0.5f; //压得更小.
+        const int rle_max_useZip=12;
+        alphaRleAdvanceParameter=rle_max_useZip;
+        alphaRleAdvanceCompressRatio=1-((1-compressRatio)*0.25f);
+    }
+    
+    static inline bool tryRleCodeData(std::vector<TByte>& data_ziped,const std::vector<TByte>& data,int rleParameter,float compressRatio,int oldDataSize=-1){
+        TBytesRle::save(data_ziped,&data[0],&data[0]+data.size(),rleParameter);
+        if (oldDataSize<0) oldDataSize=(int)data.size();
+        return (data_ziped.size()<=compressRatio*oldDataSize);
+    }
+    static inline bool tryCompressCodeData(std::vector<TByte>& data_ziped,const std::vector<TByte>& data,float compressRatio,int oldDataSize=-1){
+        writeUInt32(data_ziped, (TUInt32)data.size());
+        frgZip_compress(data_ziped,&data[0],&data[0]+data.size());
+        if (oldDataSize<0) oldDataSize=(int)data.size();
+        return (data_ziped.size()<=compressRatio*oldDataSize);
     }
 
 void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcImage,const TFrgParameter& parameter){
@@ -119,48 +133,68 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
     int tempMemoryByteSize_cur=0;
     //处理alpha通道.
     std::vector<TByte> code_alpha;
-    if (!isSingleAlpha){
+    bool isAlphaDataUseBytesZip=false;
+    bool isAlphaDataUseBytesRLE=false;
+    if (isSingleAlpha){//isSingleAlpha
+        tempMemoryByteSize_cur+=src.width;//for save min width alphas when frgFileRead, alpha's byte_width=0
+        if (tempMemoryByteSize_cur>tempMemoryByteSize_max) tempMemoryByteSize_max=tempMemoryByteSize_cur;
+    }else{
         std::vector<TByte> alphaBuf;
         getAlphasFromPixelsRef(alphaBuf,src);
         
-        tempMemoryByteSize_cur+=(int)alphaBuf.size(); //for save all alphas when frgFileRead
-        if (tempMemoryByteSize_cur>tempMemoryByteSize_max) tempMemoryByteSize_max=tempMemoryByteSize_cur;
-
-        std::vector<TByte> rleCode;
-        TBytesRle::save(rleCode, &alphaBuf[0],&alphaBuf[0]+alphaBuf.size(),parameter.rle_parameter);
-        if (parameter.isAlphaDataUseBytesZip){
-            std::vector<TByte> zipCode;
-            FRZ1_compress(zipCode,&rleCode[0],&rleCode[0]+rleCode.size(),parameter.zip_parameter);
-            writeUInt32(code_alpha, (TUInt32)rleCode.size());
-            code_alpha.insert(code_alpha.end(),zipCode.begin(),zipCode.end());
-            
-            tempMemoryByteSize_cur+=(int)rleCode.size();//for save unzip relCode when frgFileRead
-            if (tempMemoryByteSize_cur>tempMemoryByteSize_max) tempMemoryByteSize_max=tempMemoryByteSize_cur;
-            tempMemoryByteSize_cur-=(int)rleCode.size();
-        }else{
-            code_alpha.insert(code_alpha.end(),rleCode.begin(),rleCode.end());
+        std::vector<TByte> zipCode;
+        bool isAlphaDataUseBytesZip0=tryCompressCodeData(zipCode,alphaBuf,parameter.compressRatio);
+        while (1) {
+            if (parameter.isAlphaUseRleAdvance){
+                std::vector<TByte> rleCode;
+                bool isAlphaDataUseBytesRLE0=tryRleCodeData(rleCode,alphaBuf,parameter.alphaRleAdvanceParameter,parameter.alphaRleAdvanceCompressRatio);
+                std::vector<TByte> rleCode_ziped;
+                bool isAlphaDataUseBytesZip1=isAlphaDataUseBytesRLE0 && tryCompressCodeData(rleCode_ziped,rleCode,parameter.compressRatio,(int)alphaBuf.size());
+                if (isAlphaDataUseBytesZip1 && (rleCode_ziped.size()<zipCode.size())){
+                    isAlphaDataUseBytesRLE=true;
+                    isAlphaDataUseBytesZip=true;
+                    
+                    tempMemoryByteSize_cur+=(int)alphaBuf.size(); //for save all alphas when frgFileRead
+                    if (tempMemoryByteSize_cur>tempMemoryByteSize_max) tempMemoryByteSize_max=tempMemoryByteSize_cur;
+                    tempMemoryByteSize_cur+=(int)rleCode.size();//for save unzip relCode when frgFileRead
+                    if (tempMemoryByteSize_cur>tempMemoryByteSize_max) tempMemoryByteSize_max=tempMemoryByteSize_cur;
+                    tempMemoryByteSize_cur-=(int)rleCode.size();
+                    
+                    code_alpha.insert(code_alpha.end(),rleCode_ziped.begin(),rleCode_ziped.end());
+                    break;//ok  同时使用rle和数据压缩.
+                }//else ->
+            }//else
+            {
+                isAlphaDataUseBytesRLE=false;
+                isAlphaDataUseBytesZip=isAlphaDataUseBytesZip0;
+                if (isAlphaDataUseBytesZip){
+                    tempMemoryByteSize_cur+=(int)alphaBuf.size(); //for save all alphas when frgFileRead
+                    if (tempMemoryByteSize_cur>tempMemoryByteSize_max) tempMemoryByteSize_max=tempMemoryByteSize_cur;
+                    code_alpha.insert(code_alpha.end(),zipCode.begin(),zipCode.end());//使用数据压缩.
+                }else{
+                    code_alpha.insert(code_alpha.end(),alphaBuf.begin(),alphaBuf.end());//不压缩.
+                }
+                break;
+            }
         }
-    }else{//isSingleAlpha
-        tempMemoryByteSize_cur+=src.width;//for save min width alphas when frgFileRead, alpha's byte_width=0
-        if (tempMemoryByteSize_cur>tempMemoryByteSize_max) tempMemoryByteSize_max=tempMemoryByteSize_cur;
     }
     
     //处理RGB通道.
     std::vector<TByte> code_bgr;
+    bool isRGBDataUseBytesZip=false;
     if (!isSingleBGR){        
         int tempMemoryByteSize_bgrZip=0;
         TColorZiper::saveTo(code_bgr, src,parameter.quality,parameter.isMustFitColorTable,&tempMemoryByteSize_bgrZip);
         tempMemoryByteSize_cur+=tempMemoryByteSize_bgrZip;//for load BGRColor from code_bgr when frgFileRead
         if (tempMemoryByteSize_cur>tempMemoryByteSize_max) tempMemoryByteSize_max=tempMemoryByteSize_cur;
        
-        if (parameter.isRGBDataUseBytesZip){
+        
+        std::vector<TByte> color_bgr_ziped;
+        isRGBDataUseBytesZip=tryCompressCodeData(color_bgr_ziped,code_bgr,parameter.compressRatio);
+        if (isRGBDataUseBytesZip){
             tempMemoryByteSize_cur+=(int)code_bgr.size(); //for save code_bgr when frgFileRead
             if (tempMemoryByteSize_cur>tempMemoryByteSize_max) tempMemoryByteSize_max=tempMemoryByteSize_cur;
-            
-            std::vector<TByte> color_temp;
-            writeUInt32(color_temp, (TUInt32)code_bgr.size());
-            FRZ1_compress(color_temp,&code_bgr[0],&code_bgr[0]+code_bgr.size(),parameter.zip_parameter);
-            code_bgr.swap(color_temp);
+            code_bgr.swap(color_bgr_ziped);
         }
     }
     
@@ -176,8 +210,9 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
         TByte colorInfo=0;
         colorInfo|=isSingleAlpha?kColorInfo_isSingleAlpha:0;
         colorInfo|=isSingleBGR?kColorInfo_isSingleBGR:0;
-        colorInfo|=parameter.isAlphaDataUseBytesZip?kColorInfo_isAlphaDataUseBytesZip:0;
-        colorInfo|=parameter.isRGBDataUseBytesZip?kColorInfo_isRGBDataUseBytesZip:0;
+        colorInfo|=isAlphaDataUseBytesZip?kColorInfo_isAlphaDataUseBytesZip:0;
+        colorInfo|=isRGBDataUseBytesZip?kColorInfo_isRGBDataUseBytesZip:0;
+        colorInfo|=(!isAlphaDataUseBytesRLE)?kColorInfo_isAlphaDataNotUseBytesRLE:0;
         
         code_head.push_back(colorInfo);
         code_head.push_back(0);//_reserved

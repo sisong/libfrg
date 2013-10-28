@@ -30,7 +30,9 @@
 #include "string.h" //memset memcpy
 #include "assert.h" //assert
 #include "frg_draw.h"
-#include "FRZ1_decompress.h" //source code: https://github.com/sisong/FRZ 
+#include "../../lz4/lz4.h"//http://code.google.com/p/lz4/
+
+
 
     inline static TUInt32 readUInt32(const void* _codeData){
         const TByte* codeData=(const TByte*)_codeData;
@@ -49,6 +51,36 @@
         return (const TByte*)0+( ((const TByte*)pointer-(const TByte*)0+3)>>2<<2 );
     }
 
+
+
+#ifdef FRG_IS_NEED_FRZ1_decompress
+    #include "../../FRZ/reader/FRZ1_decompress.h" //source code: https://github.com/sisong/FRZ/
+    static const char kFrgTagAndVersion_frz1[kFrgTagAndVersionSize]={'F','R','G',13};
+#endif
+
+static inline bool frgZip_decompress(unsigned char* out_data,unsigned char* out_data_end,
+                              const unsigned char* frgZip_code,const unsigned char* frgZip_code_end,const char* frgTagAndVersion){
+#ifdef FRG_IS_NEED_FRZ1_decompress
+    if (readUInt32(frgTagAndVersion)==readUInt32(kFrgTagAndVersion_frz1)) {
+        return FRZ1_decompress(out_data,out_data_end,frgZip_code,frgZip_code_end);
+    }
+#endif
+    int size=LZ4_decompress_fast((const char*)frgZip_code,(char*)out_data,(int)(out_data_end-out_data));
+    return (size>=0);
+}
+
+static inline bool frgZip_decompress_safe(unsigned char* out_data,unsigned char* out_data_end,
+                                   const unsigned char* frgZip_code,const unsigned char* frgZip_code_end,const char* frgTagAndVersion){
+#ifdef FRG_IS_NEED_FRZ1_decompress
+    if (readUInt32(frgTagAndVersion)==readUInt32(kFrgTagAndVersion_frz1)) {
+        return FRZ1_decompress_safe(out_data,out_data_end,frgZip_code,frgZip_code_end);
+    }
+#endif
+    int size=LZ4_decompress_safe((const char*)frgZip_code,(char*)out_data,(int)(frgZip_code_end-frgZip_code),(int)(out_data_end-out_data));
+    return (size>=0);
+}
+
+
 int FRG_READER_EXPORT_API getFrgHeadSize(){
     return kFrgFileHeadSize;
 }
@@ -59,8 +91,13 @@ int FRG_READER_EXPORT_API getFrgHeadSize(){
 frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const TByte* frgCode_begin,const TByte* frgCode_end,struct frg_TFrgImageInfo* out_frgImageInfo){
     if (frgCode_end-frgCode_begin<kFrgFileHeadSize) return frg_FALSE;
     const struct TFrgFileHead& fhead=*(const struct TFrgFileHead*)frgCode_begin;
-    if (  readUInt32(&fhead.frgTagAndVersion[0])!=readUInt32(&kFrgTagAndVersion[0]))
+    if (   (readUInt32(&fhead.frgTagAndVersion[0])!=readUInt32(&kFrgTagAndVersion[0]))
+#ifdef FRG_IS_NEED_FRZ1_decompress
+        && (readUInt32(&fhead.frgTagAndVersion[0])!=readUInt32(&kFrgTagAndVersion_frz1[0]))
+#endif
+       )
         return frg_FALSE;
+    
     if (out_frgImageInfo==0) return frg_TRUE;
     
     out_frgImageInfo->imageFileSize=readUInt32(&fhead.imageFileSize);
@@ -76,13 +113,13 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const TByte* frgCode_begin,const
 }
 
 ////
-static frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,const TByte* rle_code,const TByte* rle_code_end);//rle解码.
-static frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TByte* code,const TByte* code_end,const TByte* alpha,int alpha_byte_width,TByte* tempMemory,TByte* tempMemory_end);
+FRG_READER_STATIC frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,const TByte* rle_code,const TByte* rle_code_end);//rle解码.
+FRG_READER_STATIC frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TByte* code,const TByte* code_end,const TByte* alpha,int alpha_byte_width,TByte* tempMemory,TByte* tempMemory_end);
 
 #ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-#   define _FRZ1_decompress_NAME FRZ1_decompress_safe
+#   define _frgZip_decompress_NAME frgZip_decompress_safe
 #else
-#   define _FRZ1_decompress_NAME FRZ1_decompress
+#   define _frgZip_decompress_NAME frgZip_decompress
 #endif
 
 frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TByte* frgCode_end,const struct frg_TPixelsRef* dst_image,TByte* tempMemory,TByte* tempMemory_end){
@@ -103,6 +140,7 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TBy
     const bool isSingleBGR=(_colorInfo&kColorInfo_isSingleBGR)!=0;
     const bool isAlphaDataUseBytesZip=(_colorInfo&kColorInfo_isAlphaDataUseBytesZip)!=0;
     const bool isRGBDataUseBytesZip=(_colorInfo&kColorInfo_isRGBDataUseBytesZip)!=0;
+    const bool isAlphaDataUseRLE=(_colorInfo&kColorInfo_isAlphaDataNotUseBytesRLE)==0;
     
     const TByte* singleBGRA=&(fhead.headInfo.singleColor_b); //b,g,r,a
     const TByte* frgCodeData=frgCode_begin+(sizeof(struct TFrgFileHead)-sizeof(struct TFrgHeadInfo))
@@ -115,41 +153,54 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TBy
     }
 
     //read alpha
-    TByte* alphaBuf=0;
-    int alpha_byte_width;
+    const TByte* alphaBuf=0;
+    int alpha_byte_width=0;
     if (isSingleAlpha){
         alpha_byte_width=0;
         const int alphaBufSize=dst_image->width;
         if (tempMemory_end-tempMemory<alphaBufSize) return frg_FALSE;
         alphaBuf=tempMemory; tempMemory+=alphaBufSize;
-        memset(alphaBuf,singleBGRA[3],alphaBufSize);
+        memset((TByte*)alphaBuf,singleBGRA[3],alphaBufSize);
     }else{
         if (frgCode_end-frgCodeData<4) return frg_FALSE;
         const TUInt32 codeSize=readUInt32(&frgCodeData);
-        if (frgCode_end-frgCodeData<codeSize) return frg_FALSE;
+        if ((TUInt32)(frgCode_end-frgCodeData)<codeSize) return frg_FALSE;
         const TByte* code=frgCodeData;
         frgCodeData+=codeSize;
         const TByte* code_end=frgCodeData;
 
         alpha_byte_width=dst_image->width;
         const int alphaBufSize=alpha_byte_width*dst_image->height;
-        if (tempMemory_end-tempMemory<alphaBufSize) return frg_FALSE;
-        alphaBuf=tempMemory; tempMemory+=alphaBufSize;
-
-        TByte* _tempMemory_back=tempMemory;
-        if (isAlphaDataUseBytesZip){
-            if (codeSize<4) return frg_FALSE;
-            const TUInt32 alpha_code_size=readUInt32(&code);
-            if ((TUInt32)(tempMemory_end-tempMemory)<alpha_code_size) return frg_FALSE;
-            TByte* _alpha_code_buf=tempMemory; tempMemory+=alpha_code_size;
-            if (!_FRZ1_decompress_NAME(_alpha_code_buf,_alpha_code_buf+alpha_code_size,code,code_end))
-                return frg_FALSE;
-            code=_alpha_code_buf;
-            code_end=_alpha_code_buf+alpha_code_size;
+        if((!isAlphaDataUseRLE)&&(!isAlphaDataUseBytesZip)){
+            if (codeSize!=alphaBufSize) return frg_FALSE;
+            alphaBuf=code; //没有任何压缩.
+        }else{
+            if (tempMemory_end-tempMemory<alphaBufSize) return frg_FALSE;
+            alphaBuf=tempMemory; tempMemory+=alphaBufSize;
+            
+            TByte* _tempMemory_back=tempMemory;
+            if (isAlphaDataUseBytesZip){
+                if (codeSize<4) return frg_FALSE;
+                const TUInt32 alpha_code_size=readUInt32(&code);
+                TByte* _alpha_code_buf=0;
+                if (isAlphaDataUseRLE){
+                    if ((TUInt32)(tempMemory_end-tempMemory)<alpha_code_size) return frg_FALSE;
+                    _alpha_code_buf=tempMemory; tempMemory+=alpha_code_size;
+                }else{
+                    if (alpha_code_size!=alphaBufSize) return frg_FALSE;
+                    _alpha_code_buf=(TByte*)alphaBuf;
+                }
+                if (!_frgZip_decompress_NAME(_alpha_code_buf,_alpha_code_buf+alpha_code_size,code,code_end,fhead.frgTagAndVersion))
+                    return frg_FALSE;
+                code=_alpha_code_buf;
+                code_end=_alpha_code_buf+alpha_code_size;
+            }
+            if (isAlphaDataUseRLE) {
+                if (!_bytesRle_load((TByte*)alphaBuf,(TByte*)alphaBuf+alphaBufSize,code,code_end))
+                    return frg_FALSE;
+            }
+            tempMemory=_tempMemory_back;
         }
-        if (!_bytesRle_load(alphaBuf,alphaBuf+alphaBufSize,code,code_end))
-            return frg_FALSE;
-        tempMemory=_tempMemory_back;
     }
 
     //read bgr
@@ -169,7 +220,7 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TBy
             const TUInt32 bgr_code_size=readUInt32(&code);
             if ((TUInt32)(tempMemory_end-tempMemory)<bgr_code_size) return frg_FALSE;
             TByte* _bgr_code_buf=tempMemory; tempMemory+=bgr_code_size;
-            if (!_FRZ1_decompress_NAME(_bgr_code_buf,_bgr_code_buf+bgr_code_size,code,code_end))
+            if (!_frgZip_decompress_NAME(_bgr_code_buf,_bgr_code_buf+bgr_code_size,code,code_end,fhead.frgTagAndVersion))
                 return frg_FALSE;
             code=_bgr_code_buf;
             code_end=_bgr_code_buf+bgr_code_size;
@@ -189,7 +240,7 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TBy
 // x1* 1* 0*  7+7+7-x bit
 // x1* 1* 1* 0*  7+7+7+7-x bit
 // x1* 1* 1* 1* 0*  7+7+7+7+7-x bit
-static TUInt32 unpack32BitWithTag(const TByte** src_code,const TByte* src_code_end,const int kTagBit){//读出整数并前进指针.
+static inline TUInt32 unpack32BitWithTag(const TByte** src_code,const TByte* src_code_end,const int kTagBit){//读出整数并前进指针.
     const TByte* pcode;
     TUInt32 value;
     TByte   code;
@@ -218,7 +269,7 @@ static inline TUInt32 unpack32Bit(const TByte** src_code,const TByte* src_code_e
     return unpack32BitWithTag(src_code, src_code_end, 0);
 }
 
-static frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TByte* code,const TByte* code_end,const TByte* alpha,int alpha_byte_width,TByte* tempMemory,TByte* tempMemory_end){
+frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TByte* code,const TByte* code_end,const TByte* alpha,int alpha_byte_width,TByte* tempMemory,TByte* tempMemory_end){
     //assert((dst_image->width>0)&&(dst_image->height>0));
 
     const TUInt32 nodeCount=unpack32Bit(&code,code_end);
@@ -295,7 +346,7 @@ static frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,c
                     if ((TUInt32)tableLength>(TUInt32)(colorTable_end-colorTable)) return frg_FALSE;
                     if ((TUInt32)(subRef.height*bit)>(TUInt32)(indexCodeList_end-indexCodeList)) return frg_FALSE;
 #endif
-                    frg_copyPixels_32bit_index_single_a_w8_xbit[bit](&subRef,colorTable,indexCodeList,*curAlpha);
+                    frg_copyPixels_32bit_index_single_a_w8_xbit(bit,&subRef,colorTable,indexCodeList,*curAlpha);
                     colorTable+=tableLength;
                     indexCodeList+=subRef.height*bit;//*kFrg_ClipWidth/8
                 } break;
@@ -306,7 +357,7 @@ static frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,c
                     if ((TUInt32)tableLength>(TUInt32)(colorTable_end-colorTable)) return frg_FALSE;
                     if ((TUInt32)((subRef.width*subRef.height*bit+7)>>3)>(TUInt32)(indexCodeList_end-indexCodeList)) return frg_FALSE;
 #endif
-                    frg_copyPixels_32bit_index_xbit[bit](&subRef,colorTable,indexCodeList,curAlpha,alpha_byte_width);
+                    frg_copyPixels_32bit_index_xbit(bit,&subRef,colorTable,indexCodeList,curAlpha,alpha_byte_width);
                     colorTable+=tableLength;
                     indexCodeList+=(subRef.width*subRef.height*bit+7)>>3;
                 } break;
@@ -345,7 +396,7 @@ static frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,c
                     if ((TUInt32)(subRef.height*bit)>(TUInt32)(indexCodeList_end-indexCodeList)) return frg_FALSE;
 #endif
                     const TUInt32* subTable=&colorTable[-tableForwardLength];
-                    frg_copyPixels_32bit_index_single_a_w8_xbit[bit](&subRef,subTable,indexCodeList,*curAlpha);
+                    frg_copyPixels_32bit_index_single_a_w8_xbit(bit,&subRef,subTable,indexCodeList,*curAlpha);
                     indexCodeList+=subRef.height*bit;//*kFrg_ClipWidth/8
                 } break;
                 case kFrg_ClipType_match_table:{
@@ -356,7 +407,7 @@ static frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,c
                     if ((TUInt32)((subRef.width*subRef.height*bit+7)>>3)>(TUInt32)(indexCodeList_end-indexCodeList)) return frg_FALSE;
 #endif
                     const TUInt32* subTable=&colorTable[-tableForwardLength];
-                    frg_copyPixels_32bit_index_xbit[bit](&subRef,subTable,indexCodeList,curAlpha,alpha_byte_width);
+                    frg_copyPixels_32bit_index_xbit(bit,&subRef,subTable,indexCodeList,curAlpha,alpha_byte_width);
                     indexCodeList+=(subRef.width*subRef.height*bit+7)>>3;
                 } break;
                 case kFrg_ClipType_match_image:{
@@ -385,7 +436,7 @@ static frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,c
 
 /////////////
 
-static frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,const TByte* rle_code,const TByte* rle_code_end){
+frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,const TByte* rle_code,const TByte* rle_code_end){
     TUInt32 ctrlSize,length;
     const TByte* ctrlBuf,*ctrlBuf_end;
     enum TByteRleType type;

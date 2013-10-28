@@ -1,12 +1,3 @@
 .DS_Store
 xcuserdata
-Debug
-Release
-*.suo
-*.dcu
-*.~*
-*.depend
-*.layout
-*.filters
 demo/builds
-
