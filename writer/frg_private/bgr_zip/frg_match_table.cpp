@@ -52,7 +52,7 @@ namespace frg{
         }
     }
 
-    int TTableMatch::_findMatch(const std::vector<Color24>&  colorTable,const std::vector<Color24>& subTable,const std::vector<TUInt>& fashMatch,int windowTableSize){
+    int TTableMatch::_findMatch(const std::vector<Color24>&  colorTable,const std::vector<Color24>& subTable,const std::vector<TUInt>& fastMatch,int windowTableSize){
         const int subSize=(int)subTable.size();
         const int tabSize=(int)colorTable.size();
         assert(subSize>1);
@@ -65,7 +65,7 @@ namespace frg{
         if (last_mhi<0) last_mhi=0;
         int mi=-1;
         for (int hmi=tabSize-1; hmi>=last_mhi; --hmi) {
-            if ((fashMatch[hmi]&sub_v)!=sub_v)
+            if ((fastMatch[hmi]&sub_v)!=sub_v)
                 continue;
             
             int min_mi=hmi-windowTableSize+1;
@@ -115,10 +115,10 @@ namespace frg{
         assert(subSize>0);
         int tabSize=(int)colorTable.size();
         if (tabSize>m_oldColorTableSize){
-            createFastMatch(m_fashMatch4bit,kWindowTableSize_4bit,colorTable,m_oldColorTableSize,m_colorMask);
-            //createFastMatch(m_fashMatch3bit,kWindowTableSize_3bit,colorTable,m_oldColorTableSize,m_colorMask);
-            //createFastMatch(m_fashMatch2bit,kWindowTableSize_2bit,colorTable,m_oldColorTableSize,m_colorMask);
-            //createFastMatch(m_fashMatch1bit,kWindowTableSize_1bit,colorTable,m_oldColorTableSize,m_colorMask);
+            createFastMatch(m_fastMatch4bit,kWindowTableSize_4bit,colorTable,m_oldColorTableSize,m_colorMask);
+            //createFastMatch(m_fastMatch3bit,kWindowTableSize_3bit,colorTable,m_oldColorTableSize,m_colorMask);
+            //createFastMatch(m_fastMatch2bit,kWindowTableSize_2bit,colorTable,m_oldColorTableSize,m_colorMask);
+            //createFastMatch(m_fastMatch1bit,kWindowTableSize_1bit,colorTable,m_oldColorTableSize,m_colorMask);
             m_oldColorTableSize=tabSize;
         }
         
@@ -141,25 +141,25 @@ namespace frg{
             case 6:
             case 5:{
                 *out_matchTableBit=3;
-                int matchIndex=_findMatch(colorTable,subTable,m_fashMatch4bit,kWindowTableSize_3bit);
+                int matchIndex=_findMatch(colorTable,subTable,m_fastMatch4bit,kWindowTableSize_3bit);
                 if (matchIndex>=0)
                     return matchIndex;
                 *out_matchTableBit=4; //还可能有利可图,继续增大匹配窗口.
-                return _findMatch(colorTable,subTable,m_fashMatch4bit,kWindowTableSize_4bit);
+                return _findMatch(colorTable,subTable,m_fastMatch4bit,kWindowTableSize_4bit);
             } break;
             case 4:
             case 3:{
                 *out_matchTableBit=2;
-                return _findMatch(colorTable,subTable,m_fashMatch4bit,kWindowTableSize_2bit);
+                return _findMatch(colorTable,subTable,m_fastMatch4bit,kWindowTableSize_2bit);
             } break;
             case 2:{
                 *out_matchTableBit=1;
-                return _findMatch(colorTable,subTable,m_fashMatch4bit,kWindowTableSize_1bit);
+                return _findMatch(colorTable,subTable,m_fastMatch4bit,kWindowTableSize_1bit);
             } break;
             default:{ //9..16
                 assert((subSize>kWindowTableSize_3bit)&&(subSize<=kWindowTableSize_4bit));
                 *out_matchTableBit=4;
-                return _findMatch(colorTable,subTable,m_fashMatch4bit,kWindowTableSize_4bit);
+                return _findMatch(colorTable,subTable,m_fastMatch4bit,kWindowTableSize_4bit);
             } break;
         }
     }
