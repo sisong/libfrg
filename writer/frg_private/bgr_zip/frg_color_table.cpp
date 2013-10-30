@@ -28,7 +28,6 @@
  OTHER DEALINGS IN THE SOFTWARE.
 */
 #include "frg_color_table.h"
-#include <algorithm>
 #include "../color_error_diffuse.h"
 
 namespace frg{
@@ -379,7 +378,7 @@ namespace frg{
     ////////
 
     void TColorTableZiper::getColorSet(std::vector<TColorNode>* out_colorSet,const TPixels32Ref& colors){
-        std::map<TUInt32,TUInt32> colorSet;
+        TFRG_map<TUInt32,TUInt32> colorSet;
         const Color32* pline=colors.pColor;
         for (int y=0;y<colors.height;++y){
             for (int x=0; x<colors.width; ++x) {
@@ -402,7 +401,7 @@ namespace frg{
 
         int colorCountsSize=(int)colorSet.size();
         out_colorSet->resize(colorCountsSize);
-        std::map<TUInt32,TUInt32>::const_iterator it(colorSet.begin());
+        TFRG_map<TUInt32,TUInt32>::const_iterator it(colorSet.begin());
         for (int i=0;i<colorCountsSize;++i,++it){
             (*out_colorSet)[i].setColor(*(const Color24*)(&it->first),it->second);
         }

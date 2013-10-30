@@ -41,12 +41,12 @@ namespace frg{
         bool findMatch(TInt32 subX0,TInt32 subY0,TInt32 subWidth,TInt32 subHeight,TInt32* out_x0,TInt32* out_y0,frg_TMatchType* out_matchType);
         bool isMatchAt(TInt32 subX0,TInt32 subY0,TInt32 subWidth,TInt32 subHeight,TInt32 match_x0,TInt32 match_y0,frg_TMatchType* out_matchType);
     private:
-        typedef std::multimap<TUInt32,TUInt32> TMatchMap;
+        typedef TFRG_multimap<TUInt32,TUInt32> TMatchMap;
 
         TPixels32Ref     m_ref;
         TInt32           m_matchSubWidth;
         TInt32           m_matchSubHeight;
-        TMatchMap       m_matchMap;
+        TMatchMap        m_matchMap;
 
         static void createMatchMap(const TPixels32Ref& ref,TInt32 subWidth,TInt32 subHeight,TMatchMap& out_matchMaps);
     };

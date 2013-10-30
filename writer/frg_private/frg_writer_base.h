@@ -34,21 +34,21 @@
 #include "string.h" //memset
 #include <vector>
 #include <algorithm>
-#include <map>
 
-#ifndef PACKED
+//定义TFRG_map和TFRG_multimap; 可以尝试使用<unordered_map>或<hash_map>,编码速度略快.
+#include <map>
+#define TFRG_map        std::map
+#define TFRG_multimap   std::multimap
 
 //PACKED 紧缩数据格式  用于和文件保存相关的类型.
-#ifdef _MSC_VER
-#define PACKED __declspec(align(1))
-#else
-#ifdef __GNUC__
-#define PACKED __attribute__((packed))
-#else
-#define PACKED
-#endif
-#endif
-
+#ifndef PACKED
+  #if defined(__GNUC__)
+    #define PACKED __attribute__((packed))
+  #elif defined(_MSC_VER)
+    #define PACKED __declspec(align(1))
+  #else
+    #define PACKED
+  #endif
 #endif
 
 namespace frg {

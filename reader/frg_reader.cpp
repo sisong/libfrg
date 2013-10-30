@@ -53,14 +53,14 @@
 
 
 
-#ifdef FRG_IS_NEED_FRZ1_decompress
+#ifdef FRG_IS_NEED_FRZ1_DECOMPRESS
     #include "../../FRZ/reader/FRZ1_decompress.h" //source code: https://github.com/sisong/FRZ/
     static const char kFrgTagAndVersion_frz1[kFrgTagAndVersionSize]={'F','R','G',13};
 #endif
 
 static inline bool frgZip_decompress(unsigned char* out_data,unsigned char* out_data_end,
                               const unsigned char* frgZip_code,const unsigned char* frgZip_code_end,const char* frgTagAndVersion){
-#ifdef FRG_IS_NEED_FRZ1_decompress
+#ifdef FRG_IS_NEED_FRZ1_DECOMPRESS
     if (readUInt32(frgTagAndVersion)==readUInt32(kFrgTagAndVersion_frz1)) {
         return FRZ1_decompress(out_data,out_data_end,frgZip_code,frgZip_code_end);
     }
@@ -71,7 +71,7 @@ static inline bool frgZip_decompress(unsigned char* out_data,unsigned char* out_
 
 static inline bool frgZip_decompress_safe(unsigned char* out_data,unsigned char* out_data_end,
                                    const unsigned char* frgZip_code,const unsigned char* frgZip_code_end,const char* frgTagAndVersion){
-#ifdef FRG_IS_NEED_FRZ1_decompress
+#ifdef FRG_IS_NEED_FRZ1_DECOMPRESS
     if (readUInt32(frgTagAndVersion)==readUInt32(kFrgTagAndVersion_frz1)) {
         return FRZ1_decompress_safe(out_data,out_data_end,frgZip_code,frgZip_code_end);
     }
@@ -92,7 +92,7 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const TByte* frgCode_begin,const
     if (frgCode_end-frgCode_begin<kFrgFileHeadSize) return frg_FALSE;
     const struct TFrgFileHead& fhead=*(const struct TFrgFileHead*)frgCode_begin;
     if (   (readUInt32(&fhead.frgTagAndVersion[0])!=readUInt32(&kFrgTagAndVersion[0]))
-#ifdef FRG_IS_NEED_FRZ1_decompress
+#ifdef FRG_IS_NEED_FRZ1_DECOMPRESS
         && (readUInt32(&fhead.frgTagAndVersion[0])!=readUInt32(&kFrgTagAndVersion_frz1[0]))
 #endif
        )

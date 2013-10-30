@@ -131,7 +131,7 @@ void delEmptyColor(const TPixels32Ref& dst){
     for (int y=0;y<dst.height;++y){
         for (int x=0;x<dst.width;++x){
             if (dst.pixels(x,y).a==0){
-                std::map<TUInt32,TUInt32> set;
+                TFRG_map<TUInt32,TUInt32> set;
                 for (int dy=-kBorder;dy<=kBorder;++dy){
                     for (int dx=-kBorder;dx<=kBorder;++dx){
                         TBGRA32 c;
@@ -147,7 +147,7 @@ void delEmptyColor(const TPixels32Ref& dst){
                 else{
                     TUInt32 maxCount=0;
                     TUInt32 bestColor=0;
-                    for (std::map<TUInt32,TUInt32>::const_iterator it(set.begin());it!=set.end();++it){
+                    for (TFRG_map<TUInt32,TUInt32>::const_iterator it(set.begin());it!=set.end();++it){
                         if (it->second>maxCount){
                             maxCount=it->second;
                             bestColor=it->first;

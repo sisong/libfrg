@@ -29,24 +29,30 @@
 #ifndef _LIBFRG_frg_reader_h
 #define _LIBFRG_frg_reader_h
 
+//用来启动内存访问越界检查,用以避免frg损坏或构造特殊编码攻击;速度影响较小(打开可能慢2%).
+//#define FRG_READER_RUN_MEM_SAFE_CHECK
+
+//frg13版文件格式用了FRZ1压缩算法,14版采用了LZ4; 定义FRG_IS_NEED_FRZ1_DECOMPRESS用于兼容以前储存的图片.
+//#define FRG_IS_NEED_FRZ1_DECOMPRESS
+
+//在64位环境下,针对64位环境有少量优化(打开可能快10%,不排除某些环境有变慢的可能).
+#define FRG_READER_IS_TRY_USE_ARCH64
+
 #if defined(__BCPLUSPLUS__) || defined( _BORLANDC_ )
-#define _BCC32_OBJ_FOR_DELPHI
-//uses bcc32 compile out ".obj" file for link with Delphi App.
-#pragma option push -V?-
+  #define _BCC32_OBJ_FOR_DELPHI
+  //uses bcc32 compile out ".obj" file for link with Delphi App.
+  #pragma option push -V?-
   #define FRG_READER_EXPORT_API __stdcall
   #define FRG_READER_STATIC     static
 #else
   #define FRG_READER_EXPORT_API
-  #define FRG_READER_STATIC
+  #define FRG_READER_STATIC     
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
     
-//用来启动内存访问越界检查,用以避免frg损坏或构造特殊编码攻击;速度影响较小(打开可能慢3%).
-//#define FRG_READER_RUN_MEM_SAFE_CHECK
-
 enum frg_TColorType {
     kFrg_ColorType_32bit_A8R8G8B8  =1
     //todo: other ?  8bit_A8 24bit_R8G8B8 24bit_B8G8R8 32bit_X8B8G8R8 32bit_A8B8G8R8 32bit_X8R8G8B8 32bit_R8G8B8A8
@@ -86,13 +92,11 @@ struct frg_TFrgImageInfo{
 //返回获得frg数据类型信息的大小. //这样某些时候就不用读取整个文件的数据了.
 int FRG_READER_EXPORT_API getFrgHeadSize();
 
-//获得frg图片基本信息. //must(frgCode_end-frgCode_begin>=frgHeadSize) ;  out_frgImageInfo can null;
+//获得frg图片基本信息. //assert(frgCode_end-frgCode_begin>=frgHeadSize) ;  out_frgImageInfo can null;
 frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const unsigned char* frgCode_begin,const unsigned char* frgCode_end,struct frg_TFrgImageInfo* out_frgImageInfo);
 
 
 //解码frg格式的图片数据.
-//13版用的FRZ1压缩算法,14版后采用了LZ4; 定义FRG_IS_NEED_FRZ1_decompress用于兼容以前储存的图片.
-//#define FRG_IS_NEED_FRZ1_decompress
 frg_BOOL FRG_READER_EXPORT_API readFrgImage(const unsigned char* frgCode_begin,const unsigned char* frgCode_end,const struct frg_TPixelsRef* dst_image,unsigned char* tempMemory,unsigned char* tempMemory_end);
 
 #ifdef __cplusplus
