@@ -481,13 +481,11 @@ namespace frg{
         int&                    m_tempMemoryByteSize_forDecode;
     };
     
-    //int _temp_nums[16+1]={0};
     
     void  TColorZip::getBestColorTables(const TColorTableZiper& tableZiper,TClipNode* nodes,int nodeSize){
         //#pragma omp parallel for
         for (int i=0; i<nodeSize;++i){
             tableZiper.getBestColorTable(nodes[i].sub_table,nodes[i].colors);
-            //++_temp_nums[nodes[i].sub_table.size()-1];
         }
     }
 
@@ -496,7 +494,6 @@ namespace frg{
     
     void TColorZiper::saveTo(std::vector<TByte>& out_buf,const TPixels32Ref& ref,float colorQuality,bool isMustFitColorTable,int* tempMemoryByteSize_forDecode){
         *tempMemoryByteSize_forDecode=0;
-        //Int32 pos=out_buf.size(); colorQuality=100; //for test
         if (ref.getIsEmpty()) return;
         TColorZip colorZip(colorQuality,isMustFitColorTable,tempMemoryByteSize_forDecode);
         colorZip.saveTo(out_buf,ref);

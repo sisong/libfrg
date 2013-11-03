@@ -47,17 +47,15 @@ namespace frg{
 	const TInt64 gray_b_coeff=(1<<6)-gray_r_coeff-gray_g_coeff;//(gray_b_coeff_f*(1<<6));
     //颜色距离
     static inline TInt32 getColorDistance(const Color24& c0,const Color24& c1){
-        return
-        sqr(c0.r-c1.r)*gray_r_coeff
-        +sqr(c0.g-c1.g)*gray_g_coeff
-        +sqr(c0.b-c1.b)*gray_b_coeff;
+        return   sqr(c0.r-c1.r)*gray_r_coeff
+                +sqr(c0.g-c1.g)*gray_g_coeff
+                +sqr(c0.b-c1.b)*gray_b_coeff;
     }
     template<class TCalcColor>
     static inline TInt32 getColorDistance(const TCalcColor& c0,const TCalcColor& c1){
-        return (TInt32)(
-                       (sqr((TInt64)c0.r-c1.r)*gray_r_coeff
-                        +sqr((TInt64)c0.g-c1.g)*gray_g_coeff
-                        +sqr((TInt64)c0.b-c1.b)*gray_b_coeff) >>(TCalcColor::kIntFloatBit*2) );
+        return (TInt32)( (sqr((TInt64)c0.r-c1.r)*gray_r_coeff
+                        + sqr((TInt64)c0.g-c1.g)*gray_g_coeff
+                        + sqr((TInt64)c0.b-c1.b)*gray_b_coeff) >>(TCalcColor::kIntFloatBit*2) );
     }
 
 
@@ -141,9 +139,12 @@ namespace frg{
         m_sumColor.add(n.m_sumColor);
         m_count+=n.m_count;
         TColor bestColor=m_sumColor; bestColor.divRound(m_count);
-        //m_color=bestColor; return;
         if (getColorDistance(bestColor,n.m_color)<getColorDistance(bestColor,m_color))
             m_color=n.m_color;
+    }
+
+    TColorTableZiper::TColorTableZiper(float colorQuality,bool isMustFitColorTable):m_colorQuality(colorQuality){
+        qualityToMinColorError(&m_errorParameter,m_colorQuality,isMustFitColorTable);
     }
 
 
@@ -158,20 +159,17 @@ namespace frg{
         }
     }
 
-    TColorTableZiper::TColorTableZiper(float colorQuality,bool isMustFitColorTable):m_colorQuality(colorQuality){
-        qualityToMinColorError(&m_errorParameter,m_colorQuality,isMustFitColorTable);
-    }
-
-
     void TColorTableZiper::setImageSize(int imageWidth,int imageHeight){
         m_errorBuffer.resizeFast(imageWidth+2,imageHeight+1);
         clearErrorColors(m_errorBuffer.getRef());
     }
-
+    
+    //int _temp_nums[64+1]={0};
     bool TColorTableZiper::getBestColorTable(std::vector<Color24>& out_table,const TPixels32Ref& colors,const int maxTableSize)const{
         std::vector<TColorNode> colorSet; //color<-->count
         getColorSet(&colorSet,colors);
-
+        //++_temp_nums[colorSet.size()];
+        
         if (m_errorParameter.minColorError==0){
             if ((TInt)colorSet.size()<=maxTableSize){
                 //ok
@@ -194,64 +192,58 @@ namespace frg{
         return true;
     }
 
-    /*
-    void TColorTableZiper::uniteColorTable(std::vector<Color24>& dstTable,const std::vector<Color24>& srcTable){
-        HashSet<TUInt32> colorSet;
-        for (int i=0;i<(int)dstTable.size();++i)
-            colorSet.insert(dstTable[i].getBGR());
-        for (int i=0;i<(int)srcTable.size();++i)
-            colorSet.insert(srcTable[i].getBGR());
-
-        dstTable.resize(colorSet.size());
-        HashSet<TUInt32>::const_iterator it(colorSet.begin());
-        for (int i=0; i<(int)dstTable.size(); ++i,++it) {
-            dstTable[i]=Color24(Color32(*it));
-        }
-        sortColorArrayForOut(dstTable);
-    }*/
-
     /////////////////
-
-    class TColorsDistance{//算法复杂度现在O(N*N) todo:优化?:空间分割?八叉树?
+    
+    class TColorsDistance{//算法复杂度现在O(N*N).
     public:
-        inline TColorsDistance(std::vector<TColorTableZiper::TColorNode>& colorSet):m_colorSet(colorSet),m_colorCount((int)colorSet.size()){}
-        inline ~TColorsDistance(){ m_colorSet.resize(m_colorCount);  }
-        int getColorCount()const{ return m_colorCount; }
-        TInt32 getMinColorDistance(TInt32* out_index0,TInt32* out_index1){
-            assert(m_colorCount>=2);
-
-            TInt32 curMinDistance=((TUInt32)1<<31)-1;
-            TInt32 curMinIndex0=-1;
-            TInt32 curMinIndex1=-1;
-            for (int index0=0;index0<m_colorCount-1;++index0){
-                for (int index1=index0+1;index1<m_colorCount;++index1){
-                    TInt32 distance=getNodeColorDistance(m_colorSet[index0], m_colorSet[index1]);
-                    if (distance<curMinDistance){
-                        curMinDistance=distance;
-                        curMinIndex0=index0;
-                        curMinIndex1=index1;
-                    }
-                }
-            }
-
-            *out_index0=curMinIndex0;
-            *out_index1=curMinIndex1;
-            return curMinDistance;
-        }
-        void  deleteAColor(TInt32 index0,TInt32 index1){
-            assert(index0<index1);
-            m_colorSet[index0].uniteColor(m_colorSet[index1]);
-            for (int i=index1;i<m_colorCount-1;++i)
-                m_colorSet[i]=m_colorSet[i+1];
-            --m_colorCount;
-        }
+        inline TColorsDistance(std::vector<TColorTableZiper::TColorNode>& colorSet)
+            :m_colorSet(colorSet),m_colorCount((int)colorSet.size()){ }
+        inline ~TColorsDistance(){ m_colorSet.resize(m_colorCount); }
+        void initColorSet(std::vector<TColorTableZiper::TColorNode>* colorSet);
+        inline int getColorCount()const{ return m_colorCount; }
+        TInt32 getMinColorDistance(TInt32* out_index0,TInt32* out_index1)const;
+        void  deleteAColor(TInt32 index0,TInt32 index1);
     private:
-        std::vector<TColorTableZiper::TColorNode>& m_colorSet;
-        int                     m_colorCount;
-       inline static TInt32 getNodeColorDistance(const TColorTableZiper::TColorNode& na,const TColorTableZiper::TColorNode& nb){
+        std::vector<TColorTableZiper::TColorNode>&    m_colorSet;
+        int                         m_colorCount;
+
+        inline static TInt32 getNodeColorDistance(const TColorTableZiper::TColorNode& na,const TColorTableZiper::TColorNode& nb){
             return getColorDistance(na.getColor(),nb.getColor())*std::min(na.getCount(),nb.getCount());
         }
     };
+
+    TInt32 TColorsDistance::getMinColorDistance(TInt32* out_index0,TInt32* out_index1)const{
+        assert(m_colorCount>=2);
+        
+        TInt32 curMinDistance=((TUInt32)1<<31)-1;
+        TInt32 curMinIndex0=-1;
+        TInt32 curMinIndex1=-1;
+        for (int index0=0;index0<m_colorCount-1;++index0){
+            for (int index1=index0+1;index1<m_colorCount;++index1){
+                TInt32 distance=getNodeColorDistance(m_colorSet[index0],m_colorSet[index1]);
+                if (distance<curMinDistance){
+                    curMinDistance=distance;
+                    curMinIndex0=index0;
+                    curMinIndex1=index1;
+                }
+            }
+        }
+        
+        *out_index0=curMinIndex0;
+        *out_index1=curMinIndex1;
+        return curMinDistance;
+        
+    }
+    
+    void TColorsDistance::deleteAColor(TInt32 index0,TInt32 index1){
+        assert(index0<index1);
+        //del color
+        m_colorSet[index0].uniteColor(m_colorSet[index1]);
+        m_colorSet.erase(m_colorSet.begin()+index1);
+        --m_colorCount;
+    }
+  
+    ///
 
     void TColorTableZiper::deleteColor(std::vector<TColorNode>& colorSet,int maxTableSize,const TColorErrorParameter& errorParameter){
         maxTableSize=std::min(maxTableSize,errorParameter.maxTableSize);
@@ -272,7 +264,7 @@ namespace frg{
             TInt32 index0,index1;
             curMinColorError=colorsDistance.getMinColorDistance(&index0,&index1);
             if (curMinColorError>errorParameter.minColorError_optimize)
-                return; //fail optimize;
+                return; //finish optimize;
             colorsDistance.deleteAColor(index0,index1);
         }
     }
@@ -288,6 +280,7 @@ namespace frg{
                 curMinIndex=index;
             }
         }
+        assert(curMinIndex>=0);
         return curMinIndex;
     }
 
@@ -362,15 +355,15 @@ namespace frg{
                                                             dstIndexs,subColors,m_errorBuffer.getRef(),subX0+1,subY0);
 
         /* not uses error diffuse for test
-        out_indexList.resize(colors.getPixelsCount());
-        const Color32* pline=colors.pdata;
+        out_indexList.resize(subColors.width*subColors.height);
+        const Color32* pline=subColors.pColor;
         TByte* out_index=&out_indexList[0];
-        for (int y=0;y<colors.height;++y){
-            for (int x=0;x<colors.width;++x){
-                out_index[x]=getABestColorIndex(table,tableSize,(const Color24&)(pline[x]));
+        for (int y=0;y<subColors.height;++y){
+            for (int x=0;x<subColors.width;++x){
+                out_index[x]=getABestColorIndex(table,tableSize,TErrorColor(pline[x]));
             }
-            out_index+=colors.width;
-            pline=colors.nextLine(pline);
+            out_index+=subColors.width;
+            pline=subColors.nextLine(pline);
         }
         //*/
     }
