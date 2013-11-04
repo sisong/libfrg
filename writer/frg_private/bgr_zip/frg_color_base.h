@@ -49,11 +49,11 @@ namespace frg{
     typedef ptrdiff_t       TInt;
     
 #ifdef _MSC_VER
-    typedef    __int64             TInt64;
+    typedef    signed __int64      TInt64;
     typedef    unsigned __int64    TUInt64;
 #else
-    typedef    long long            TInt64;
-    typedef    unsigned long long   TUInt64;
+    typedef    signed long long    TInt64;
+    typedef    unsigned long long  TUInt64;
 #endif 
 
     template<class T>
