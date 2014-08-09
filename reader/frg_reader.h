@@ -29,18 +29,15 @@
 #ifndef _LIBFRG_frg_reader_h
 #define _LIBFRG_frg_reader_h
 
-//用来启动内存访问越界检查,用以避免frg损坏或构造特殊编码攻击;速度影响较小(打开可能慢2%).
+//用来启动内存访问越界检查,用以避免损坏的frg文件数据或构造特殊frg编码的攻击;速度影响较小(打开可能慢2%).
 //#define FRG_READER_RUN_MEM_SAFE_CHECK
 
 //frg13版文件格式用了FRZ1压缩算法,14版采用了LZ4; 定义FRG_IS_NEED_FRZ1_DECOMPRESS用于兼容以前储存的图片.
 //#define FRG_IS_NEED_FRZ1_DECOMPRESS
 
-//在64位环境下,针对64位环境有少量优化(打开可能快10%,不排除某些环境有变慢的可能).
-#define FRG_READER_IS_TRY_USE_ARCH64
-
 #if defined(__BCPLUSPLUS__) || defined( _BORLANDC_ )
   #define _BCC32_OBJ_FOR_DELPHI
-  //uses bcc32 compile out ".obj" file for link with Delphi App.
+  //uses bcc32 compile out ".obj" file can link to Delphi App.
   #pragma option push -V?-
   #define FRG_READER_EXPORT_API __stdcall
   #define FRG_READER_STATIC     static
@@ -73,7 +70,7 @@ struct frg_TPixelsRef{
     int      width;         //图片宽.
     int      height;        //图片高.
     int      byte_width;    //本行起始像素内存和下一行起始像素内存的间隔字节距离.
-    enum frg_TColorType  colorType; //now must kFrg_ColorType_32bit_A8R8G8B8
+    enum frg_TColorType  colorType; //now must set kFrg_ColorType_32bit_A8R8G8B8
 };
 
     
@@ -89,10 +86,10 @@ struct frg_TFrgImageInfo{
     int decoder_tempMemoryByteSize;
 };
     
-//返回获得frg数据类型信息的大小. //这样某些时候就不用读取整个文件的数据了.
+//返回获得frg数据类型信息的大小. //在某些只需要知道文件头信息的时候就不用读取整个文件的数据了.
 int FRG_READER_EXPORT_API getFrgHeadSize();
 
-//获得frg图片基本信息. //assert(frgCode_end-frgCode_begin>=frgHeadSize) ;  out_frgImageInfo can null;
+//获得frg图片基本信息. //assert(frgCode_end-frgCode_begin>=frgHeadSize) ;  out_frgImageInfo pointer can null;
 frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const unsigned char* frgCode_begin,const unsigned char* frgCode_end,struct frg_TFrgImageInfo* out_frgImageInfo);
 
 
