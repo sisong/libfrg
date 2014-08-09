@@ -63,16 +63,16 @@ FRG_READER_STATIC void frg_copyPixels_32bit_directColor(const struct frg_TPixels
 typedef void (*TProc_frg_copyPixels_32bit_index_single_a_xbit)(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,TUInt32 alpha);
 typedef void (*TProc_frg_copyPixels_32bit_index_xbit)(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,const TByte* alphaLine,TInt32 alpha_byte_width);
     static const TProc_frg_copyPixels_32bit_index_single_a_xbit
-      _frg_copyPixels_32bit_index_single_a_w8_xbit[4+1]=
-    {   0,
+      _frg_copyPixels_32bit_index_single_a_w8_xbit[4]=
+    {
         frg_copyPixels_32bit_index_single_a_w8_1bit,
         frg_copyPixels_32bit_index_single_a_w8_2bit,
         frg_copyPixels_32bit_index_single_a_w8_3bit,
         frg_copyPixels_32bit_index_single_a_w8_4bit
     };
     static const TProc_frg_copyPixels_32bit_index_xbit
-      _frg_copyPixels_32bit_index_xbit[4+1]=
-    {   0,
+      _frg_copyPixels_32bit_index_xbit[4]=
+    {
         frg_copyPixels_32bit_index_1bit,
         frg_copyPixels_32bit_index_2bit,
         frg_copyPixels_32bit_index_3bit,
@@ -81,10 +81,10 @@ typedef void (*TProc_frg_copyPixels_32bit_index_xbit)(const struct frg_TPixelsRe
 
     
 #define frg_copyPixels_32bit_index_single_a_w8_xbit(bit,dst,_colorTable,index2List,alpha) \
-    _frg_copyPixels_32bit_index_single_a_w8_xbit[bit](dst,_colorTable,index2List,alpha)
+    _frg_copyPixels_32bit_index_single_a_w8_xbit[bit-1](dst,_colorTable,index2List,alpha)
 
 #define frg_copyPixels_32bit_index_xbit(bit,dst,colorTable,index2List,alpha,alpha_byte_width) \
-    _frg_copyPixels_32bit_index_xbit[bit](dst,colorTable,index2List,alpha,alpha_byte_width)
+    _frg_copyPixels_32bit_index_xbit[bit-1](dst,colorTable,index2List,alpha,alpha_byte_width)
 
 
 #ifdef __cplusplus
