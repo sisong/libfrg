@@ -1,7 +1,9 @@
 //bytes_rle.h
+//create by housisong
 //快速解压的一个通用字节流压缩rle算法.
+//
 /*
- Copyright (c) 2012-2013 HouSisong All Rights Reserved.
+ Copyright (c) 2012-2014 HouSisong All Rights Reserved.
  
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation
@@ -24,14 +26,14 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
 */
-#ifndef WH_BYTES_RLE_H_
-#define WH_BYTES_RLE_H_
-#include <vector>
-    
-class TBytesRle{
-public:
-    enum TRleParameter{ kRle_size_bestSize=0, kRle_size_default=2, kRle_size_bestUnRleSpeed=32 };
-    static void save(std::vector<unsigned char>& out_code,const unsigned char* src,const unsigned char* src_end,int rle_parameter=kRle_size_default);
-};
 
-#endif //WH_BYTES_RLE_H_
+#ifndef __BYTES_RLE_H_
+#define __BYTES_RLE_H_
+
+#include <vector>
+
+enum TRleParameter{ kRle_bestSize=1, kRle_default=3, kRle_bestUnRleSpeed=32 };
+
+void bytesRLE_save(std::vector<unsigned char>& out_code,const unsigned char* src,const unsigned char* src_end,int rle_parameter=kRle_default);
+
+#endif //__BYTES_RLE_H_

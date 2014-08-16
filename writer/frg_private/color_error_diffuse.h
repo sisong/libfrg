@@ -30,11 +30,6 @@
 
 namespace frg{
     
-    
-    //Floyd-Steinberg扩散模版的实现. 
-    //  * 7
-    //3 5 1   /16  =>
-    
     //  type TSrcColors{
     //      type TColor;
     //      type TLineColor;
@@ -62,6 +57,10 @@ namespace frg{
     //  };
     //>> TDstColors::TErrorColor can use TCalcColor<>
     
+    
+    //Floyd-Steinberg扩散模版的实现.
+    //  * 7
+    //3 5 1   /16  =>
     template<class TPixelsRef_ErrorColor,class TDstColors,class TSrcColors>
     class TErrorDiffuse{
     public:

@@ -34,6 +34,7 @@
 #include "string.h" //memset
 #include <vector>
 #include <algorithm>
+#include "pack_uint.h"
 
 //定义TFRG_map和TFRG_multimap; 可以尝试使用<unordered_map>或<hash_map>,编码速度略快.
 #include <map>
@@ -71,34 +72,8 @@ inline static void writeUInt32(std::vector<TByte>& out_code,TUInt32 value){
     out_code.push_back(value>>24);
 }
 
-//变长32bit正整数编码方案(x bit额外类型标志位,x<=3),从高位开始输出1-5byte:
-// x0*  7-x bit
-// x1* 0*  7+7-x bit
-// x1* 1* 0*  7+7+7-x bit
-// x1* 1* 1* 0*  7+7+7+7-x bit
-// x1* 1* 1* 1* 0*  7+7+7+7+7-x bit
-
-static void pack32BitWithTag(std::vector<TByte>& out_code,TUInt32 iValue,int highBit,const int kTagBit){//写入并前进指针.
-    const int kMaxPack32BitTagBit=3;
-    assert((0<=kTagBit)&&(kTagBit<=kMaxPack32BitTagBit));
-    assert((highBit>>kTagBit)==0);
-    const int kMaxPack32BitSize=5;
-    const unsigned int kMaxValueWithTag=(1<<(7-kTagBit))-1;
-
-    TByte codeBuf[kMaxPack32BitSize];
-    TByte* codeEnd=codeBuf;
-    while (iValue>kMaxValueWithTag) {
-        *codeEnd=iValue&((1<<7)-1); ++codeEnd;
-        iValue>>=7;
-    }
-    out_code.push_back( (highBit<<(8-kTagBit)) | iValue | (((codeBuf!=codeEnd)?1:0)<<(7-kTagBit)));
-    while (codeBuf!=codeEnd) {
-        --codeEnd;
-        out_code.push_back((*codeEnd) | (((codeBuf!=codeEnd)?1:0)<<7));
-    }
-}
-
-inline static int pack32BitWithTagOutSize(TUInt32 iValue,int kTagBit){//返回pack后字节大小.
+template<class TUInt>
+inline static int packUIntWithTagOutSize(TUInt iValue,int kTagBit){//返回pack后字节大小.
     const unsigned int kMaxValueWithTag=(1<<(7-kTagBit))-1;
     int result=0;
     while (iValue>kMaxValueWithTag) {
@@ -107,12 +82,10 @@ inline static int pack32BitWithTagOutSize(TUInt32 iValue,int kTagBit){//返回pa
     }
     return (result+1);
 }
-
-static inline void pack32Bit(std::vector<TByte>& out_code,TUInt32 iValue){
-    pack32BitWithTag(out_code, iValue, 0, 0);
-}
-static inline int pack32BitOutSize(TUInt32 iValue){
-    return pack32BitWithTagOutSize(iValue, 0);
+    
+template<class TUInt>
+static inline int packUIntOutSize(TUInt iValue){
+    return packUIntWithTagOutSize(iValue, 0);
 }
 
 }//end namespace frg

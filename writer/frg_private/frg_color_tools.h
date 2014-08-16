@@ -79,7 +79,7 @@ struct TPixelsRefBase{
     void pixelsCopy(const TPixels32Ref& dst,const TPixels32Ref& src);
     bool getIsSigleRGBColor(const TPixels32Ref& src,TBGRA32* out_BGR);
     bool getIsSigleAlphaColor(const TPixels32Ref& src,TByte* out_Alpha);
-    void delEmptyColor(const TPixels32Ref& dst);
+    void delEmptyColor(const TPixels32Ref& dst);//alpha==0
     void pixelsFill(const TPixels32Ref& dst,TBGRA32 color);
     
 /////
