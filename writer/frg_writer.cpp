@@ -37,7 +37,8 @@ static void frgZip_compress(std::vector<unsigned char>& out_code,
                    const unsigned char* src,const unsigned char* src_end){
     int oldSize=(int)out_code.size();
     out_code.resize(oldSize+LZ4_compressBound((int)(src_end-src)));
-    int codeSize=LZ4_compressHC((const char*)src,(char*)&out_code[oldSize],(int)(src_end-src));
+    //int codeSize=LZ4_compressHC((const char*)src,(char*)&out_code[oldSize],(int)(src_end-src));
+    int codeSize=LZ4_compressHC2((const char*)src,(char*)&out_code[oldSize],(int)(src_end-src),16);
     out_code.resize(oldSize+codeSize);
 }
 
@@ -86,13 +87,13 @@ namespace frg{
             compressRatio=(compressSizeParameter-kFrg_size_default)*((ratio_max-ratio_default)/(kFrg_size_maxUnZipSpeed-kFrg_size_default))+ratio_default;
         
         isAlphaUseRleAdvance=compressSizeParameter<(kFrg_size_default+kFrg_size_minSize)*0.5f; //压得更小.
-        const int rle_max_useZip=12;
+        const int rle_max_useZip=11;
         alphaRleAdvanceParameter=rle_max_useZip;
         alphaRleAdvanceCompressRatio=1-((1-compressRatio)*0.25f);
     }
     
     static inline bool tryRleCodeData(std::vector<TByte>& data_ziped,const std::vector<TByte>& data,int rleParameter,float compressRatio,int oldDataSize=-1){
-        TBytesRle::save(data_ziped,&data[0],&data[0]+data.size(),rleParameter);
+        bytesRLE_save(data_ziped,&data[0],&data[0]+data.size(),rleParameter);
         if (oldDataSize<0) oldDataSize=(int)data.size();
         return (data_ziped.size()<=compressRatio*oldDataSize);
     }

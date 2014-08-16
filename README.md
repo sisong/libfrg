@@ -1,6 +1,6 @@
 libfrg
 ========
-Version  1.1.3 
+Version  1.1.4 
 libfrg: C\C++ codec of FRG  
    
 ---
@@ -34,7 +34,7 @@ load+decode time (ms)  3,590.7 6,241.4 5,148.0 3,710.1  3,324.9  1,539.4 1,404.5
 =====================================================================================================================================
 ```
    
-test v1.0.2 DEMO png<->frg : https://github.com/sisong/png2frg_app   
+test v1.1.3 DEMO png<->frg : https://github.com/sisong/png2frg_app   
    
 ---
 by HouSisong@Gmail.com

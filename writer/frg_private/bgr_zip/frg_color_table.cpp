@@ -42,9 +42,9 @@ namespace frg{
     //const double gray_r_coeff_f=0.299;
 	//const double gray_g_coeff_f=0.587;
 	//const double gray_b_coeff_f=0.114;
-    const TInt64 gray_r_coeff=19;//(gray_r_coeff_f*(1<<6));
-	const TInt64 gray_g_coeff=37;//(gray_g_coeff_f*(1<<6));
-	const TInt64 gray_b_coeff=(1<<6)-gray_r_coeff-gray_g_coeff;//(gray_b_coeff_f*(1<<6));
+    const TInt32 gray_r_coeff=19;//(gray_r_coeff_f*(1<<6));
+	const TInt32 gray_g_coeff=37;//(gray_g_coeff_f*(1<<6));
+	const TInt32 gray_b_coeff=(1<<6)-gray_r_coeff-gray_g_coeff;//(gray_b_coeff_f*(1<<6));
     //颜色距离
     static inline TInt32 getColorDistance(const Color24& c0,const Color24& c1){
         return   sqr(c0.r-c1.r)*gray_r_coeff
