@@ -28,8 +28,8 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
 */
-#ifndef WH_LIBFRG_FRG_COLOR_TABLE_H_
-#define WH_LIBFRG_FRG_COLOR_TABLE_H_
+#ifndef __LIBFRG_FRG_COLOR_TABLE_H_
+#define __LIBFRG_FRG_COLOR_TABLE_H_
 #include "frg_color_base.h"
 #include "../calc_color.h"
 
@@ -92,4 +92,4 @@ namespace frg{
 
 }//end namespace frg
 
-#endif //WH_LIBFRG_FRG_COLOR_TABLE_H_
+#endif //__LIBFRG_FRG_COLOR_TABLE_H_

@@ -126,7 +126,7 @@ void delEmptyColor(const TPixels32Ref& dst){
          }
      }
     //*/
-    //*优化缩放等时的边界的填充,不引入黑边.
+    //*尽量填充全透明像素；但排除边界,减少被缩放时出现黑边的可能.
     const int kBorder=1;
     for (int y=0;y<dst.height;++y){
         for (int x=0;x<dst.width;++x){

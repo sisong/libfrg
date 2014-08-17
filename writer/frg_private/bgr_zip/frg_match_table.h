@@ -28,8 +28,8 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
 */
-#ifndef WH_LIBFRG_FRG_MATCH_TABLE_H_
-#define WH_LIBFRG_FRG_MATCH_TABLE_H_
+#ifndef __LIBFRG_FRG_MATCH_TABLE_H_
+#define __LIBFRG_FRG_MATCH_TABLE_H_
 #include "frg_color_base.h"
 
 namespace frg{
@@ -46,11 +46,11 @@ namespace frg{
         //std::vector<UInt>  m_fastMatch3bit;
         //std::vector<UInt>  m_fastMatch2bit;
         //std::vector<UInt>  m_fastMatch1bit;
-        int             m_oldColorTableSize;
+        int              m_oldColorTableSize;
         TUInt32          m_colorMask;
         int _findMatch(const std::vector<Color24>& colorTable,const std::vector<Color24>& subTable,const std::vector<TUInt>& fastMatch,int windowTableSize);
     };
 
 }//end namespace frg
 
-#endif //WH_LIBFRG_FRG_MATCH_TABLE_H_
+#endif //__LIBFRG_FRG_MATCH_TABLE_H_

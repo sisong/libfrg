@@ -1,4 +1,4 @@
-//  frg_reader_base.h
+//  frg_private_reader_base.h
 /*
  This is the frg copyright.
  
@@ -26,17 +26,15 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
 */
-#ifndef _LIBFRG_frg_base_h
-#define _LIBFRG_frg_base_h
+#ifndef __LIBFRG_frg_private_reader_base_h
+#define __LIBFRG_frg_private_reader_base_h
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef unsigned char   TByte;
-typedef signed   int    TInt32;
 typedef unsigned int    TUInt32;
-typedef unsigned short  TUInt16;
 
 
 /*// frg image file struct:
@@ -85,29 +83,29 @@ struct TFrgFileHead{ //frg文件头数据布局(小端格式读写).
 };
 static const int kFrgFileHeadSize=sizeof(struct TFrgFileHead);
 
-static const int  kFrgTagAndVersionSize =4;
+#define  kFrgTagAndVersionSize 4
 static const char kFrgTagAndVersion[kFrgTagAndVersionSize]={'F','R','G',14};
 
 //占用8bit 存储颜色的相关信息.
-enum TFrgHeadColorInfo{
+typedef enum TFrgHeadColorInfo{
     kColorInfo_isSingleAlpha             = 1<<0,
     kColorInfo_isSingleBGR               = 1<<1,
     kColorInfo_isAlphaDataUseBytesZip    = 1<<2,
     kColorInfo_isRGBDataUseBytesZip      = 1<<3,
     kColorInfo_isAlphaDataNotUseBytesRLE = 1<<4,
-};
+} TFrgHeadColorInfo;
 
 //占用8bit 编码数据储存方式.
-enum TEncodingFormat{
+typedef enum TEncodingFormat{
     kEncodingFormat_stream =1  //字节流.
     //todo:支持允许直接映射到内存或显存的储存格式 kEncodingFormat_memoryMapping? .
-};
+} TEncodingFormat;
 
 //占用8bit 储存的颜色的格式和位数.
-enum TSavedColorFormat{
+typedef enum TSavedColorFormat{
     kSavedColorFormat_A8R8G8B8 =32
     //todo:支持 kSavedColorFormat_ xxx ? .
-};
+} TSavedColorFormat;
 
     
 //------
@@ -118,7 +116,7 @@ static const int kFrg_ClipWidth=8;
 static const int kFrg_ClipHeight=8;
 
 //颜色块类型.  占用高4bit
-enum frg_TClipType{
+typedef enum frg_TClipType{
     kFrg_ClipType_index_single_a_w8         = 0, //调色板(有序号数据 单Alpha,8像素宽) +4bit(局部调色板长度-1)
     kFrg_ClipType_index                     = 1, //调色板(有序号数据) +4bit(局部调色板长度-1)
     kFrg_ClipType_single_bgra_w8            = 2, //单色BGRA(8像素宽) +4bit向前匹配的位置处颜色相同(长度0表示自己储存了一个颜色到调色板)
@@ -127,28 +125,21 @@ enum frg_TClipType{
     kFrg_ClipType_match_table               = 5, //调色板匹配 +2bit未用+2bit(局部调色板bit数-1) (并储存了一个向前匹配位置(变长1-5byte))
     kFrg_ClipType_match_image               = 6, //帧间预测 +1bit未用+3bit匹配类型 (并储存了一个向前匹配xy坐标位置(2+2byte))
     kFrg_ClipType_directColor               = 7, //无损压缩(将分块内的所有颜色按顺序放置在调色板中) +3bit未用 +1bit(是否是单Alpha并且8像素宽)
-};
+} frg_TClipType;
 
-static const int kFrg_MaxSubTableSize=(1<<4); //最大局部调色板大小.
+#define kFrg_MaxSubTableSize (1<<4)  //最大局部调色板大小.
 static const TByte kFrg_SubTableSize_to_indexBit[kFrg_MaxSubTableSize+1]={ 0,0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4 };//局部调色板大小查表得到序号需要的bit数.
 static const int kFrg_MaxForwardLength=(1<<4)-1; //利用剩余的4bit空间能储存的最大向前匹配位置数值.
 
 //kFrg_ClipType_match_image属性块匹配类型. 占用3bit
-enum frg_TMatchType{
+typedef enum frg_TMatchType{
     kFrg_MatchType_move_bgra_w8         = 0,    //平移BGRA(8像素宽)
     kFrg_MatchType_move_bgr             = 1,    //平移BGR
     kFrg_MatchType_left_right_bgra_w8   = 2,    //左右镜像BGRA(8像素宽)
     kFrg_MatchType_left_right_bgr       = 3,    //左右镜像BGR
     kFrg_MatchType_up_down_bgra_w8      = 4,    //上下镜像BGRA(8像素宽)
     kFrg_MatchType_up_down_bgr          = 5,    //上下镜像BGR
-};
-
-inline static int unpackMatchX(TUInt32 xy){
-    return xy&((1<<16)-1);
-}
-inline static int unpackMatchY(TUInt32 xy){
-    return xy>>16;
-}
+} frg_TMatchType;
 
 //---
     
@@ -165,4 +156,4 @@ static const int kByteRleType_bit=2;
 }
 #endif
 
-#endif
+#endif //__LIBFRG_frg_private_reader_base_h

@@ -29,7 +29,7 @@
 #ifndef _LIBFRG_frg_writer_base_h
 #define _LIBFRG_frg_writer_base_h
 
-#include "../../reader/frg_reader_base.h"
+#include "../../reader/frg_private_reader_base.h"
 #include "assert.h" //assert
 #include "string.h" //memset
 #include <vector>
@@ -52,11 +52,19 @@
   #endif
 #endif
 
+
 namespace frg {
 
 inline static TUInt32 packMatchXY(TUInt32 x,TUInt32 y){
     assert((x|y)<(1<<16));
     return x|(y<<16);
+}
+    
+inline static int unpackMatchX(TUInt32 xy){
+    return xy&((1<<16)-1);
+}
+inline static int unpackMatchY(TUInt32 xy){
+    return xy>>16;
 }
 
 inline static void writeUInt16(std::vector<TByte>& out_code,TUInt32 value){
