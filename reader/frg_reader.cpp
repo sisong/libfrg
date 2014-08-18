@@ -75,11 +75,11 @@ int FRG_READER_EXPORT_API getFrgHeadSize(void){
 }
 
 #ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-    static const unsigned int kSafeColorTable_extendMemSize=kFrg_MaxSubTableSize*4;
+    static const unsigned int kSafeColorTable_extendMemSize=kFrg_MaxSubTableSize*sizeof(TUInt32);
 #endif
 
 frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const TByte* frgCode_begin,const TByte* frgCode_end,struct frg_TFrgImageInfo* out_frgImageInfo){
-    if (frgCode_end-frgCode_begin<kFrgFileHeadSize) return frg_FALSE;
+    if ((TUInt32)kFrgFileHeadSize>(TUInt32)(frgCode_end-frgCode_begin)) return frg_FALSE;
     const struct TFrgFileHead* fhead=(const struct TFrgFileHead*)frgCode_begin;
     if (   (loadUInt32(&fhead->frgTagAndVersion[0])!=loadUInt32(&kFrgTagAndVersion[0]))
 #ifdef FRG_IS_NEED_FRZ1_DECOMPRESS

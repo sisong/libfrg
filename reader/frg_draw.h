@@ -40,29 +40,29 @@ extern "C" {
 typedef TUInt32 TFastUInt;
 struct frg_TPixelsRef;
 
-FRG_READER_STATIC void frg_table_BGR24_to_32bit(void* pDstColor,const TByte* pBGR24,int colorCount);
+FRG_READER_STATIC void frg_table_BGR24_to_32bit(void* pDstColor,const TByte* pBGR24,TUInt32 colorCount);
 
 FRG_READER_STATIC void frg_fillPixels_32bit(const struct frg_TPixelsRef* dst,const TByte* pBGRA32);
 FRG_READER_STATIC void frg_fillPixels_32bit_withAlpha(const struct frg_TPixelsRef* dst,const TByte* pBGR24,const TByte* alphaLine,int alpha_byte_width);
 
 FRG_READER_STATIC void frg_copyPixels_32bit_single_bgra_w8(const struct frg_TPixelsRef* dst,TUInt32 color32);
 FRG_READER_STATIC void frg_copyPixels_32bit_single_bgr(const struct frg_TPixelsRef* dst,const TUInt32 color24,const TByte* alphaLine,int alpha_byte_width);
-FRG_READER_STATIC void frg_copyPixels_32bit_index_single_a_w8_4bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,TUInt32 alpha);
-FRG_READER_STATIC void frg_copyPixels_32bit_index_4bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,const TByte* alphaLine,int alpha_byte_width);
-FRG_READER_STATIC void frg_copyPixels_32bit_index_single_a_w8_3bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,TUInt32 alpha);
-FRG_READER_STATIC void frg_copyPixels_32bit_index_3bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,const TByte* alphaLine,int alpha_byte_width);
-FRG_READER_STATIC void frg_copyPixels_32bit_index_single_a_w8_2bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,TUInt32 alpha);
-FRG_READER_STATIC void frg_copyPixels_32bit_index_2bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,const TByte* alphaLine,int alpha_byte_width);
-FRG_READER_STATIC void frg_copyPixels_32bit_index_single_a_w8_1bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,TUInt32 alpha);
-FRG_READER_STATIC void frg_copyPixels_32bit_index_1bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,const TByte* alphaLine,int alpha_byte_width);
+FRG_READER_STATIC void frg_copyPixels_32bit_index_single_a_w8_4bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* indexsList,TUInt32 alpha);
+FRG_READER_STATIC void frg_copyPixels_32bit_index_4bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* indexsList,const TByte* alphaLine,int alpha_byte_width);
+FRG_READER_STATIC void frg_copyPixels_32bit_index_single_a_w8_3bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* indexsList,TUInt32 alpha);
+FRG_READER_STATIC void frg_copyPixels_32bit_index_3bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* indexsList,const TByte* alphaLine,int alpha_byte_width);
+FRG_READER_STATIC void frg_copyPixels_32bit_index_single_a_w8_2bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* indexsList,TUInt32 alpha);
+FRG_READER_STATIC void frg_copyPixels_32bit_index_2bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* indexsList,const TByte* alphaLine,int alpha_byte_width);
+FRG_READER_STATIC void frg_copyPixels_32bit_index_single_a_w8_1bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* indexsList,TUInt32 alpha);
+FRG_READER_STATIC void frg_copyPixels_32bit_index_1bit(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* indexsList,const TByte* alphaLine,int alpha_byte_width);
 FRG_READER_STATIC void frg_copyPixels_32bit_match(const struct frg_TPixelsRef* dst,const TUInt32* src_pline,enum frg_TMatchType matchType,const TByte* alphaLine,int alpha_byte_width);
 FRG_READER_STATIC void frg_copyPixels_32bit_directColor_single_a_w8(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,TUInt32 alpha);
 FRG_READER_STATIC void frg_copyPixels_32bit_directColor(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* alphaLine,int alpha_byte_width);
 
 //////
 
-typedef void (*TProc_frg_copyPixels_32bit_index_single_a_xbit)(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,TUInt32 alpha);
-typedef void (*TProc_frg_copyPixels_32bit_index_xbit)(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* index2List,const TByte* alphaLine,int alpha_byte_width);
+typedef void (*TProc_frg_copyPixels_32bit_index_single_a_xbit)(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* indexsList,TUInt32 alpha);
+typedef void (*TProc_frg_copyPixels_32bit_index_xbit)(const struct frg_TPixelsRef* dst,const TUInt32* colorTable,const TByte* indexsList,const TByte* alphaLine,int alpha_byte_width);
     static const TProc_frg_copyPixels_32bit_index_single_a_xbit
       _frg_copyPixels_32bit_index_single_a_w8_xbit[4]=
     {
@@ -81,11 +81,11 @@ typedef void (*TProc_frg_copyPixels_32bit_index_xbit)(const struct frg_TPixelsRe
     };
 
     
-#define frg_copyPixels_32bit_index_single_a_w8_xbit(bit,dst,_colorTable,index2List,alpha) \
-    _frg_copyPixels_32bit_index_single_a_w8_xbit[bit-1](dst,_colorTable,index2List,alpha)
+#define frg_copyPixels_32bit_index_single_a_w8_xbit(bit,dst,_colorTable,indexsList,alpha) \
+    _frg_copyPixels_32bit_index_single_a_w8_xbit[bit-1](dst,_colorTable,indexsList,alpha)
 
-#define frg_copyPixels_32bit_index_xbit(bit,dst,colorTable,index2List,alpha,alpha_byte_width) \
-    _frg_copyPixels_32bit_index_xbit[bit-1](dst,colorTable,index2List,alpha,alpha_byte_width)
+#define frg_copyPixels_32bit_index_xbit(bit,dst,colorTable,indexsList,alpha,alpha_byte_width) \
+    _frg_copyPixels_32bit_index_xbit[bit-1](dst,colorTable,indexsList,alpha,alpha_byte_width)
 
 
 #ifdef __cplusplus
