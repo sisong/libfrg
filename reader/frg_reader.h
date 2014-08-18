@@ -56,15 +56,15 @@ typedef enum frg_TColorType {
     //todo: other ?  8bit_A8 24bit_R8G8B8 24bit_B8G8R8 32bit_X8B8G8R8 32bit_A8B8G8R8 32bit_X8R8G8B8 32bit_R8G8B8A8
 } frg_TColorType;
 
-//你可以修改kFrg_outColor32_*这4个值以支持你需要的rgba32bit颜色输出格式(需要重新编译解码器源代码).
+//你可以修改kFrg_outColor_*这4个值以支持你需要的rgba32bit颜色输出格式(需要重新编译解码器源代码).
 //outColor32 = (b8<<blue_shl) | (g8<<green_shl) | (r8<<red_shl) | (a8<<alpha_shl);
 enum {
-    kFrg_outColor32_blue_shl    =0,
-    kFrg_outColor32_green_shl   =8,
-    kFrg_outColor32_red_shl     =16,
-    kFrg_outColor32_alpha_shl   =24
+    kFrg_outColor_blue_shl    =0,
+    kFrg_outColor_green_shl   =8,
+    kFrg_outColor_red_shl     =16,
+    kFrg_outColor_alpha_shl   =24
 };
-static const int kFrg_outColor32_size =4;
+static const int kFrg_outColor_size =4;
 
 struct frg_TPixelsRef{
     void*    pColor;        //图片像素内存起始地址.
@@ -79,7 +79,6 @@ struct frg_TPixelsRef{
 #define frg_FALSE   0
 #define frg_TRUE    (!frg_FALSE)
 
-    
 struct frg_TFrgImageInfo{
     int imageFileSize;
     int imageWidth;

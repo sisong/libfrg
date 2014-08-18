@@ -32,15 +32,17 @@
 #define _LIBFRG_frg_draw_h
 
 #include "frg_private_reader_base.h"
+#include "string.h" //memset memcpy size_t
+#include "assert.h" //assert
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
-typedef TUInt32 TFastUInt;
+
+typedef size_t  TUInt;
 struct frg_TPixelsRef;
 
-FRG_READER_STATIC void frg_table_BGR24_to_32bit(void* pDstColor,const TByte* pBGR24,TUInt32 colorCount);
+FRG_READER_STATIC void frg_table_BGR24_to_32bit(void* pDstColor,const TByte* pBGR24,TUInt colorCount);
 
 FRG_READER_STATIC void frg_fillPixels_32bit(const struct frg_TPixelsRef* dst,const TByte* pBGRA32);
 FRG_READER_STATIC void frg_fillPixels_32bit_withAlpha(const struct frg_TPixelsRef* dst,const TByte* pBGR24,const TByte* alphaLine,int alpha_byte_width);
