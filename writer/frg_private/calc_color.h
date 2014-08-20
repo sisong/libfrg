@@ -24,8 +24,8 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
 */
-#ifndef WH_CALC_COLOR_H_
-#define WH_CALC_COLOR_H_
+#ifndef __CALC_COLOR_H_
+#define __CALC_COLOR_H_
 
 namespace frg{
 
@@ -158,4 +158,4 @@ namespace frg{
 
 }//end namespace
 
-#endif //WH_CALC_COLOR_H_
+#endif //__CALC_COLOR_H_

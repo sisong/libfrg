@@ -66,7 +66,7 @@ bool frgImage_decodeTo_bmpImage(const unsigned char* frgCode,const unsigned char
         return false;
     unsigned char *tempMemory=new unsigned char[frgInfo.decoder_tempMemoryByteSize];
 
-    bmpImage.byte_width=frgInfo.imageWidth*kFrg_outColor32_size;
+    bmpImage.byte_width=frgInfo.imageWidth*kFrg_outColor_size;
     bmpImage.pColor=new unsigned char[frgInfo.imageWidth*bmpImage.byte_width];
     bmpImage.width=frgInfo.imageWidth;
     bmpImage.height=frgInfo.imageHeight;

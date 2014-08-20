@@ -33,18 +33,19 @@
 #include "../../lz4/lz4.h"
 #include "../../lz4/lz4hc.h" //http://code.google.com/p/lz4/
 
-static void frgZip_compress(std::vector<unsigned char>& out_code,
-                   const unsigned char* src,const unsigned char* src_end){
-    int oldSize=(int)out_code.size();
-    out_code.resize(oldSize+LZ4_compressBound((int)(src_end-src)));
-    //int codeSize=LZ4_compressHC((const char*)src,(char*)&out_code[oldSize],(int)(src_end-src));
-    int codeSize=LZ4_compressHC2((const char*)src,(char*)&out_code[oldSize],(int)(src_end-src),16);
-    out_code.resize(oldSize+codeSize);
-}
-
 
 namespace frg{
-        
+    
+    static void frgZip_compress(std::vector<unsigned char>& out_code,
+                                const unsigned char* src,const unsigned char* src_end){
+        int oldSize=(int)out_code.size();
+        out_code.resize(oldSize+LZ4_compressBound((int)(src_end-src)));
+        //int codeSize=LZ4_compressHC((const char*)src,(char*)&out_code[oldSize],(int)(src_end-src));
+        int codeSize=LZ4_compressHC2((const char*)src,(char*)&out_code[oldSize],(int)(src_end-src),16);
+        assert(codeSize>0);
+        out_code.resize(oldSize+codeSize);
+    }
+    
     static void getAlphasFromPixelsRef(std::vector<TByte>& out_alphaBuf,const TPixels32Ref& src){
         for (int y=0;y<src.height;++y){
             for (int x=0;x<src.width;++x){
@@ -237,17 +238,17 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
     writeUInt32(code_data,imageFileSize);
     
     //head code
-    writeUInt32(code_data,(TInt32)code_head.size());
+    writeUInt32(code_data,(TUInt32)code_head.size());
     code_data.insert(code_data.end(), code_head.begin(),code_head.end());
     
     //alpha code
     if (!isSingleAlpha){
-        writeUInt32(code_data,(TInt32)code_alpha.size());
+        writeUInt32(code_data,(TUInt32)code_alpha.size());
         code_data.insert(code_data.end(), code_alpha.begin(),code_alpha.end());
     }
     //BGR code
     if (!isSingleBGR){
-        writeUInt32(code_data,(TInt32)code_bgr.size());
+        writeUInt32(code_data,(TUInt32)code_bgr.size());
         code_data.insert(code_data.end(), code_bgr.begin(),code_bgr.end());
     }
 }

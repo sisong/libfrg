@@ -52,9 +52,9 @@ struct TPixelsRefBase{
     typedef _TColorType*    TPLineColor;
     
     TColor*     pColor;
-    TInt32      width;
-    TInt32      height;
-    TInt32      byte_width;
+    int         width;
+    int         height;
+    int         byte_width;
     
     inline TPixelsRefBase():pColor(0),width(0),height(0),byte_width(0){}
     inline TColor&    pixels(int x,int y)const{ return getLinePixels(y)[x]; }

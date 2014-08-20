@@ -171,7 +171,7 @@ namespace frg{
         //++_temp_nums[colorSet.size()];
         
         if (m_errorParameter.minColorError==0){
-            if ((TInt)colorSet.size()<=maxTableSize){
+            if (colorSet.size()<=(TUInt)maxTableSize){
                 //ok
                 sortColorArrayForOut(colorSet);
                 writeTable(out_table,colorSet);
@@ -184,7 +184,7 @@ namespace frg{
 
         //delete color
         deleteColor(colorSet,maxTableSize,m_errorParameter);
-        if ((TInt)colorSet.size()>maxTableSize)
+        if (colorSet.size()>(TUInt)maxTableSize)
             return false; //fail
 
         sortColorArrayForOut(colorSet);

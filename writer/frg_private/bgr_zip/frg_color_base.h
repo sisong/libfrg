@@ -45,15 +45,13 @@ namespace frg{
         inline TUInt32 getBGR()const{ return b|(g<<8)|(r<<16); }
     };
     
+    typedef signed   int    TInt32;
     typedef size_t          TUInt;
-    typedef ptrdiff_t       TInt;
     
 #ifdef _MSC_VER
     typedef    signed __int64      TInt64;
-    typedef    unsigned __int64    TUInt64;
 #else
     typedef    signed long long    TInt64;
-    typedef    unsigned long long  TUInt64;
 #endif 
 
     template<class T>

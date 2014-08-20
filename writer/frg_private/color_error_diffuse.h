@@ -24,8 +24,8 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
 */
-#ifndef WH_COLOR_ERROR_DIFFUSE_H_
-#define WH_COLOR_ERROR_DIFFUSE_H_
+#ifndef __COLOR_ERROR_DIFFUSE_H_
+#define __COLOR_ERROR_DIFFUSE_H_
 #include "calc_color.h"
 
 namespace frg{
@@ -128,4 +128,4 @@ namespace frg{
 
 }//end namespace
 
-#endif //WH_COLOR_ERROR_DIFFUSE_H_
+#endif //__COLOR_ERROR_DIFFUSE_H_
