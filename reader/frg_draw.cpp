@@ -177,11 +177,12 @@ void frg_fillPixels_32bit(const struct frg_TPixelsRef* dst,const TByte* pBGRA32)
     const TUInt32 color32=BRGToColor32(pBGRA32[0],pBGRA32[1],pBGRA32[2],pBGRA32[3]);
     DefinePairColor(pairColor,color32,color32);
     TUInt32* pline=(TUInt32*)dst->pColor;
+    int x,y;
     
-    for (int y=0; y<height; ++y) {
-        for (int x=0; x<fast_width; x+=8)
+    for (y=0; y<height; ++y) {
+        for (x=0; x<fast_width; x+=8)
             fill8Pixels((pline+x),pairColor);
-        for (int x=fast_width; x<width; ++x)
+        for (x=fast_width; x<width; ++x)
             pline[x]=color32;
         pline=(TUInt32*)( ((TByte*)pline)+byte_width );
     }
@@ -194,11 +195,12 @@ void frg_fillPixels_32bit_withAlpha(const struct frg_TPixelsRef* dst,const TByte
     const int fast_width=width&(~7);
     const TUInt32 color24=BRGToColor24(pBGR24[0],pBGR24[1],pBGR24[2]);
     TUInt32* pline=(TUInt32*)dst->pColor;
+    int x,y;
     
-    for (int y=0; y<height; ++y) {
-        for (int x=0; x<fast_width; x+=8)
+    for (y=0; y<height; ++y) {
+        for (x=0; x<fast_width; x+=8)
             fill8PixelsWithAlpha((pline+x),color24,(alphaLine+x));
-        for (int x=fast_width; x<width; ++x)
+        for (x=fast_width; x<width; ++x)
             pline[x]=color24 | (alphaLine[x]<<kFrg_outColor_alpha_shl);
         alphaLine+=alpha_byte_width;
         pline=(TUInt32*)( ((TByte*)pline)+byte_width );
@@ -210,14 +212,15 @@ void frg_copyPixels_32bit_single_bgra_w8(const struct frg_TPixelsRef* dst,TUInt3
     const int byte_width=dst->byte_width;
     DefinePairColor(pairColor,color32,color32);
     TUInt32* pline=(TUInt32*)dst->pColor;
+    int y;
     /*
-    for (int y=0; y<height; ++y) {
+    for (y=0; y<height; ++y) {
         fill8Pixels(pline,pairColor);
      
         pline=(TUInt32*)( ((TByte*)pline)+byte_width );
     }
     */
-    for (int y=-height;;) {
+    for (y=-height;;) {
         fill8Pixels(pline,pairColor);
         
         pline=(TUInt32*)( ((TByte*)pline)+byte_width );
@@ -230,16 +233,17 @@ void frg_copyPixels_32bit_single_bgr(const struct frg_TPixelsRef* dst,const TUIn
     const int width=dst->width;
     const int byte_width=dst->byte_width;
     TUInt32* pline=(TUInt32*)dst->pColor;
+    int x,y;
     
     if (width==kFrg_ClipWidth){
-        for (int y=0; y<height; ++y){
+        for (y=0; y<height; ++y){
             fill8PixelsWithAlpha(pline,color24,alphaLine);
             alphaLine+=alpha_byte_width;
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
         }
     }else{
-        for (int y=0; y<height; ++y) {
-            for (int x=0; x<width; ++x){
+        for (y=0; y<height; ++y) {
+            for (x=0; x<width; ++x){
                 pline[x]=color24 | (alphaLine[x]<<kFrg_outColor_alpha_shl);
             }
             alphaLine+=alpha_byte_width;
@@ -254,6 +258,7 @@ void frg_copyPixels_32bit_index_single_a_w8_4bit(const struct frg_TPixelsRef* ds
     const int byte_width=dst->byte_width;
     const TUInt32 alpha32=alpha<<kFrg_outColor_alpha_shl;
     TUInt32* pline=(TUInt32*)dst->pColor;
+    int y;
      /*
      for (int y=0; y<height; ++y) {
         const TFastUInt index01=indexsList[0];
@@ -285,7 +290,7 @@ void frg_copyPixels_32bit_index_single_a_w8_4bit(const struct frg_TPixelsRef* ds
     if (kIs_LITTLE_ENDIAN){
         TPackByte4 indexs; indexs.value=0;
         indexsList+=height*4;
-        for (int y=-height;;) {
+        for (y=-height;;) {
             TPackByte4 indexs;
             indexs.bs=((const TByte4*)indexsList)[y];
             copy8PixelsFromTable_single_a(pline,alpha32,colorTable,
@@ -298,7 +303,7 @@ void frg_copyPixels_32bit_index_single_a_w8_4bit(const struct frg_TPixelsRef* ds
             ++y; if (!y) break;
         }
     }else{ //is BIG_ENDIAN
-        for (int y=-height;;) {
+        for (y=-height;;) {
             const TFastUInt index01=indexsList[0];
             const TFastUInt index23=indexsList[1];
             const TFastUInt index45=indexsList[2];
@@ -320,9 +325,11 @@ void frg_copyPixels_32bit_index_4bit(const struct frg_TPixelsRef* dst,const TUIn
     const int width=dst->width;
     const int byte_width=dst->byte_width;
     TUInt32* pline=(TUInt32*)dst->pColor;
+    int x,y;
+    TFastUInt  indexPos,index;
     
     if (width==kFrg_ClipWidth){
-        for (int y=0; y<height; ++y) {
+        for (y=0; y<height; ++y) {
             const TFastUInt index01=indexsList[0];
             const TFastUInt index23=indexsList[1];
             const TFastUInt index45=indexsList[2];
@@ -337,10 +344,10 @@ void frg_copyPixels_32bit_index_4bit(const struct frg_TPixelsRef* dst,const TUIn
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
         }
     }else{
-        TFastUInt  indexPos=0;
-        for (int y=0; y<height; ++y) {
-            for (int x=0; x<width; ++x,++indexPos){
-                const TFastUInt index=(indexsList[indexPos>>1]>>(indexPos*4&7))&15;
+        indexPos=0;
+        for (y=0; y<height; ++y) {
+            for (x=0; x<width; ++x,++indexPos){
+                index=(indexsList[indexPos>>1]>>(indexPos*4&7))&15;
                 pline[x]=colorTable[index] | (alphaLine[x]<<kFrg_outColor_alpha_shl);
             }
             alphaLine+=alpha_byte_width;
@@ -354,6 +361,7 @@ void frg_copyPixels_32bit_index_single_a_w8_3bit(const struct frg_TPixelsRef* ds
     const int byte_width=dst->byte_width;
     const TUInt32 alpha32=alpha<<kFrg_outColor_alpha_shl;
     TUInt32* pline=(TUInt32*)dst->pColor;
+    int y;
     /*
     for (int y=0; y<height; ++y) {
         const TFastUInt index0=indexsList[0];
@@ -381,7 +389,7 @@ void frg_copyPixels_32bit_index_single_a_w8_3bit(const struct frg_TPixelsRef* ds
     };
     if (kIs_LITTLE_ENDIAN){
         TPackByte3 indexs; indexs.value=0;
-        for (int y=-height;;) {
+        for (y=-height;;) {
             indexs.bs=*(const TByte3*)indexsList;
             copy8PixelsFromTable_single_a(pline,alpha32,colorTable,
                                           ((indexs.value    )&7),((indexs.value>> 3)&7),
@@ -393,7 +401,7 @@ void frg_copyPixels_32bit_index_single_a_w8_3bit(const struct frg_TPixelsRef* ds
             ++y; if (!y) break;
         }
     }else{ //is BIG_ENDIAN
-        for (int y=-height;;) {
+        for (y=-height;;) {
             const TFastUInt index0=indexsList[0];
             const TFastUInt index1=indexsList[1];
             const TFastUInt index2=indexsList[2];
