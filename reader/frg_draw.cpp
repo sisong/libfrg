@@ -30,6 +30,10 @@
 #include "frg_reader.h"
 #include "frg_draw.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 #define BRGToColor24(b,g,r) ( ((TUInt32)(b)<<kFrg_outColor_blue_shl)|((TUInt32)(g)<<kFrg_outColor_green_shl)|((TUInt32)(r)<<kFrg_outColor_red_shl) )
 #define BRGToColor32(b,g,r,a) ( BRGToColor24(b,g,r)|((TUInt32)(a)<<kFrg_outColor_alpha_shl) )
 enum { kBGRMask=BRGToColor24(0xFF,0xFF,0xFF) };
@@ -38,28 +42,20 @@ static const int _temp_bl=1;
 static const bool kIs_LITTLE_ENDIAN=((*(char*)&_temp_bl)==1);
 
 typedef TUInt TFastUInt;
-struct TPairColor{
+typedef struct TPairColor{
     TUInt32     c0;
     TUInt32     c1;
-    inline TPairColor(TUInt32 _c0,TUInt32 _c1):c0(_c0),c1(_c1){}
-};
+} TPairColor;
 
-//---------
-
-void frg_table_BGR24_to_32bit(void* pDstColor,const TByte* pBGR24,TUInt colorCount){
-    const TUInt fast_width=colorCount&(~3);
-    TUInt32* pline=(TUInt32*)pDstColor;
-    for (TUInt x=0; x<fast_width; x+=4,pBGR24+=3*4) {
-        pline[x+0]=BRGToColor24(pBGR24[ 0],pBGR24[ 1],pBGR24[ 2]);
-        pline[x+1]=BRGToColor24(pBGR24[ 3],pBGR24[ 4],pBGR24[ 5]);
-        pline[x+2]=BRGToColor24(pBGR24[ 6],pBGR24[ 7],pBGR24[ 8]);
-        pline[x+3]=BRGToColor24(pBGR24[ 9],pBGR24[10],pBGR24[11]);
-    }
-    for (TUInt x=fast_width; x<colorCount; ++x,pBGR24+=3) {
-        pline[x]=BRGToColor24(pBGR24[0],pBGR24[1],pBGR24[2]);
-    }
+static inline TPairColor _initPairColor(TUInt32 _c0,TUInt32 _c1){
+     struct TPairColor temp={_c0,_c1};
+    return temp;
 }
-
+    
+//#define DefinePairColor(pairColorName,_c0,_c1)  const struct TPairColor pairColorName={_c0,_c1} //xcode 64-bit,fill8Pixels slow!
+#define DefinePairColor(pairColorName,_c0,_c1)  const struct TPairColor pairColorName=_initPairColor(_c0,_c1)
+#define SetPairColor(pdst,_c0,_c1) { ((TUInt32*)(pdst))[0]=(_c0); ((TUInt32*)(pdst))[1]=(_c1); }
+    
 ///
 
 #define fill8Pixels(pline,pairColor){ \
@@ -116,10 +112,10 @@ void frg_table_BGR24_to_32bit(void* pDstColor,const TByte* pBGR24,TUInt colorCou
     copy8PixelsFromTableWithAlpha(pline,alphaLine,src_pline,0,1,2,3,4,5,6,7)
 
 #define copy8PixelsFromTable(pline,colorTable,i0,i1,i2,i3,i4,i5,i6,i7){ \
-    *(struct TPairColor*)&pline[0]=TPairColor(colorTable[i0],colorTable[i1]);\
-    *(struct TPairColor*)&pline[2]=TPairColor(colorTable[i2],colorTable[i3]);\
-    *(struct TPairColor*)&pline[4]=TPairColor(colorTable[i4],colorTable[i5]);\
-    *(struct TPairColor*)&pline[6]=TPairColor(colorTable[i6],colorTable[i7]);\
+    SetPairColor(&pline[0],colorTable[i0],colorTable[i1]);\
+    SetPairColor(&pline[2],colorTable[i2],colorTable[i3]);\
+    SetPairColor(&pline[4],colorTable[i4],colorTable[i5]);\
+    SetPairColor(&pline[6],colorTable[i6],colorTable[i7]);\
 }
 
 
@@ -151,6 +147,26 @@ void frg_table_BGR24_to_32bit(void* pDstColor,const TByte* pBGR24,TUInt colorCou
     }
 
 
+#ifdef __cplusplus
+}
+#endif
+
+//---------
+
+void frg_table_BGR24_to_32bit(void* pDstColor,const TByte* pBGR24,TUInt colorCount){
+    const TUInt fast_width=colorCount&(~3);
+    TUInt32* pline=(TUInt32*)pDstColor;
+    for (TUInt x=0; x<fast_width; x+=4,pBGR24+=3*4) {
+        pline[x+0]=BRGToColor24(pBGR24[ 0],pBGR24[ 1],pBGR24[ 2]);
+        pline[x+1]=BRGToColor24(pBGR24[ 3],pBGR24[ 4],pBGR24[ 5]);
+        pline[x+2]=BRGToColor24(pBGR24[ 6],pBGR24[ 7],pBGR24[ 8]);
+        pline[x+3]=BRGToColor24(pBGR24[ 9],pBGR24[10],pBGR24[11]);
+    }
+    for (TUInt x=fast_width; x<colorCount; ++x,pBGR24+=3) {
+        pline[x]=BRGToColor24(pBGR24[0],pBGR24[1],pBGR24[2]);
+    }
+}
+
 ////
 
 void frg_fillPixels_32bit(const struct frg_TPixelsRef* dst,const TByte* pBGRA32){
@@ -159,7 +175,7 @@ void frg_fillPixels_32bit(const struct frg_TPixelsRef* dst,const TByte* pBGRA32)
     const int width=dst->width;
     const int fast_width=width&(~7);
     const TUInt32 color32=BRGToColor32(pBGRA32[0],pBGRA32[1],pBGRA32[2],pBGRA32[3]);
-    const TPairColor pairColor(color32,color32);
+    DefinePairColor(pairColor,color32,color32);
     TUInt32* pline=(TUInt32*)dst->pColor;
     
     for (int y=0; y<height; ++y) {
@@ -192,7 +208,7 @@ void frg_fillPixels_32bit_withAlpha(const struct frg_TPixelsRef* dst,const TByte
 void frg_copyPixels_32bit_single_bgra_w8(const struct frg_TPixelsRef* dst,TUInt32 color32){
     const int height=dst->height;
     const int byte_width=dst->byte_width;
-    const TPairColor pairColor(color32,color32);
+    DefinePairColor(pairColor,color32,color32);
     TUInt32* pline=(TUInt32*)dst->pColor;
     /*
     for (int y=0; y<height; ++y) {
