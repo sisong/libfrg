@@ -241,10 +241,9 @@ static TUInt unpackUIntWithTag(const TByte** src_code,const TByte* src_code_end,
 #ifdef FRG_READER_RUN_MEM_SAFE_CHECK
     const int kPackMaxTagBit=7;
 #endif
-    const TByte* pcode;
-    TUInt   value;
-    TByte   code;
-    pcode=*src_code;
+    TUInt           value;
+    TByte           code;
+    const TByte*    pcode=*src_code;
     
 #ifdef FRG_READER_RUN_MEM_SAFE_CHECK
     assert((0<=kTagBit)&&(kTagBit<=kPackMaxTagBit));
@@ -438,23 +437,20 @@ frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TB
 
 /////////////
 
-
 frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,const TByte* rle_code,const TByte* rle_code_end){
-    TUInt ctrlSize,length;
-    const TByte* ctrlBuf,*ctrlBuf_end;
-    enum TByteRleType type;
+    const TByte*    ctrlBuf,*ctrlBuf_end;
     
-    ctrlSize= unpackUInt(&rle_code,rle_code_end);
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
+    TUInt ctrlSize= unpackUInt(&rle_code,rle_code_end);
+#ifdef FRG_RUN_MEM_SAFE_CHECK
     if (ctrlSize>(TUInt)(rle_code_end-rle_code)) return frg_FALSE;
 #endif
     ctrlBuf=rle_code;
     rle_code+=ctrlSize;
     ctrlBuf_end=rle_code;
     while (ctrlBuf_end-ctrlBuf>0){
-        type=(enum TByteRleType)((*ctrlBuf)>>(8-kByteRleType_bit));
-        length= 1 + unpackUIntWithTag(&ctrlBuf,ctrlBuf_end,kByteRleType_bit);
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
+        enum TByteRleType type=(enum TByteRleType)((*ctrlBuf)>>(8-kByteRleType_bit));
+        TUInt length= 1 + unpackUIntWithTag(&ctrlBuf,ctrlBuf_end,kByteRleType_bit);
+#ifdef FRG_RUN_MEM_SAFE_CHECK
         if (length>(TUInt)(out_dataEnd-out_data)) return frg_FALSE;
 #endif
         switch (type){
@@ -467,7 +463,7 @@ frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,const TByte* rle_code
                 out_data+=length;
             }break;
             case kByteRleType_rle:{
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
+#ifdef FRG_RUN_MEM_SAFE_CHECK
                 if (1>(TUInt)(rle_code_end-rle_code)) return frg_FALSE;
 #endif
                 memset(out_data,*rle_code,length);
@@ -475,7 +471,7 @@ frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,const TByte* rle_code
                 out_data+=length;
             }break;
             case kByteRleType_unrle:{
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
+#ifdef FRG_RUN_MEM_SAFE_CHECK
                 if (length>(TUInt)(rle_code_end-rle_code)) return frg_FALSE;
 #endif
                 memcpy(out_data,rle_code,length);
