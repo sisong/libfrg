@@ -1,4 +1,4 @@
-//  frg_reader.cpp
+//  frg_reader.c
 /*
  This is the frg copyright.
 
@@ -30,7 +30,7 @@
 #include "../../lz4/lz4.h"//http://code.google.com/p/lz4/
 #include "frg_draw.h"
 #ifdef _IS_NEED_INLINE_FRG_DRAW_CODE
-    #include "frg_draw.cpp"
+    #include "frg_draw.c"
 #endif
 
 #define loadUInt32(pcode) ((TUInt32)(   \

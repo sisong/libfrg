@@ -1,4 +1,4 @@
-//  frg_draw.cpp
+//  frg_draw.c
 //  for frg_reader
 /*
  This is the frg copyright.
@@ -681,7 +681,7 @@ void frg_copyPixels_32bit_match(const struct frg_TPixelsRef* dst,const TUInt32* 
             copyLinePixelsWithBGRAndAlpha(+,-);
         } break;
         default:{
-            assert(false);
+            assert(0);
         } break;
     }
 }
