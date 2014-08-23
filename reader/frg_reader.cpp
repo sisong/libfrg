@@ -264,75 +264,75 @@ static TUInt unpackUIntWithTag(const TByte** src_code,const TByte* src_code_end,
 #define unpackUInt(src_code,src_code_end) unpackUIntWithTag(src_code,src_code_end,0)
 
 frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TByte* code,const TByte* code_end,const TByte* alpha,int alpha_byte_width,TByte* tempMemory,TByte* tempMemory_end){
-    //assert((dst_image->width>0)&&(dst_image->height>0)); //is ok
-
-    const TUInt nodeCount=unpackUInt(&code,code_end);
-    const int nodeWidth=(dst_image->width-1)/kFrg_ClipWidth+1;
-    const int nodeHeight=(dst_image->height-1)/kFrg_ClipHeight+1;
-    if (nodeCount!=(TUInt)nodeWidth*(TUInt)nodeHeight) return frg_FALSE;
-    if( (sizeof(TUInt)<sizeof(int)*2) && (nodeCount/(TUInt)nodeWidth!=(TUInt)nodeHeight) ) return frg_FALSE;
-    const TUInt tableSize=unpackUInt(&code,code_end);
-    const TUInt indexCodeSize=unpackUInt(&code,code_end);
-    const TUInt matchCount=unpackUInt(&code,code_end);
-
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-    if (nodeCount>(TUInt)(code_end-code)) return frg_FALSE;
-#endif
-    const TByte* nodeInfoList=code;   code+=nodeCount;
-    const TByte* nodeInfoList_end=code;
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-    if ( ((tableSize>>(sizeof(TUInt)*8-2))!=0) || (tableSize*3>(TUInt)(code_end-code)) ) return frg_FALSE;
-#endif
-    const TByte* color24Table=code;   code+=tableSize*3;
-
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-    if (indexCodeSize>(TUInt)(code_end-code)) return frg_FALSE;
-#endif
-    const TByte* indexCodeList=code; code+=indexCodeSize;
-    const TByte* indexCodeList_end=code;
-
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-    if ( ((matchCount>>(sizeof(TUInt)*8-2))!=0) || (matchCount*4>(TUInt)(code_end-code)) ) return frg_FALSE;
-#endif
-    const TByte* matchXYList=code; code+=matchCount*4;
-    const TByte* matchXYList_end=code;
-    if (code!=code_end) return frg_FALSE;
-
-    //colorTable
-    if ((TUInt)(tempMemory_end-tempMemory)<(TUInt)(tableSize*4+3)) return frg_FALSE;
-    TUInt32* colorTable=(TUInt32*)tempMemory; //tempMemory+= tableSize*4+3;
-    colorTable=(TUInt32*)toAlign4(colorTable);
-    const TUInt32* colorTable_end=colorTable+tableSize;
-    frg_table_BGR24_to_32bit(colorTable,color24Table,tableSize);
-#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-    const TUInt32* _colorTable0_back=colorTable;
-    if (kSafeColorTable_extendMemSize>(TUInt)(tempMemory_end-tempMemory-(tableSize*4+3))) return frg_FALSE;
-    memset(&colorTable[tableSize],0,kSafeColorTable_extendMemSize);
-#endif
-
-    int lastNodeWidth=(dst_image->width)%kFrg_ClipWidth;
-    if (lastNodeWidth==0) lastNodeWidth=kFrg_ClipWidth;
-    int lastNodeHeight=(dst_image->height)%kFrg_ClipHeight;
-    if (lastNodeHeight==0) lastNodeHeight=kFrg_ClipHeight;
+    const int nodeWidth=((TUInt32)(dst_image->width-1))/kFrg_ClipWidth+1;
+    const int nodeHeight=((TUInt32)(dst_image->height-1))/kFrg_ClipHeight+1;
+    const TByte *nodeInfoList,*nodeInfoList_end,*indexCodeList,*indexCodeList_end,*matchXYList,*matchXYList_end;
+    const TUInt32 *colorTable,*colorTable_end;
+    int lastNodeWidth,lastNodeHeight;
+    int ny;
     struct frg_TPixelsRef subRef;
+    
+    {
+        const TByte* color24Table;
+        const TUInt nodeCount=unpackUInt(&code,code_end);
+        const TUInt tableSize=unpackUInt(&code,code_end);
+        const TUInt indexCodeSize=unpackUInt(&code,code_end);
+        const TUInt matchCount=unpackUInt(&code,code_end);
+        if (nodeCount!=(TUInt)nodeWidth*(TUInt)nodeHeight) return frg_FALSE;
+        if( (sizeof(TUInt)<sizeof(int)*2) && (nodeCount/(TUInt)nodeWidth!=(TUInt)nodeHeight) ) return frg_FALSE;
+        
+#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
+        if (nodeCount>(TUInt)(code_end-code)) return frg_FALSE;
+#endif
+        nodeInfoList=code;   code+=nodeCount;
+        nodeInfoList_end=code;
+#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
+        if ( ((tableSize>>(sizeof(TUInt)*8-2))!=0) || (tableSize*3>(TUInt)(code_end-code)) ) return frg_FALSE;
+#endif
+        color24Table=code;   code+=tableSize*3;
+        
+#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
+        if (indexCodeSize>(TUInt)(code_end-code)) return frg_FALSE;
+#endif
+        indexCodeList=code; code+=indexCodeSize;
+        indexCodeList_end=code;
+        
+#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
+        if ( ((matchCount>>(sizeof(TUInt)*8-2))!=0) || (matchCount*4>(TUInt)(code_end-code)) ) return frg_FALSE;
+#endif
+        matchXYList=code; code+=matchCount*4;
+        matchXYList_end=code;
+        if (code!=code_end) return frg_FALSE;
+        
+        //colorTable
+        if ((TUInt)(tempMemory_end-tempMemory)<(TUInt)(tableSize*4+3)) return frg_FALSE;
+        colorTable=(const TUInt32*)toAlign4(tempMemory);//tempMemory+= tableSize*4+3;
+        colorTable_end=colorTable+tableSize;
+        frg_table_BGR24_to_32bit((TUInt32*)colorTable,color24Table,tableSize);
+#ifdef FRG_READER_RUN_MEM_SAFE_CHECK
+        const TUInt32* _colorTable0_back=colorTable;
+        if (kSafeColorTable_extendMemSize>(TUInt)(tempMemory_end-tempMemory-(tableSize*4+3))) return frg_FALSE;
+        memset(&colorTable[tableSize],0,kSafeColorTable_extendMemSize);
+#endif
+    }
+    
+    lastNodeWidth=((TUInt32)(dst_image->width-1))%kFrg_ClipWidth+1;
+    lastNodeHeight=((TUInt32)(dst_image->height-1))%kFrg_ClipHeight+1;
+    
     subRef.byte_width=dst_image->byte_width;
     subRef.colorType=dst_image->colorType;
     subRef.height=kFrg_ClipHeight;
-
-    for (int ny=0; ny<nodeHeight;++ny,alpha+=alpha_byte_width*kFrg_ClipHeight){
+    for (ny=0; ny<nodeHeight;++ny,alpha+=alpha_byte_width*kFrg_ClipHeight){
+        int nx;
+        const TByte* curAlpha=alpha;
         subRef.pColor=(TByte*)dst_image->pColor+ny*kFrg_ClipHeight*dst_image->byte_width;
         subRef.width=kFrg_ClipWidth;
-        if (ny==nodeHeight-1)
-            subRef.height=lastNodeHeight;
-        const TByte* curAlpha=alpha;
-        for (int nx=0; nx<nodeWidth;++nx,curAlpha+=kFrg_ClipWidth,subRef.pColor=(TUInt32*)( ((TByte*)subRef.pColor)+kFrg_ClipWidth*kFrg_outColor_size )){
-            if (nx==nodeWidth-1)
-                subRef.width=lastNodeWidth;
-
+        if (ny==nodeHeight-1) subRef.height=lastNodeHeight;
+        for (nx=nodeWidth-1; nx>=0;--nx,curAlpha+=kFrg_ClipWidth,subRef.pColor=(TUInt32*)( ((TByte*)subRef.pColor)+kFrg_ClipWidth*kFrg_outColor_size )){
             TByte nodeInfo=*nodeInfoList; ++nodeInfoList;
+            if (nx==0) subRef.width=lastNodeWidth;
             //assert(nodeInfoList<=nodeInfoList_end); //safe
-            const enum frg_TClipType nodeType=(enum frg_TClipType)(nodeInfo>>4);
-            switch (nodeType) { //type
+            switch ((enum frg_TClipType)(nodeInfo>>4)) { //type
                 case kFrg_ClipType_index_single_a_w8:{
                     TUInt tableLength=1+( nodeInfo&15 );
                     const int bit=kFrg_SubTableSize_to_indexBit[tableLength];
@@ -389,8 +389,7 @@ frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TB
                     if (tableForwardLength>(TUInt)(colorTable-_colorTable0_back)) return frg_FALSE;
                     if ((TUInt32)(subRef.height*bit)>(TUInt)(indexCodeList_end-indexCodeList)) return frg_FALSE;
 #endif
-                    const TUInt32* subTable=colorTable-tableForwardLength;
-                    frg_copyPixels_32bit_index_single_a_w8_xbit(bit,&subRef,subTable,indexCodeList,*curAlpha);
+                    frg_copyPixels_32bit_index_single_a_w8_xbit(bit,&subRef,colorTable-tableForwardLength,indexCodeList,*curAlpha);
                     indexCodeList+=subRef.height*bit;//*kFrg_ClipWidth/8
                 } break;
                 case kFrg_ClipType_match_table:{
@@ -400,15 +399,14 @@ frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TB
                     if (tableForwardLength>(TUInt)(colorTable-_colorTable0_back)) return frg_FALSE;
                     if ((TUInt)((subRef.width*subRef.height*bit+7)>>3)>(TUInt)(indexCodeList_end-indexCodeList)) return frg_FALSE;
 #endif
-                    const TUInt32* subTable=colorTable-tableForwardLength;
-                    frg_copyPixels_32bit_index_xbit(bit,&subRef,subTable,indexCodeList,curAlpha,alpha_byte_width);
+                    frg_copyPixels_32bit_index_xbit(bit,&subRef,colorTable-tableForwardLength,indexCodeList,curAlpha,alpha_byte_width);
                     indexCodeList+=(subRef.width*subRef.height*bit+7)>>3;
                 } break;
                 case kFrg_ClipType_match_image:{
+                    enum frg_TMatchType matchType=(enum frg_TMatchType)(nodeInfo&((1<<3)-1)); //3bit
 #ifdef FRG_READER_RUN_MEM_SAFE_CHECK
                     if (4>(TUInt)(matchXYList_end-matchXYList)) return frg_FALSE;
 #endif
-                    enum frg_TMatchType matchType=(enum frg_TMatchType)(nodeInfo&((1<<3)-1)); //3bit
                     const TUInt32* pXYColor_matched=(const TUInt32*)( (matchXYList[0]|(matchXYList[1]<<8))*sizeof(TUInt32)
                                                 +(matchXYList[2]|(matchXYList[3]<<8))*dst_image->byte_width
                                                 +((TByte*)dst_image->pColor) );
