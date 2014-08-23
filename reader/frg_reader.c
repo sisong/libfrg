@@ -30,7 +30,9 @@
 #include "../../lz4/lz4.h"//http://code.google.com/p/lz4/
 #include "frg_draw.h"
 #ifdef _IS_NEED_INLINE_FRG_DRAW_CODE
-    #include "frg_draw.c"
+    #undef  _IS_NEED_INLINE_FRG_DRAW_CODE
+        #include "frg_draw.c"
+    #define _IS_NEED_INLINE_FRG_DRAW_CODE
 #endif
 
 #ifdef FRG_READER_RUN_MEM_SAFE_CHECK

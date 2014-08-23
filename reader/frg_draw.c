@@ -30,6 +30,8 @@
 #include "frg_reader.h"
 #include "frg_draw.h"
 
+#ifndef _IS_NEED_INLINE_FRG_DRAW_CODE
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -731,4 +733,5 @@ void frg_copyPixels_32bit_directColor(const struct frg_TPixelsRef* dst,const TUI
 }
 
 
+#endif //_IS_NEED_INLINE_FRG_DRAW_CODE
 
