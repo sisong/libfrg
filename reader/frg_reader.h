@@ -32,9 +32,6 @@
 //用来启动内存访问越界检查,用以避免损坏的frg文件数据或构造特殊frg编码的攻击;速度影响较小(打开可能慢2%).
 //#define FRG_READER_RUN_MEM_SAFE_CHECK
 
-//frg13版文件格式用了FRZ1压缩算法,14版采用了LZ4; 定义FRG_IS_NEED_FRZ1_DECOMPRESS用于兼容以前储存的图片.
-//#define FRG_IS_NEED_FRZ1_DECOMPRESS
-
 #if defined(__BCPLUSPLUS__) || defined( _BORLANDC_ )
   #define _BCC32_OBJ_FOR_DELPHI
   #define _IS_NEED_INLINE_FRG_DRAW_CODE
