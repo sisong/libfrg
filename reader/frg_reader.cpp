@@ -39,27 +39,13 @@
                             | (TUInt32)(((const TByte*)(pcode))[2]<<16) \
                             | (TUInt32)(((const TByte*)(pcode))[3]<<24) ))
 #define readUInt32(ppcode) loadUInt32(*(ppcode)); { *(ppcode)+=4; }
-#define toAlign4(pointer) (  (const TByte*)0+( ((const TByte*)pointer-(const TByte*)0+3)>>2<<2 )  )
+#define toAlign4(pointer) (  (const TByte*)0+( ((const TByte*)pointer-(const TByte*)0+3)&(~(size_t)3) )  )
 
 FRG_READER_STATIC frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,const TByte* rle_code,const TByte* rle_code_end);//rle解码.
 FRG_READER_STATIC frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TByte* code,const TByte* code_end,const TByte* alpha,int alpha_byte_width,TByte* tempMemory,TByte* tempMemory_end);
 
-#ifdef FRG_IS_NEED_FRZ1_DECOMPRESS
-    #include "../../FRZ/reader/FRZ1_decompress.h" //source code: https://github.com/sisong/FRZ/
-    static const char kFrgTagAndVersion_frz1[kFrgTagAndVersionSize]={'F','R','G',13};
-#endif
-
-static inline bool frgZip_decompress(unsigned char* out_data,unsigned char* out_data_end,
-                              const unsigned char* frgZip_code,const unsigned char* frgZip_code_end,const char* frgTagAndVersion){
-#ifdef FRG_IS_NEED_FRZ1_DECOMPRESS
-    if (loadUInt32(frgTagAndVersion)==loadUInt32(kFrgTagAndVersion_frz1)) {
-    #ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-        return FRZ1_decompress_safe(out_data,out_data_end,frgZip_code,frgZip_code_end);
-    #else
-        return FRZ1_decompress     (out_data,out_data_end,frgZip_code,frgZip_code_end);
-    #endif
-    }
-#endif
+static /* inline */ frg_BOOL frgZip_decompress(unsigned char* out_data,unsigned char* out_data_end,
+                              const unsigned char* frgZip_code,const unsigned char* frgZip_code_end){
     #ifdef FRG_READER_RUN_MEM_SAFE_CHECK
         return 0<=LZ4_decompress_safe((const char*)frgZip_code,(char*)out_data,(int)(frgZip_code_end-frgZip_code),(int)(out_data_end-out_data));
     #else
@@ -74,24 +60,20 @@ int FRG_READER_EXPORT_API getFrgHeadSize(void){
 }
 
 #ifdef FRG_READER_RUN_MEM_SAFE_CHECK
-    static const unsigned int kSafeColorTable_extendMemSize=kFrg_MaxSubTableSize*kFrg_outColor_size;
+#   define kSafeColorTable_extendMemSize ((unsigned int)(kFrg_MaxSubTableSize*kFrg_outColor_size))
 #endif
 
 frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const TByte* frgCode_begin,const TByte* frgCode_end,struct frg_TFrgImageInfo* out_frgImageInfo){
+    const struct TFrgFileHead* fhead=(const struct TFrgFileHead*)frgCode_begin;
+    struct frg_TFrgImageInfo tmp_frgImageInfo;
+    if (out_frgImageInfo==0) out_frgImageInfo=&tmp_frgImageInfo;
+    
     assert(frgCode_end>=frgCode_begin);
     if (!(frgCode_end>=frgCode_begin)) return frg_FALSE;
     if ((TUInt)kFrgFileHeadSize>(TUInt)(frgCode_end-frgCode_begin)) return frg_FALSE;
-    const struct TFrgFileHead* fhead=(const struct TFrgFileHead*)frgCode_begin;
-    if (   (loadUInt32(&fhead->frgTagAndVersion[0])!=loadUInt32(&kFrgTagAndVersion[0]))
-#ifdef FRG_IS_NEED_FRZ1_DECOMPRESS
-        && (loadUInt32(&fhead->frgTagAndVersion[0])!=loadUInt32(&kFrgTagAndVersion_frz1[0]))
-#endif
-       )
+    if ( loadUInt32(&fhead->frgTagAndVersion[0])!=loadUInt32(&kFrgTagAndVersion[0]) )
         return frg_FALSE;
-
-    struct frg_TFrgImageInfo tmp_frgImageInfo;
-    if (out_frgImageInfo==0) out_frgImageInfo=&tmp_frgImageInfo;
-
+    
     out_frgImageInfo->imageFileSize=loadUInt32(&fhead->imageFileSize);
     if(out_frgImageInfo->imageFileSize<kFrgFileHeadSize) return frg_FALSE;
     out_frgImageInfo->imageWidth=loadUInt32(&fhead->headInfo.imageWidth);
@@ -104,126 +86,140 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const TByte* frgCode_begin,const
     out_frgImageInfo->decoder_tempMemoryByteSize+=kSafeColorTable_extendMemSize;
 #endif
     //特殊实现的解码器可以对decoder_tempMemoryByteSize送回0,并自己申请解码需要的内存;或者返回自己需要的内存(较困难).
-
+    
     return frg_TRUE;
 }
 
 ////
 
 frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TByte* frgCode_end,const struct frg_TPixelsRef* dst_image,TByte* tempMemory,TByte* tempMemory_end){
-    assert(kFrg_outColor_size==sizeof(TUInt32));
-    assert(tempMemory_end>=tempMemory);
-    if (!(tempMemory_end>=tempMemory)) return frg_FALSE;
-    if (dst_image->colorType!=kFrg_ColorType_32bit_A8R8G8B8) return frg_FALSE;
-    if ((dst_image->width<0)||(dst_image->height<0)) return frg_FALSE;
-    struct frg_TFrgImageInfo frgInfo;
-    if (!readFrgImageInfo(frgCode_begin,frgCode_end,&frgInfo))
-        return frg_FALSE;
-    if ((TUInt)frgInfo.imageFileSize!=(TUInt)(frgCode_end-frgCode_begin)) return frg_FALSE;
-    if ((frgInfo.imageWidth!=dst_image->width)||(frgInfo.imageHeight!=dst_image->height)
-        ||((TUInt)frgInfo.decoder_tempMemoryByteSize>((TUInt)(tempMemory_end-tempMemory)))) return frg_FALSE;
-
-    if ((dst_image->width==0)||(dst_image->height==0)) return frg_TRUE;
-
     const struct TFrgFileHead* fhead=(const struct TFrgFileHead*)frgCode_begin;
-    if (fhead->headInfo.encodingFormat!=kEncodingFormat_stream) return frg_FALSE;
-    if (fhead->headInfo.savedColorFormat!=kSavedColorFormat_A8R8G8B8) return frg_FALSE;
-    const TUInt32 headInfoCodeSize=loadUInt32(&fhead->headInfo.headInfoCodeSize);
-    const TByte* frgCodeData=frgCode_begin+(sizeof(struct TFrgFileHead)-sizeof(struct TFrgHeadInfo))
-                            +sizeof(headInfoCodeSize)+headInfoCodeSize;//skip head code
-    
-    const TByte _colorInfo=fhead->headInfo.colorInfo;
-    const bool isSingleAlpha=(_colorInfo&kColorInfo_isSingleAlpha)!=0;
-    const bool isSingleBGR=(_colorInfo&kColorInfo_isSingleBGR)!=0;
-    const bool isAlphaDataUseBytesZip=(_colorInfo&kColorInfo_isAlphaDataUseBytesZip)!=0;
-    const bool isRGBDataUseBytesZip=(_colorInfo&kColorInfo_isRGBDataUseBytesZip)!=0;
-    const bool isAlphaDataUseRLE=(_colorInfo&kColorInfo_isAlphaDataNotUseBytesRLE)==0;
-
-    const TByte* singleBGRA=&(fhead->headInfo.singleColor_b); //b,g,r,a
-
-    //single color
-    if (isSingleAlpha&&isSingleBGR){
-        frg_fillPixels_32bit(dst_image,singleBGRA);
-        return frg_TRUE;
+    {   //head check
+        struct frg_TFrgImageInfo frgInfo;
+        assert(kFrg_outColor_size==sizeof(TUInt32));
+        assert(tempMemory_end>=tempMemory);
+        if (!(tempMemory_end>=tempMemory)) return frg_FALSE;
+        if (dst_image->colorType!=kFrg_ColorType_32bit_A8R8G8B8) return frg_FALSE;
+        if ((dst_image->width<0)||(dst_image->height<0)) return frg_FALSE;
+        if (!readFrgImageInfo(frgCode_begin,frgCode_end,&frgInfo))
+            return frg_FALSE;
+        if ((TUInt)frgInfo.imageFileSize!=(TUInt)(frgCode_end-frgCode_begin)) return frg_FALSE;
+        if ((frgInfo.imageWidth!=dst_image->width)||(frgInfo.imageHeight!=dst_image->height)
+            ||((TUInt)frgInfo.decoder_tempMemoryByteSize>((TUInt)(tempMemory_end-tempMemory)))) return frg_FALSE;
+        
+        if ((dst_image->width==0)||(dst_image->height==0)) return frg_TRUE;
+        
+        if (fhead->headInfo.encodingFormat!=kEncodingFormat_stream) return frg_FALSE;
+        if (fhead->headInfo.savedColorFormat!=kSavedColorFormat_A8R8G8B8) return frg_FALSE;
     }
-
-    //read alpha
-    const TByte* alphaBuf=0;
-    int alpha_byte_width=0;
-    if (isSingleAlpha){
-        alpha_byte_width=0;
-        const TUInt alphaBufSize=dst_image->width;
-        if (alphaBufSize>(TUInt)(tempMemory_end-tempMemory)) return frg_FALSE;
-        alphaBuf=tempMemory; tempMemory+=alphaBufSize;
-        memset((TByte*)alphaBuf,singleBGRA[3],alphaBufSize);
-    }else{
-        if (4>(TUInt)(frgCode_end-frgCodeData)) return frg_FALSE;
-        const TUInt codeSize=readUInt32(&frgCodeData);
-        if (codeSize>(TUInt)(frgCode_end-frgCodeData)) return frg_FALSE;
-        const TByte* code=frgCodeData;
-        frgCodeData+=codeSize;
-        const TByte* code_end=frgCodeData;
-
-        alpha_byte_width=dst_image->width;
-        const TUInt alphaBufSize=(TUInt)alpha_byte_width*(TUInt)dst_image->height;
-        if ( (sizeof(TUInt)<sizeof(int)*2) && (alphaBufSize/(TUInt)alpha_byte_width!=(TUInt)dst_image->height) ) return frg_FALSE;
-        if((!isAlphaDataUseRLE)&&(!isAlphaDataUseBytesZip)){
-            if (codeSize!=alphaBufSize) return frg_FALSE;
-            alphaBuf=code; //没有任何压缩.
-        }else{
+    {
+        const TUInt32 _headInfoCodeSize=loadUInt32(&fhead->headInfo.headInfoCodeSize);
+        const TByte* frgCodeData=frgCode_begin+(sizeof(struct TFrgFileHead)-sizeof(struct TFrgHeadInfo))
+                                +sizeof(_headInfoCodeSize)+_headInfoCodeSize;//skip head code
+        
+        const TByte _colorInfo=fhead->headInfo.colorInfo;
+        const frg_BOOL isSingleAlpha=(_colorInfo&kColorInfo_isSingleAlpha)!=0;
+        const frg_BOOL isSingleBGR=(_colorInfo&kColorInfo_isSingleBGR)!=0;
+        const frg_BOOL isAlphaDataUseBytesZip=(_colorInfo&kColorInfo_isAlphaDataUseBytesZip)!=0;
+        const frg_BOOL isRGBDataUseBytesZip=(_colorInfo&kColorInfo_isRGBDataUseBytesZip)!=0;
+        const frg_BOOL isAlphaDataUseRLE=(_colorInfo&kColorInfo_isAlphaDataNotUseBytesRLE)==0;
+        const TByte* singleBGRA=&(fhead->headInfo.singleColor_b); //b,g,r,a
+        
+        const TByte* alphaBuf=0;
+        int alpha_byte_width=0;
+        
+        //single color
+        if (isSingleAlpha&&isSingleBGR){
+            frg_fillPixels_32bit(dst_image,singleBGRA);
+            return frg_TRUE;
+        }
+        
+        //read alpha
+        if (isSingleAlpha){
+            const TUInt alphaBufSize=dst_image->width;
+            //alpha_byte_width=0;
             if (alphaBufSize>(TUInt)(tempMemory_end-tempMemory)) return frg_FALSE;
             alphaBuf=tempMemory; tempMemory+=alphaBufSize;
-
-            TByte* _tempMemory_back=tempMemory;
-            if (isAlphaDataUseBytesZip){
-                if (codeSize<4) return frg_FALSE;
-                const TUInt alpha_code_size=readUInt32(&code);
-                TByte* _alpha_code_buf=0;
-                if (isAlphaDataUseRLE){
-                    if (alpha_code_size>(TUInt)(tempMemory_end-tempMemory)) return frg_FALSE;
-                    _alpha_code_buf=tempMemory; tempMemory+=alpha_code_size;
-                }else{
-                    if (alpha_code_size!=alphaBufSize) return frg_FALSE;
-                    _alpha_code_buf=(TByte*)alphaBuf;
+            memset((TByte*)alphaBuf,singleBGRA[3],alphaBufSize);
+        }else{
+            const TByte *code,*code_end;
+            TUInt alphaBufSize,codeSize;
+            
+            if (4>(TUInt)(frgCode_end-frgCodeData)) return frg_FALSE;
+            codeSize=readUInt32(&frgCodeData);
+            if (codeSize>(TUInt)(frgCode_end-frgCodeData)) return frg_FALSE;
+            code=frgCodeData;
+            frgCodeData+=codeSize;
+            code_end=frgCodeData;
+            
+            alpha_byte_width=dst_image->width;
+            alphaBufSize=(TUInt)alpha_byte_width*(TUInt)dst_image->height;
+            if ( (sizeof(TUInt)<sizeof(int)*2) && (alphaBufSize/(TUInt)alpha_byte_width!=(TUInt)dst_image->height) ) return frg_FALSE;
+            if((!isAlphaDataUseRLE)&&(!isAlphaDataUseBytesZip)){
+                if (codeSize!=alphaBufSize) return frg_FALSE;
+                alphaBuf=code; //没有任何压缩.
+            }else{
+                TByte* _tempMemory_back;
+                if (alphaBufSize>(TUInt)(tempMemory_end-tempMemory)) return frg_FALSE;
+                alphaBuf=tempMemory; tempMemory+=alphaBufSize;
+                
+                _tempMemory_back=tempMemory;
+                if (isAlphaDataUseBytesZip){
+                    TUInt alpha_code_size;
+                    TByte* _alpha_code_buf=0;
+                    if (codeSize<4) return frg_FALSE;
+                    alpha_code_size=readUInt32(&code);
+                    if (isAlphaDataUseRLE){
+                        if (alpha_code_size>(TUInt)(tempMemory_end-tempMemory)) return frg_FALSE;
+                        _alpha_code_buf=tempMemory; tempMemory+=alpha_code_size;
+                    }else{
+                        if (alpha_code_size!=alphaBufSize) return frg_FALSE;
+                        _alpha_code_buf=(TByte*)alphaBuf;
+                    }
+                    if (!frgZip_decompress(_alpha_code_buf,_alpha_code_buf+alpha_code_size,code,code_end))
+                        return frg_FALSE;
+                    code=_alpha_code_buf;
+                    code_end=_alpha_code_buf+alpha_code_size;
                 }
-                if (!frgZip_decompress(_alpha_code_buf,_alpha_code_buf+alpha_code_size,code,code_end,fhead->frgTagAndVersion))
-                    return frg_FALSE;
-                code=_alpha_code_buf;
-                code_end=_alpha_code_buf+alpha_code_size;
+                if (isAlphaDataUseRLE) {
+                    if (!_bytesRle_load((TByte*)alphaBuf,(TByte*)alphaBuf+alphaBufSize,code,code_end))
+                        return frg_FALSE;
+                }
+                tempMemory=_tempMemory_back;
             }
-            if (isAlphaDataUseRLE) {
-                if (!_bytesRle_load((TByte*)alphaBuf,(TByte*)alphaBuf+alphaBufSize,code,code_end))
-                    return frg_FALSE;
-            }
-            tempMemory=_tempMemory_back;
         }
-    }
-
-    //read bgr
-    if (isSingleBGR) {
-        frg_fillPixels_32bit_withAlpha(dst_image,singleBGRA,alphaBuf,alpha_byte_width);
-    }else{
-        if (4>(TUInt)(frgCode_end-frgCodeData)) return frg_FALSE;
-        const TUInt codeSize=readUInt32(&frgCodeData);
-        if (codeSize>(TUInt)(frgCode_end-frgCodeData)) return frg_FALSE;
-        const TByte* code=frgCodeData;
-        frgCodeData+=codeSize;
-        const TByte* code_end=frgCodeData;
-
-        //TByte* _tempMemory_back=tempMemory;
-        if (isRGBDataUseBytesZip){
-            if (codeSize<4) return frg_FALSE;
-            const TUInt bgr_code_size=readUInt32(&code);
-            if (bgr_code_size>(TUInt)(tempMemory_end-tempMemory)) return frg_FALSE;
-            TByte* _bgr_code_buf=tempMemory; tempMemory+=bgr_code_size;
-            if (!frgZip_decompress(_bgr_code_buf,_bgr_code_buf+bgr_code_size,code,code_end,fhead->frgTagAndVersion))
+        
+        //read bgr
+        if (isSingleBGR) {
+            frg_fillPixels_32bit_withAlpha(dst_image,singleBGRA,alphaBuf,alpha_byte_width);
+        }else{
+            const TByte *code,*code_end;
+            TUInt codeSize;
+            if (4>(TUInt)(frgCode_end-frgCodeData)) return frg_FALSE;
+            codeSize=readUInt32(&frgCodeData);
+            if (codeSize>(TUInt)(frgCode_end-frgCodeData)) return frg_FALSE;
+            code=frgCodeData;
+            frgCodeData+=codeSize;
+            code_end=frgCodeData;
+            
+            //TByte* _tempMemory_back=tempMemory;
+            if (isRGBDataUseBytesZip){
+                TUInt bgr_code_size;
+                TByte* _bgr_code_buf;
+                
+                if (codeSize<4) return frg_FALSE;
+                bgr_code_size=readUInt32(&code);
+                if (bgr_code_size>(TUInt)(tempMemory_end-tempMemory)) return frg_FALSE;
+                _bgr_code_buf=tempMemory; tempMemory+=bgr_code_size;
+                if (!frgZip_decompress(_bgr_code_buf,_bgr_code_buf+bgr_code_size,code,code_end))
+                    return frg_FALSE;
+                code=_bgr_code_buf;
+                code_end=_bgr_code_buf+bgr_code_size;
+            }
+            if (!_colorUnZiper_loadColor(dst_image,code,code_end,alphaBuf,alpha_byte_width,tempMemory,tempMemory_end))
                 return frg_FALSE;
-            code=_bgr_code_buf;
-            code_end=_bgr_code_buf+bgr_code_size;
+            //tempMemory=_tempMemory_back;
         }
-        if (!_colorUnZiper_loadColor(dst_image,code,code_end,alphaBuf,alpha_byte_width,tempMemory,tempMemory_end))
-            return frg_FALSE;
-        //tempMemory=_tempMemory_back;
     }
     return frg_TRUE;
 }
