@@ -275,6 +275,9 @@ frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TB
     int lastNodeWidth,lastNodeHeight;
     int ny;
     struct frg_TPixelsRef subRef;
+#ifdef __RUN_MEM_SAFE_CHECK
+    const TUInt32* _colorTable0_back;
+#endif
     
     {
         const TByte* color24Table;
@@ -314,9 +317,9 @@ frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TB
         colorTable_end=colorTable+tableSize;
         frg_table_BGR24_to_32bit((TUInt32*)colorTable,color24Table,tableSize);
 #ifdef __RUN_MEM_SAFE_CHECK
-        const TUInt32* _colorTable0_back=colorTable;
+        _colorTable0_back=colorTable;
         if (kSafeColorTable_extendMemSize>(TUInt)(tempMemory_end-tempMemory-(tableSize*4+3))) return frg_FALSE;
-        memset(&colorTable[tableSize],0,kSafeColorTable_extendMemSize);
+        memset((void*)&colorTable[tableSize],0,kSafeColorTable_extendMemSize);
 #endif
     }
     
