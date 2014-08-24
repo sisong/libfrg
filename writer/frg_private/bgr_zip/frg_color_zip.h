@@ -36,7 +36,7 @@ namespace frg{
 
     class TColorZiper{
     public:
-        static void saveTo(std::vector<TByte>& out_buf,const TPixels32Ref& src_ref,float colorQuality,bool isMustFitColorTable,int* tempMemoryByteSize_forDecode);
+        static void saveTo(std::vector<TByte>& out_buf,const TPixels32Ref& src_ref,float colorQuality,bool isMustFitColorTable,TUInt* tempMemoryByteSize_forDecode);
     };
 
 }//end namespace frg

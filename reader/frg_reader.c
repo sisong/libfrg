@@ -81,7 +81,7 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const TByte* frgCode_begin,const
         return frg_FALSE;
     
     out_frgImageInfo->imageFileSize=loadUInt32(&fhead->imageFileSize);
-    if(out_frgImageInfo->imageFileSize<kFrgFileHeadSize) return frg_FALSE;
+    if(out_frgImageInfo->imageFileSize<(TUInt32)kFrgFileHeadSize) return frg_FALSE;
     out_frgImageInfo->imageWidth=loadUInt32(&fhead->headInfo.imageWidth);
     if(out_frgImageInfo->imageWidth<0) return frg_FALSE;
     out_frgImageInfo->imageHeight=loadUInt32(&fhead->headInfo.imageHeight);

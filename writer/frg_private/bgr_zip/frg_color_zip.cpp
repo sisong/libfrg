@@ -91,7 +91,7 @@ namespace frg{
 
     class TColorZip{
     public:
-        explicit TColorZip(float colorQuality,bool isMustFitColorTable,int* tempMemoryByteSize_forDecode):m_colorQuality(colorQuality),m_tableZiper(colorQuality,isMustFitColorTable),m_tempMemoryByteSize_forDecode(*tempMemoryByteSize_forDecode){ }
+        explicit TColorZip(float colorQuality,bool isMustFitColorTable,TUInt* tempMemoryByteSize_forDecode):m_colorQuality(colorQuality),m_tableZiper(colorQuality,isMustFitColorTable),m_tempMemoryByteSize_forDecode(*tempMemoryByteSize_forDecode){ }
         void saveTo(std::vector<TByte>& out_buf,const TPixels32Ref& ref){
             if (ref.getIsEmpty()) return;
             m_srcRef=ref;
@@ -478,7 +478,7 @@ namespace frg{
         std::vector<TByte>      m_indexList;
         std::vector<Color24>    m_colorTable;       //总调色板.
         std::vector<TUInt32>    m_matchXYList;      //帧内匹配列表.
-        int&                    m_tempMemoryByteSize_forDecode;
+        TUInt&                  m_tempMemoryByteSize_forDecode;
     };
 
 
@@ -492,7 +492,7 @@ namespace frg{
 
     ///
 
-    void TColorZiper::saveTo(std::vector<TByte>& out_buf,const TPixels32Ref& ref,float colorQuality,bool isMustFitColorTable,int* tempMemoryByteSize_forDecode){
+    void TColorZiper::saveTo(std::vector<TByte>& out_buf,const TPixels32Ref& ref,float colorQuality,bool isMustFitColorTable,TUInt* tempMemoryByteSize_forDecode){
         *tempMemoryByteSize_forDecode=0;
         if (ref.getIsEmpty()) return;
         TColorZip colorZip(colorQuality,isMustFitColorTable,tempMemoryByteSize_forDecode);

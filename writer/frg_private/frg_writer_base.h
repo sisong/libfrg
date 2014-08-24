@@ -54,7 +54,10 @@
 
 
 namespace frg {
-
+    
+typedef ptrdiff_t   TInt;
+typedef size_t      TUInt;
+    
 inline static TUInt32 packMatchXY(TUInt32 x,TUInt32 y){
     assert((x|y)<(1<<16));
     return x|(y<<16);

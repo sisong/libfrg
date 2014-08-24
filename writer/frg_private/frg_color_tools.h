@@ -2,10 +2,10 @@
 //  for frg_writer
 /*
  This is the frg copyright.
- 
+
  Copyright (c) 2012-2013 HouSisong All Rights Reserved.
  (The MIT License)
- 
+
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation
  files (the "Software"), to deal in the Software without
@@ -14,10 +14,10 @@
  copies of the Software, and to permit persons to whom the
  Software is furnished to do so, subject to the following
  conditions:
- 
+
  The above copyright notice and this permission notice shall be
  included in all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -50,12 +50,12 @@ template <class _TColorType>
 struct TPixelsRefBase{
     typedef _TColorType     TColor;
     typedef _TColorType*    TPLineColor;
-    
+
     TColor*     pColor;
     int         width;
     int         height;
     int         byte_width;
-    
+
     inline TPixelsRefBase():pColor(0),width(0),height(0),byte_width(0){}
     inline TColor&    pixels(int x,int y)const{ return getLinePixels(y)[x]; }
     inline bool getPixels(int x,int y,TColor* outColor)const{
@@ -73,22 +73,22 @@ struct TPixelsRefBase{
         return (width<=0)||(height<=0);
     }
 };
-    
+
     typedef TPixelsRefBase<TBGRA32> TPixels32Ref;
-    
+
     void pixelsCopy(const TPixels32Ref& dst,const TPixels32Ref& src);
     bool getIsSigleRGBColor(const TPixels32Ref& src,TBGRA32* out_BGR);
     bool getIsSigleAlphaColor(const TPixels32Ref& src,TByte* out_Alpha);
     void delEmptyColor(const TPixels32Ref& dst);//alpha==0
     void pixelsFill(const TPixels32Ref& dst,TBGRA32 color);
-    
+
 /////
 
 template <class TPixelsRefType>
 class TPixelsBufferBase{
 public:
     typedef typename TPixelsRefType::TColor TColor;
-    
+
     inline TPixelsBufferBase(){ }
     inline TPixelsBufferBase(int width,int height){ resizeFast(width,height); }
     inline ~TPixelsBufferBase() { clear(); }
@@ -99,8 +99,12 @@ public:
         m_ref.width=width;
         m_ref.height=height;
         m_ref.byte_width=width*sizeof(TColor);
-        if (width*height>0)
-            m_ref.pColor=new TColor[width*height];
+        assert(m_ref.byte_width/(int)sizeof(TColor)==width);
+        TUInt colorCount=width*height;
+        assert((colorCount==0)||((int)(colorCount/width)==height));
+        if (colorCount>0){
+            m_ref.pColor=new TColor[colorCount];
+        }
     }
     inline const TPixelsRefType& getRef()const{ return m_ref; }
     inline void clear(){
@@ -113,5 +117,5 @@ private:
 typedef TPixelsBufferBase<TPixels32Ref> TPixels32Buffer;
 
 }//end namespace frg
-    
+
 #endif
