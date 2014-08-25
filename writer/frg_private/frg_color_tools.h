@@ -34,7 +34,7 @@
 
 namespace frg{
 
-struct PACKED TBGRA32 {
+struct TBGRA32 {
     TByte b;
     TByte g;
     TByte r;
@@ -44,6 +44,8 @@ struct PACKED TBGRA32 {
     inline TBGRA32(TByte _r,TByte _g,TByte _b,TByte _a=255):b(_b),g(_g),r(_r),a(_a){}
     inline TUInt32 getBGRA()const{ return getBGR()|(a<<24); }
     inline TUInt32 getBGR()const{ return b|(g<<8)|(r<<16); }
+    inline void setBGRA(TUInt32 bgra) { b=(TByte)(bgra); g=(TByte)(bgra>>8); r=(TByte)(bgra); a=(TByte)(bgra>>24); }
+    static TBGRA32 fromBGRA(TUInt32 bgra) {  TBGRA32 result; result.setBGRA(bgra); return result;  }
 };
 
 template <class _TColorType>
@@ -67,8 +69,8 @@ struct TPixelsRefBase{
         TByte* py=(TByte*)pColor+y*byte_width;
         return (TColor*)py;
     }
-    TColor* nextLine(const TColor* pline)const { return (TColor*)((TByte*)pline+byte_width); }
-    TColor* prevLine(const TColor* pline)const { return (TColor*)((TByte*)pline-byte_width); }
+    inline TColor* nextLine(const TColor* pline)const { return (TColor*)((TByte*)pline+byte_width); }
+    inline TColor* prevLine(const TColor* pline)const { return (TColor*)((TByte*)pline-byte_width); }
     inline bool getIsEmpty()const{
         return (width<=0)||(height<=0);
     }
@@ -99,9 +101,9 @@ public:
         m_ref.width=width;
         m_ref.height=height;
         m_ref.byte_width=width*sizeof(TColor);
-        assert(m_ref.byte_width/(int)sizeof(TColor)==width);
+        assert(m_ref.byte_width/(int)sizeof(TColor)==width);//throw
         TUInt colorCount=width*height;
-        assert((colorCount==0)||((int)(colorCount/width)==height));
+        assert((colorCount==0)||((int)(colorCount/width)==height));//throw
         if (colorCount>0){
             m_ref.pColor=new TColor[colorCount];
         }
@@ -109,7 +111,7 @@ public:
     inline const TPixelsRefType& getRef()const{ return m_ref; }
     inline void clear(){
         if (m_ref.pColor!=0) delete[] m_ref.pColor;
-        memset(&m_ref,0,sizeof(m_ref));
+        m_ref=TPixelsRefType();
     }
 private:
     TPixelsRefType m_ref;

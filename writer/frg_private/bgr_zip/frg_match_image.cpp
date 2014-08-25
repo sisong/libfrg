@@ -31,7 +31,7 @@
 
 namespace frg{
 
-    struct PACKED TCountInfos{
+    struct TCountInfos{
         TUInt32 sum0;
         TUInt32 sum1;
         TUInt32 sum2;

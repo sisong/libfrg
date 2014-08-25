@@ -138,7 +138,7 @@ namespace frg{
     void TColorTableZiper::TColorNode::uniteColor(const TColorNode& n){
         m_sumColor.add(n.m_sumColor);
         m_count+=n.m_count;
-        TColor bestColor=m_sumColor; bestColor.divRound(m_count);
+        TColor bestColor=m_sumColor; bestColor.divUseRound(m_count);
         if (getColorDistance(bestColor,n.m_color)<getColorDistance(bestColor,m_color))
             m_color=n.m_color;
     }
@@ -159,9 +159,9 @@ namespace frg{
         }
     }
 
-    void TColorTableZiper::setImageSize(int imageWidth,int imageHeight){
-        m_errorBuffer.resizeFast(imageWidth+2,imageHeight+1);
-        clearErrorColors(m_errorBuffer.getRef());
+    void TColorTableZiper::setImageSize(int imageWidth,int imageHeight){// null   ,boader,boader,boader,...
+        m_errorBuffer.resizeFast(1+1+imageWidth+1,1+kFrg_ClipHeight);   // HErrCur,boader,..........,boader
+        clearErrorColors(m_errorBuffer.getRef());                       // HErrCur,boader,..........,boader
     }
     
     //int _temp_nums[64+1]={0};
@@ -288,7 +288,7 @@ namespace frg{
     public:
         typedef TColorTableZiper::TErrorColor TErrorColor;
        inline void toBeginLine() { }//m_rand.setSeed(0);  }
-       inline void toNextLine()  {   }
+       inline void toNextLine()  { }
         Color24 setColor(const TErrorColor& wantColor,Color24 srcColor) {
             //wantColor引入随机误差.
             const TErrorColor& newColor=wantColor;
@@ -322,10 +322,10 @@ namespace frg{
 
         }
     private:
-        std::vector<TByte>&  m_out_indexList;
-        const Color24*  m_table;
-        TInt32           m_tableSize;
-        TColorErrorParameter m_errorParameter;
+        std::vector<TByte>&     m_out_indexList;
+        const Color24*          m_table;
+        TInt32                  m_tableSize;
+        TColorErrorParameter    m_errorParameter;
         //TRand          m_rand;
         /*must_inline int randError(int c){
             return c;
@@ -351,8 +351,33 @@ namespace frg{
     void TColorTableZiper::getBestColorIndex(std::vector<TByte>& out_indexList,const Color24* table,TInt32 tableSize,const TPixels32Ref& subColors,int subX0,int subY0){
         out_indexList.clear();
         TIndextColors dstIndexs(out_indexList,table,tableSize,m_errorParameter);
-        TErrorDiffuse<TPixelsRefBase<TIndextColors::TErrorColor>,TIndextColors,TPixels32Ref>::errorDiffuse(
-                                                            dstIndexs,subColors,m_errorBuffer.getRef(),subX0+1,subY0);
+        
+        //errorDiffuse
+        assert(subColors.width<=kFrg_ClipWidth);
+        assert(subColors.height<=kFrg_ClipHeight);
+        assert(subX0%kFrg_ClipWidth==0);
+        assert(subY0%kFrg_ClipHeight==0);
+        if (subX0==0){
+            TPixelsRefBase<TErrorColor> ref=m_errorBuffer.getRef();
+            for (int x=1;x<ref.width;++x)
+                ref.pixels(x,0)=ref.pixels(x, ref.height-1);
+            ref.pColor=ref.nextLine(ref.pColor);
+            --ref.height;
+            clearErrorColors(ref);
+        }
+        
+        TPixelsRefBase<TErrorColor> errRef=m_errorBuffer.getRef();
+        TBGRA32* pSrc=subColors.pColor;
+        TErrorColor*  PrevHLineErr =errRef.pColor;
+        TErrorColor*  NextHLineErr =errRef.nextLine(PrevHLineErr);
+        dstIndexs.toBeginLine();
+        for  ( int  y = 0 ;y < subColors.height; ++ y){
+            TErrorDiffuse<TPixelsRefBase<TIndextColors::TErrorColor>,TIndextColors,TPixels32Ref>::errorDiffuse_Line(
+                dstIndexs,pSrc,subColors.width,PrevHLineErr+1+1+subX0,NextHLineErr+1+1,&NextHLineErr[0]);
+            PrevHLineErr=NextHLineErr; NextHLineErr=errRef.nextLine(PrevHLineErr);
+            pSrc= subColors.nextLine(pSrc);
+            dstIndexs.toNextLine();
+        }
 
         /* not uses error diffuse for test
         out_indexList.resize(subColors.width*subColors.height);

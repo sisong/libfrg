@@ -73,7 +73,7 @@ namespace frg{
             void uniteColor(const TColorNode& n);
            inline const TColor& getColor()const{ return m_color; }
            inline int getCount()const { return m_count; }
-           inline  Color24 asColor24()const { return m_color.asColor(); }
+           inline  Color24 asColor24()const { return m_color.asColor(0,255); }
         };
         
         enum{ kColorErrorIntFloatBit=9};

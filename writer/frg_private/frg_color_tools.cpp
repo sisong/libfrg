@@ -121,40 +121,39 @@ void delEmptyColor(const TPixels32Ref& dst){
      for (int y=0;y<dst.height;++y){
          for (int x=0;x<dst.width;++x){
              if (dst.pixels(x,y).a==0){
-                 dst.pixels(x,y)={0};
+                 dst.pixels(x,y)=TBGRA32(0,0,0,0);
              }
          }
      }
     //*/
-    //*尽量填充全透明像素；但排除边界,减少被缩放时出现黑边的可能.
+    //*尽量填充全透明像素；但排除有效像素的边界,减少被缩放时出现黑边的可能.
     const int kBorder=1;
     for (int y=0;y<dst.height;++y){
         for (int x=0;x<dst.width;++x){
-            if (dst.pixels(x,y).a==0){
-                TFRG_map<TUInt32,TUInt32> set;
-                for (int dy=-kBorder;dy<=kBorder;++dy){
-                    for (int dx=-kBorder;dx<=kBorder;++dx){
-                        TBGRA32 c;
-                        if (dst.getPixels(x+dx,y+dy,&c)){
-                            if (c.a>0){
-                                set[c.getBGR()]+=c.a;
-                            }
+            if (dst.pixels(x,y).a!=0) continue;
+            TFRG_map<TUInt32,TUInt32> set;
+            for (int dy=-kBorder;dy<=kBorder;++dy){
+                for (int dx=-kBorder;dx<=kBorder;++dx){
+                    TBGRA32 c;
+                    if (dst.getPixels(x+dx,y+dy,&c)){
+                        if (c.a>0){
+                            set[c.getBGR()]+=c.a;
                         }
                     }
                 }
-                if (set.empty())
-                    dst.pixels(x,y)=TBGRA32(0,0,0,0);
-                else{
-                    TUInt32 maxCount=0;
-                    TUInt32 bestColor=0;
-                    for (TFRG_map<TUInt32,TUInt32>::const_iterator it(set.begin());it!=set.end();++it){
-                        if (it->second>maxCount){
-                            maxCount=it->second;
-                            bestColor=it->first;
-                        }
+            }
+            if (set.empty())
+                dst.pixels(x,y)=TBGRA32(0,0,0,0);
+            else{
+                TUInt32 maxSumAlpha=0;
+                TUInt32 bestBGRColor=0;
+                for (TFRG_map<TUInt32,TUInt32>::const_iterator it(set.begin());it!=set.end();++it){
+                    if (it->second>maxSumAlpha){
+                        maxSumAlpha=it->second;
+                        bestBGRColor=it->first;
                     }
-                    dst.pixels(x,y)=TBGRA32((TByte)bestColor,(TByte)(bestColor>>8),(TByte)(bestColor>>16),0);
                 }
+                dst.pixels(x,y)=TBGRA32::fromBGRA(bestBGRColor);
             }
         }
     }

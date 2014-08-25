@@ -35,7 +35,7 @@
 namespace frg{
     
     typedef TBGRA32 Color32;
-    struct PACKED Color24{
+    struct Color24{
         TByte b;
         TByte g;
         TByte r;

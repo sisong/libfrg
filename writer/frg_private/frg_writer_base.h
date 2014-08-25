@@ -41,18 +41,6 @@
 #define TFRG_map        std::map
 #define TFRG_multimap   std::multimap
 
-//PACKED 紧缩数据格式  用于和文件保存相关的类型.
-#ifndef PACKED
-  #if defined(__GNUC__)
-    #define PACKED __attribute__((packed))
-  #elif defined(_MSC_VER)
-    #define PACKED __declspec(align(1))
-  #else
-    #define PACKED
-  #endif
-#endif
-
-
 namespace frg {
     
 typedef ptrdiff_t   TInt;
