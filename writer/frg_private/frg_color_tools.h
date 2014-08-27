@@ -44,7 +44,7 @@ struct TBGRA32 {
     inline TBGRA32(TByte _r,TByte _g,TByte _b,TByte _a=255):b(_b),g(_g),r(_r),a(_a){}
     inline TUInt32 getBGRA()const{ return getBGR()|(a<<24); }
     inline TUInt32 getBGR()const{ return b|(g<<8)|(r<<16); }
-    inline void setBGRA(TUInt32 bgra) { b=(TByte)(bgra); g=(TByte)(bgra>>8); r=(TByte)(bgra); a=(TByte)(bgra>>24); }
+    inline void setBGRA(TUInt32 bgra) { b=(TByte)(bgra); g=(TByte)(bgra>>8); r=(TByte)(bgra>>16); a=(TByte)(bgra>>24); }
     static TBGRA32 fromBGRA(TUInt32 bgra) {  TBGRA32 result; result.setBGRA(bgra); return result;  }
 };
 

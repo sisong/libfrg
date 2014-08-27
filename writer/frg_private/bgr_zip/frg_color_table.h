@@ -45,11 +45,10 @@ namespace frg{
 
         bool getBestColorTable(std::vector<Color24>& out_table,const TPixels32Ref& colors,const int maxTableSize)const;//计算最佳调色板.
         void getBestColorIndex(std::vector<TByte>& out_indexList,const Color24* table,TInt32 tableSize,const TPixels32Ref& subColors,int subX0,int subY0);//计算像素在调色板中的序号.
-        //void uniteColorTable(std::vector<Color24>& dstTable,const std::vector<Color24>& srcTable);
     public:
         struct TColorErrorParameter{
-            TInt32       minColorError; //最大允许误差  当调色板过大时，允许删除颜色而产生的最大误差.
-            TInt32       minColorError_optimize;    //最大允许误差-优化  当调色板大小已经合适，允许继续删除颜色而产生的最大误差.
+            TInt32       minColorError;             //最大允许误差距离  当调色板过大时，允许删除颜色而产生的最大误差.
+            TInt32       minColorError_optimize;    //最大允许误差距离-优化  当调色板大小已经合适，允许继续删除颜色而产生的最大误差.
             TInt32       errorDiffuse_coefficient;  //误差扩散系数.
             TInt32       maxErrorDiffuseValue;      //最大扩散值.
             TInt32       maxTableSize;
@@ -75,7 +74,7 @@ namespace frg{
            inline  Color24 asColor24()const { return m_color.asColor(0,255); }
         };
         
-        enum{ kColorErrorIntFloatBit=9};
+        enum{ kColorErrorIntFloatBit=8};
         typedef TCalcColor<Color32,kColorErrorIntFloatBit,int> TErrorColor;
     private:
         float                   m_colorQuality;

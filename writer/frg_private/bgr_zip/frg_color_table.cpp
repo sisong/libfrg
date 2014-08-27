@@ -272,27 +272,28 @@ namespace frg{
     struct TIndextColors{
     public:
         typedef TColorTableZiper::TErrorColor TErrorColor;
-       inline void toBeginLine() { }
-       inline void toNextLine()  { }
-        Color24 setColor(const TErrorColor& wantColor,Color24 srcColor) {
-            const TErrorColor& newColor=wantColor; //newColor=f(wantColor)
+        inline void toBeginLine() { }
+        inline void toNextLine()  { }
+        
+        inline Color32 setColor(const TErrorColor& wantColor,Color32 srcColor) {
+            TErrorColor newColor=wantColor; //newColor=f(wantColor,srcColor)
+            newColor.sub(srcColor);
+            newColor.r=limitError(newColor.r);
+            newColor.g=limitError(newColor.g);
+            newColor.b=limitError(newColor.b);
+            newColor.add(srcColor);
+            
             int index=getABestColorIndex(m_table,m_tableSize,newColor);
             m_out_indexList.push_back(index);
-            return m_table[index];
-        }
-        inline Color32 setColor(const TErrorColor& wantColor,Color32 srcColor) {
-            Color24 rt=setColor(wantColor,Color24(srcColor.r,srcColor.g,srcColor.b));
+            Color24 rt= m_table[index];
             return Color32(rt.r,rt.g,rt.b);
         }
 
         TErrorColor  optimizeErrorColor(const TErrorColor& eColor) {
-            TErrorColor rt=eColor;
-            rt.r=rt.r*m_errorParameter.errorDiffuse_coefficient/(1<<kColorErrorDiffuseCoefficientIntFloatBit);
-            rt.g=rt.g*m_errorParameter.errorDiffuse_coefficient/(1<<kColorErrorDiffuseCoefficientIntFloatBit);
-            rt.b=rt.b*m_errorParameter.errorDiffuse_coefficient/(1<<kColorErrorDiffuseCoefficientIntFloatBit);
-            rt.r=limitError(rt.r);
-            rt.g=limitError(rt.g);
-            rt.b=limitError(rt.b);
+            TErrorColor rt;
+            rt.r=optimizeLimitError(eColor.r);
+            rt.g=optimizeLimitError(eColor.g);
+            rt.b=optimizeLimitError(eColor.b);
             return rt;
         }
 
@@ -306,13 +307,23 @@ namespace frg{
         const Color24*          m_table;
         TInt32                  m_tableSize;
         TColorErrorParameter    m_errorParameter;
-        inline int limitError(int c){
-            if (c<=(-m_errorParameter.maxErrorDiffuseValue)){
+        inline int optimizeLimitError(int c){
+            c=c*m_errorParameter.errorDiffuse_coefficient/(1<<kColorErrorDiffuseCoefficientIntFloatBit);
+            if (c<(-m_errorParameter.maxErrorDiffuseValue)){
                 int half=(c+m_errorParameter.maxErrorDiffuseValue)/2;
                 return -m_errorParameter.maxErrorDiffuseValue+half;
-            }else if (c>=(m_errorParameter.maxErrorDiffuseValue)){
+            }else if (c>(m_errorParameter.maxErrorDiffuseValue)){
                 int half=(c-m_errorParameter.maxErrorDiffuseValue)/2;
                 return m_errorParameter.maxErrorDiffuseValue+half;
+            }else{
+                return c;
+            }
+        }
+        inline int limitError(int c){
+            if (c<(-m_errorParameter.maxErrorDiffuseValue)){
+                return -m_errorParameter.maxErrorDiffuseValue;
+            }else if (c>(m_errorParameter.maxErrorDiffuseValue)){
+                return m_errorParameter.maxErrorDiffuseValue;
             }else{
                 return c;
             }
@@ -393,26 +404,15 @@ namespace frg{
         out_colorSet->resize(colorCountsSize);
         TFRG_map<TUInt32,TUInt32>::const_iterator it(colorSet.begin());
         for (int i=0;i<colorCountsSize;++i,++it){
-            (*out_colorSet)[i].setColor(*(const Color24*)(&it->first),it->second);
+            Color24 color; color.setBGR(it->first);
+            (*out_colorSet)[i].setColor(color,it->second);
         }
     }
-
-
-       inline static bool color_sort_by(const Color24& a,const Color24& b){
-            //return ((a.b<<16)|(a.g<<8)|(a.r)) < ((b.b<<16)|(b.g<<8)|(b.r));
-            return (a.b+a.g+a.r)<(b.b+b.g+b.r);
-            //return (a.b*2+a.g*4+a.r*3)<(b.b*2+b.g*4+b.r*3);
-        }
-       inline static bool ncolor_sort_by(const TColorTableZiper::TColorNode& na,const TColorTableZiper::TColorNode& nb){
-            return color_sort_by(na.asColor24(),nb.asColor24());
-        }
-       inline static void swap(TColorTableZiper::TColorNode& na,TColorTableZiper::TColorNode& nb){
-            TColorTableZiper::TColorNode tmp=na;  na=nb;  nb=tmp;
-        }
+    
+    inline static bool color_sort_by(const TColorTableZiper::TColorNode& na,const TColorTableZiper::TColorNode& nb){
+        return (na.getColor().b+na.getColor().g+na.getColor().r)<(nb.getColor().b+nb.getColor().g+nb.getColor().r);
+    }
     void TColorTableZiper::sortColorArrayForOut(std::vector<TColorNode>& colorSet){
-        std::sort(colorSet.begin(),colorSet.end(),ncolor_sort_by);
-    }
-    void TColorTableZiper::sortColorArrayForOut(std::vector<Color24>& colorSet){
         std::sort(colorSet.begin(),colorSet.end(),color_sort_by);
     }
 

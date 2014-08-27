@@ -43,6 +43,7 @@ namespace frg{
         inline Color24(const Color24& v):b(v.b),g(v.g),r(v.r){}
         inline Color24(TByte _r,TByte _g,TByte _b):b(_b),g(_g),r(_r){}
         inline TUInt32 getBGR()const{ return b|(g<<8)|(r<<16); }
+        inline void setBGR(TUInt32 bgr) { b=(TByte)(bgr); g=(TByte)(bgr>>8); r=(TByte)(bgr>>16); }
     };
 
     template<class T>
