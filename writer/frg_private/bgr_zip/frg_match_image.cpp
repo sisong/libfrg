@@ -142,7 +142,7 @@ namespace frg{
         return true;
     }
 
-    static bool isSameColorH(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh){
+    static bool isSameColor_left_right(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh){
         const Color32* pixelLine0=&ref.pixels(curX,curY);
         const Color32* pixelLine1=&ref.pixels(ox,oy);
         for (TInt32 y=0;y<sh;++y){
@@ -156,7 +156,7 @@ namespace frg{
         return true;
     }
     
-    static bool isSameAlphaH(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh){
+    static bool isSameAlpha_left_right(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh){
         const Color32* pixelLine0=&ref.pixels(curX,curY);
         const Color32* pixelLine1=&ref.pixels(ox,oy);
         for (TInt32 y=0;y<sh;++y){
@@ -170,7 +170,7 @@ namespace frg{
         return true;
     }
     
-    static bool isSameColorV(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh){
+    static bool isSameColor_up_down(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh){
         const Color32* pixelLine0=&ref.pixels(curX,curY);
         const Color32* pixelLine1=&ref.pixels(ox,oy+(sh-1));
         for (TInt32 y=0;y<sh;++y){
@@ -184,7 +184,7 @@ namespace frg{
         return true;
     }
     
-    static bool isSameAlphaV(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh){
+    static bool isSameAlpha_up_down(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh){
         const Color32* pixelLine0=&ref.pixels(curX,curY);
         const Color32* pixelLine1=&ref.pixels(ox,oy+(sh-1));
         for (TInt32 y=0;y<sh;++y){
@@ -219,14 +219,14 @@ namespace frg{
                 else
                     *out_matchType=kFrg_MatchType_move_bgr;
                 return true;
-            }if (isSameColorV(m_ref,subX0,subY0,match_x0,match_y0,sw,sh)){
-                if ((sw==kFrg_ClipWidth)&&isSameAlphaV(m_ref,subX0,subY0,match_x0,match_y0,sw,sh))
+            }if (isSameColor_up_down(m_ref,subX0,subY0,match_x0,match_y0,sw,sh)){
+                if ((sw==kFrg_ClipWidth)&&isSameAlpha_up_down(m_ref,subX0,subY0,match_x0,match_y0,sw,sh))
                     *out_matchType=kFrg_MatchType_up_down_bgra_w8;
                 else
                     *out_matchType=kFrg_MatchType_up_down_bgr;
                 return true;
-            }else if (isSameColorH(m_ref,subX0,subY0,match_x0,match_y0,sw,sh)){
-                if ((sw==kFrg_ClipWidth)&&isSameAlphaH(m_ref,subX0,subY0,match_x0,match_y0,sw,sh))
+            }else if (isSameColor_left_right(m_ref,subX0,subY0,match_x0,match_y0,sw,sh)){
+                if ((sw==kFrg_ClipWidth)&&isSameAlpha_left_right(m_ref,subX0,subY0,match_x0,match_y0,sw,sh))
                     *out_matchType=kFrg_MatchType_left_right_bgra_w8;
                 else
                     *out_matchType=kFrg_MatchType_left_right_bgr;
@@ -273,16 +273,16 @@ namespace frg{
                         minX0=ox;
                         minY0=oy;
                         break;
-                    }else if (isSameColorV(m_ref,subX0,subY0,ox,oy,sw,sh)){
-                        if ((sw==kFrg_ClipWidth)&&isSameAlphaV(m_ref,subX0,subY0,ox,oy,sw,sh))
+                    }else if (isSameColor_up_down(m_ref,subX0,subY0,ox,oy,sw,sh)){
+                        if ((sw==kFrg_ClipWidth)&&isSameAlpha_up_down(m_ref,subX0,subY0,ox,oy,sw,sh))
                             *out_matchType=kFrg_MatchType_up_down_bgra_w8;
                         else
                             *out_matchType=kFrg_MatchType_up_down_bgr;
                         minX0=ox;
                         minY0=oy;
                         break;
-                    }else if (isSameColorH(m_ref,subX0,subY0,ox,oy,sw,sh)){
-                        if ((sw==kFrg_ClipWidth)&&isSameAlphaH(m_ref,subX0,subY0,ox,oy,sw,sh))
+                    }else if (isSameColor_left_right(m_ref,subX0,subY0,ox,oy,sw,sh)){
+                        if ((sw==kFrg_ClipWidth)&&isSameAlpha_left_right(m_ref,subX0,subY0,ox,oy,sw,sh))
                             *out_matchType=kFrg_MatchType_left_right_bgra_w8;
                         else
                             *out_matchType=kFrg_MatchType_left_right_bgr;

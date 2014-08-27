@@ -200,9 +200,9 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
     std::vector<TByte> code_bgr;
     bool isRGBDataUseBytesZip=false;
     if (!isSingleBGR){
-        TUInt tempMemoryByteSize_bgrZip=0;
-        TColorZiper::saveTo(code_bgr, src,parameter.quality,parameter.isMustFitColorTable,&tempMemoryByteSize_bgrZip);
-        tempMemoryByteSize_cur+=tempMemoryByteSize_bgrZip;//for load BGRColor from code_bgr when frgFileRead
+        TUInt bgrColorTableLength=0;
+        bgrZiper_save(code_bgr, src,parameter.quality,parameter.isMustFitColorTable,&bgrColorTableLength);
+        tempMemoryByteSize_cur+=bgrColorTableLength*sizeof(TUInt32)+3; //+3 for Align4;//for load BGRColor from code_bgr when frgFileRead
         if (tempMemoryByteSize_cur>tempMemoryByteSize_max) tempMemoryByteSize_max=tempMemoryByteSize_cur;
         
         std::vector<TByte> color_bgr_ziped;

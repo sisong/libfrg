@@ -1,6 +1,6 @@
 libfrg
 ========
-Version  1.2.0 
+Version  1.2.1 
 libfrg: C\C++ codec of FRG  
    
 ---

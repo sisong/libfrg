@@ -66,8 +66,7 @@ struct TPixelsRefBase{
         return true;
     }
     inline TColor* getLinePixels(int y)const{
-        TByte* py=(TByte*)pColor+y*byte_width;
-        return (TColor*)py;
+        return (TColor*)((TByte*)pColor+y*byte_width);
     }
     inline TColor* nextLine(const TColor* pline)const { return (TColor*)((TByte*)pline+byte_width); }
     inline TColor* prevLine(const TColor* pline)const { return (TColor*)((TByte*)pline-byte_width); }

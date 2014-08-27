@@ -129,7 +129,7 @@ typedef enum frg_TClipType{
 
 #define kFrg_MaxSubTableSize (1<<4)  //最大局部调色板大小.
 static const TByte kFrg_SubTableSize_to_indexBit[kFrg_MaxSubTableSize+1]={ 0,0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4 };//局部调色板大小查表得到序号需要的bit数.
-static const int kFrg_MaxForwardLength=(1<<4)-1; //利用剩余的4bit空间能储存的最大向前匹配位置数值.
+static const int kFrg_MaxShortForwardLength=(1<<4)-1; //利用剩余的4bit空间能储存的最大向前匹配位置数值.
 
 //kFrg_ClipType_match_image属性块匹配类型. 占用3bit
 typedef enum frg_TMatchType{

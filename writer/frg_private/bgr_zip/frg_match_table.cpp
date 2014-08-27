@@ -126,7 +126,7 @@ namespace frg{
             //只用支持较短的前匹配.
             Color24 singleColor=subTable[0];
             int mi=(int)colorTable.size()-1;
-            for (int i=1;(mi>=0)&&(i<=kFrg_MaxForwardLength);--mi,++i){
+            for (int i=1;(mi>=0)&&(i<=kFrg_MaxShortForwardLength);--mi,++i){
                 if (colorTable[mi].getBGR()==singleColor.getBGR()){
                     return mi;
                 }

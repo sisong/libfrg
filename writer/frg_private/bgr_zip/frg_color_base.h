@@ -44,15 +44,6 @@ namespace frg{
         inline Color24(TByte _r,TByte _g,TByte _b):b(_b),g(_g),r(_r){}
         inline TUInt32 getBGR()const{ return b|(g<<8)|(r<<16); }
     };
-    
-    typedef signed   int    TInt32;
-    typedef size_t          TUInt;
-    
-#ifdef _MSC_VER
-    typedef    signed __int64      TInt64;
-#else
-    typedef    signed long long    TInt64;
-#endif 
 
     template<class T>
     inline static const T sqr(const T& a){

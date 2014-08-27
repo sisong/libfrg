@@ -35,26 +35,25 @@
 
 namespace frg{
 
-    //处理调色板
+    //处理调色板.
     class TColorTableZiper{
     public:
-        static TUInt32 getMatchColorMask(float colorQuality);
-    public:        
+        static TUInt32 qualityToMatchColorMask(float colorQuality);
+    public:
         TColorTableZiper(float colorQuality,bool isMustFitColorTable);
         void setImageSize(int imageWidth,int imageHeight);
 
-        bool getBestColorTable(std::vector<Color24>& out_table,const TPixels32Ref& colors,const int maxTableSize=kFrg_MaxSubTableSize)const;//计算最佳调色板.
-        void getBestColorIndex(std::vector<TByte>& out_indexList,const Color24* table,TInt32 tableSize,const TPixels32Ref& subColors,int subX0,int subY0);//计算颜色序号.
+        bool getBestColorTable(std::vector<Color24>& out_table,const TPixels32Ref& colors,const int maxTableSize)const;//计算最佳调色板.
+        void getBestColorIndex(std::vector<TByte>& out_indexList,const Color24* table,TInt32 tableSize,const TPixels32Ref& subColors,int subX0,int subY0);//计算像素在调色板中的序号.
         //void uniteColorTable(std::vector<Color24>& dstTable,const std::vector<Color24>& srcTable);
     public:
         struct TColorErrorParameter{
-            TInt32       minColorError; //最大允许误差  当调色板过大时，允许删除颜色产生的最大误差.
-            TInt32       minColorError_optimize;    //最大允许误差-优化  当调色板大小已经合适，允许删除颜色产生的最大误差.
+            TInt32       minColorError; //最大允许误差  当调色板过大时，允许删除颜色而产生的最大误差.
+            TInt32       minColorError_optimize;    //最大允许误差-优化  当调色板大小已经合适，允许继续删除颜色而产生的最大误差.
             TInt32       errorDiffuse_coefficient;  //误差扩散系数.
-            //Int32       errorDiffuse_randError;   //随机扩散.
             TInt32       maxErrorDiffuseValue;      //最大扩散值.
-            bool        isMustFitColorTable;
             TInt32       maxTableSize;
+            bool         isMustFitColorTable;
         };
         
         struct TColorNode {
