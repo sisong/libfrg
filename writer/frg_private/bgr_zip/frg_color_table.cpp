@@ -35,7 +35,7 @@ namespace frg{
     const TUInt32 gray_r_coeff=19;//(0.299*(1<<6));
 	const TUInt32 gray_g_coeff=37;//(0.587*(1<<6));
 	const TUInt32 gray_b_coeff=(1<<6)-gray_r_coeff-gray_g_coeff;//(0.114*(1<<6));
-    //颜色距离
+    //颜色距离.
     static inline TUInt32 getColorDistance(const Color24& c0,const Color24& c1){
         return   (TUInt32)sqr(c0.r-c1.r)*gray_r_coeff
                 +(TUInt32)sqr(c0.g-c1.g)*gray_g_coeff
@@ -310,20 +310,19 @@ namespace frg{
         inline int optimizeLimitError(int c){
             c=c*m_errorParameter.errorDiffuse_coefficient/(1<<kColorErrorDiffuseCoefficientIntFloatBit);
             if (c<(-m_errorParameter.maxErrorDiffuseValue)){
-                int half=(c+m_errorParameter.maxErrorDiffuseValue)/2;
-                return -m_errorParameter.maxErrorDiffuseValue+half;
+                return (c-m_errorParameter.maxErrorDiffuseValue)/2;
             }else if (c>(m_errorParameter.maxErrorDiffuseValue)){
-                int half=(c-m_errorParameter.maxErrorDiffuseValue)/2;
-                return m_errorParameter.maxErrorDiffuseValue+half;
+                return (c+m_errorParameter.maxErrorDiffuseValue)/2;
             }else{
                 return c;
             }
         }
         inline int limitError(int c){
-            if (c<(-m_errorParameter.maxErrorDiffuseValue)){
-                return -m_errorParameter.maxErrorDiffuseValue;
-            }else if (c>(m_errorParameter.maxErrorDiffuseValue)){
-                return m_errorParameter.maxErrorDiffuseValue;
+            const int limit=m_errorParameter.maxErrorDiffuseValue>>1;
+            if (c<(-limit)){
+                return -limit;
+            }else if (c>limit){
+                return limit;
             }else{
                 return c;
             }
@@ -335,7 +334,7 @@ namespace frg{
         out_indexList.clear();
         TIndextColors dstIndexs(out_indexList,table,tableSize,m_errorParameter);
         
-        //errorDiffuse
+        //error diffuse
         assert(subColors.width<=kFrg_ClipWidth);
         assert(subColors.height<=kFrg_ClipHeight);
         assert(subX0%kFrg_ClipWidth==0);
@@ -362,7 +361,7 @@ namespace frg{
             dstIndexs.toNextLine();
         }
 
-        /* not uses error diffuse for test
+        /* not uses error diffuse; for test
         out_indexList.resize(subColors.width*subColors.height);
         const Color32* pline=subColors.pColor;
         TByte* out_index=&out_indexList[0];

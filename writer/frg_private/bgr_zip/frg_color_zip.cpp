@@ -93,7 +93,8 @@ namespace frg{
         explicit TColorZip(float colorQuality,bool isMustFitColorTable,TUInt* out_bgrColorTableLength)
             :m_colorQuality(colorQuality),
              m_tableZiper(colorQuality,isMustFitColorTable),
-             m_out_bgrColorTableLength(out_bgrColorTableLength){ }
+             m_out_bgrColorTableLength(out_bgrColorTableLength),
+             m_tableMatcher(m_colorTable){ }
         void saveTo(std::vector<TByte>& out_buf,const TPixels32Ref& ref){
             if (ref.getIsEmpty()) return;
             m_srcRef=ref;
@@ -232,7 +233,7 @@ namespace frg{
 
                 int forwardLength=0;
                 int matchTableBit;
-                int tableMatchIndex=m_tableMatcher.findMatch(m_colorTable,sub_table,&matchTableBit); //颜色表匹配.
+                int tableMatchIndex=m_tableMatcher.findMatch(sub_table,&matchTableBit); //颜色表匹配.
                 if (tableMatchIndex>=0){
                     forwardLength=(int)m_colorTable.size()-tableMatchIndex;
                     //note!  mybe forwardLength < sub_table.size()
@@ -439,7 +440,7 @@ namespace frg{
         TInt32                  m_nodeHeight;
         std::vector<TClipNode>  m_clipNodeList;
         std::vector<TByte>      m_indexList;
-        std::vector<Color24>    m_colorTable;       //总调色板.
+        std::vector<Color24>    m_colorTable;       //公共调色板.
         std::vector<TUInt32>    m_matchXYList;      //帧内匹配列表.
         TUInt*                  m_out_bgrColorTableLength;
     };
