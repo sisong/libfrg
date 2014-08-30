@@ -56,7 +56,7 @@ struct TPixelsRefBase{
     TColor*     pColor;
     int         width;
     int         height;
-    int         byte_width;
+    TInt        byte_width;
 
     inline TPixelsRefBase():pColor(0),width(0),height(0),byte_width(0){}
     inline TColor&    pixels(int x,int y)const{ return getLinePixels(y)[x]; }
@@ -94,17 +94,18 @@ public:
     inline TPixelsBufferBase(int width,int height){ resizeFast(width,height); }
     inline ~TPixelsBufferBase() { clear(); }
     void resizeFast(int width,int height) {
+        if ((width<0)||(height<0)) throw TFrgRunTimeError("TPixelsBufferBase::resizeFast() (width<0)||(height<0).");
         assert((width>=0)&&(height>=0));
         if ((width==m_ref.width)&&(height==m_ref.height)) return;
         clear();
         m_ref.width=width;
         m_ref.height=height;
         m_ref.byte_width=width*sizeof(TColor);
-        assert(m_ref.byte_width/(int)sizeof(TColor)==width);//throw
-        TUInt colorCount=width*height;
-        assert((colorCount==0)||((int)(colorCount/width)==height));//throw
-        if (colorCount>0){
-            m_ref.pColor=new TColor[colorCount];
+        TUInt pixelsCount=(TUInt)width*(TUInt)height;
+        if ((pixelsCount>0)&&(pixelsCount/(TUInt)width!=(TUInt)height))
+            throw TFrgRunTimeError("TPixelsBufferBase::resizeFast() width*height too big.");
+        if (pixelsCount>0){
+            m_ref.pColor=new TColor[pixelsCount];
         }
     }
     inline const TPixelsRefType& getRef()const{ return m_ref; }

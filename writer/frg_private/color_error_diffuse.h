@@ -66,25 +66,32 @@ namespace frg{
         typedef typename TDstColors::TErrorColor    TErrorColor;
         typedef typename TSrcColors::TColor         TSrcColor;
         typedef typename TSrcColors::TPLineColor    TSrcPLineColor;
+    private:
+        struct TAutoPointer{
+            inline TAutoPointer(TInt size):pointer(0){ pointer=new TErrorColor[size]; }
+            inline ~TAutoPointer(){ if (pointer!=0) delete []pointer; }
+            TErrorColor* pointer;
+        };
+    public:
         static void  errorDiffuse(TDstColors& dst,const  TSrcColors &  src){
-            TErrorColor* _HLineErr=new TErrorColor[(src.width + 2)*2];
-            TErrorColor*  PrevHLineErr =&_HLineErr[ 1 ];
-            TErrorColor*  NextHLineErr =&_HLineErr[ 1 + (src.width + 2) ];
+            TAutoPointer _autoPointer((src.width+2)*2);
+            TErrorColor* _HLineErr=_autoPointer.pointer;
+            TErrorColor*  PrevHLineErr =&_HLineErr[1];
+            TErrorColor*  NextHLineErr =&_HLineErr[1 + (src.width+2)];
             for (int i=0;i<src.width;++i)
                 PrevHLineErr[i].clear();
             
             TSrcPLineColor pSrc=src.beginLine();
             dst.toBeginLine();
-            for  ( int  y = 0 ;y < src.height; ++ y){
-                NextHLineErr[ - 1 ].clear();
-                NextHLineErr[ 0 ].clear();
+            for  (int y=0; y<src.height; ++y){
+                NextHLineErr[-1].clear();
+                NextHLineErr[ 0].clear();
                 TErrorColor HErrCur; HErrCur.clear();
                 errorDiffuse_Line(dst,pSrc,src.width,PrevHLineErr,NextHLineErr,&HErrCur);
-                TErrorColor* _tmp=PrevHLineErr; PrevHLineErr=NextHLineErr; NextHLineErr=_tmp; //swap
+                TErrorColor* _tmp=PrevHLineErr; PrevHLineErr=NextHLineErr; NextHLineErr=_tmp; //swap pointer
                 pSrc= src.nextLine(pSrc);
                 dst.toNextLine();
             }
-            delete []_HLineErr;
         }
     public:
         static void  errorDiffuse_Line(TDstColors& dst,const TSrcPLineColor pSrc,int  width,TErrorColor*  PrevHLineErr,TErrorColor*  NextHLineErr,TErrorColor* HErrCur){

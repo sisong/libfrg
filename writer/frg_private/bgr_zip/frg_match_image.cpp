@@ -49,26 +49,26 @@ namespace frg{
             sum-=bgr;
             xorValue^=bgr;
         }
-        inline void addHLine(const TPixels32Ref& ref,TInt32 y,TInt32 x0,TInt32 x1,TUInt32 colorMask){
+        inline void addHLine(const TPixels32Ref& ref,int y,int x0,int x1,TUInt32 colorMask){
             const Color32* pixelsLine=ref.getLinePixels(y);
-            for (TInt32 x=x0;x<x1;++x)
+            for (int x=x0;x<x1;++x)
                 addColor(pixelsLine[x],colorMask);
         }
-       inline void delHLine(const TPixels32Ref& ref,TInt32 y,TInt32 x0,TInt32 x1,TUInt32 colorMask){
+       inline void delHLine(const TPixels32Ref& ref,int y,int x0,int x1,TUInt32 colorMask){
             const Color32* pixelsLine=ref.getLinePixels(y);
-            for (TInt32 x=x0;x<x1;++x)
+            for (int x=x0;x<x1;++x)
                 delColor(pixelsLine[x],colorMask);
         }
-       inline void addVLine(const TPixels32Ref& ref,TInt32 x,TInt32 y0,TInt32 y1,TUInt32 colorMask){
+       inline void addVLine(const TPixels32Ref& ref,int x,int y0,int y1,TUInt32 colorMask){
             const Color32* pixel=&ref.pixels(x,y0);
-            for (TInt32 y=y0;y<y1;++y){
+            for (int y=y0;y<y1;++y){
                 addColor(*pixel,colorMask);
                 pixel=ref.nextLine(pixel);
             }
         }
-       inline void delVLine(const TPixels32Ref& ref,TInt32 x,TInt32 y0,TInt32 y1,TUInt32 colorMask){
+       inline void delVLine(const TPixels32Ref& ref,int x,int y0,int y1,TUInt32 colorMask){
             const Color32* pixel=&ref.pixels(x,y0);
-            for (TInt32 y=y0;y<y1;++y){
+            for (int y=y0;y<y1;++y){
                 delColor(*pixel,colorMask);
                 pixel=ref.nextLine(pixel);
             }
@@ -82,8 +82,8 @@ namespace frg{
             xorValue^=c.xorValue;
         }
 
-        void addRef(const TPixels32Ref& ref,TInt32 x0,TInt32 y0,TInt32 x1,TInt32 y1,TUInt32 colorMask){
-            for (TInt32 y=y0;y<y1;++y){
+        void addRef(const TPixels32Ref& ref,int x0,int y0,int x1,int y1,TUInt32 colorMask){
+            for (int y=y0;y<y1;++y){
                 addHLine(ref,y,x0,x1,colorMask);
             }
         }
@@ -104,11 +104,11 @@ namespace frg{
         return ((match.getBGR()&colorMask)==(cur.getBGR()&colorMask));
     }
 
-    static bool isSameColor(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh,TUInt32 colorMask){
+    static bool isSameColor(const TPixels32Ref& ref,int curX,int curY,int ox,int oy,int sw,int sh,TUInt32 colorMask){
         const Color32* pixelLine0=&ref.pixels(curX,curY);
         const Color32* pixelLine1=&ref.pixels(ox,oy);
-        for (TInt32 y=0;y<sh;++y){
-            for (TInt32 x=0;x<sw;++x){
+        for (int y=0;y<sh;++y){
+            for (int x=0;x<sw;++x){
                 if (!isSameColor(pixelLine0[x],pixelLine1[x],colorMask))
                     return false;
             }
@@ -118,11 +118,11 @@ namespace frg{
         return true;
     }
 
-    static bool isSameAlpha(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh){
+    static bool isSameAlpha(const TPixels32Ref& ref,int curX,int curY,int ox,int oy,int sw,int sh){
         const Color32* pixelLine0=&ref.pixels(curX,curY);
         const Color32* pixelLine1=&ref.pixels(ox,oy);
-        for (TInt32 y=0;y<sh;++y){
-            for (TInt32 x=0;x<sw;++x){
+        for (int y=0;y<sh;++y){
+            for (int x=0;x<sw;++x){
                 if (pixelLine0[x].a!=pixelLine1[x].a)
                     return false;
             }
@@ -132,11 +132,11 @@ namespace frg{
         return true;
     }
 
-    static bool isSameColor_left_right(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh,TUInt32 colorMask){
+    static bool isSameColor_left_right(const TPixels32Ref& ref,int curX,int curY,int ox,int oy,int sw,int sh,TUInt32 colorMask){
         const Color32* pixelLine0=&ref.pixels(curX,curY);
         const Color32* pixelLine1=&ref.pixels(ox,oy);
-        for (TInt32 y=0;y<sh;++y){
-            for (TInt32 x=0;x<sw;++x){
+        for (int y=0;y<sh;++y){
+            for (int x=0;x<sw;++x){
                 if (!isSameColor(pixelLine0[x],pixelLine1[(sw-1)-x],colorMask))
                     return false;
             }
@@ -146,11 +146,11 @@ namespace frg{
         return true;
     }
 
-    static bool isSameAlpha_left_right(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh){
+    static bool isSameAlpha_left_right(const TPixels32Ref& ref,int curX,int curY,int ox,int oy,int sw,int sh){
         const Color32* pixelLine0=&ref.pixels(curX,curY);
         const Color32* pixelLine1=&ref.pixels(ox,oy);
-        for (TInt32 y=0;y<sh;++y){
-            for (TInt32 x=0;x<sw;++x){
+        for (int y=0;y<sh;++y){
+            for (int x=0;x<sw;++x){
                 if (pixelLine0[x].a!=pixelLine1[(sw-1)-x].a)
                     return false;
             }
@@ -160,11 +160,11 @@ namespace frg{
         return true;
     }
 
-    static bool isSameColor_up_down(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh,TUInt32 colorMask){
+    static bool isSameColor_up_down(const TPixels32Ref& ref,int curX,int curY,int ox,int oy,int sw,int sh,TUInt32 colorMask){
         const Color32* pixelLine0=&ref.pixels(curX,curY);
         const Color32* pixelLine1=&ref.pixels(ox,oy+(sh-1));
-        for (TInt32 y=0;y<sh;++y){
-            for (TInt32 x=0;x<sw;++x){
+        for (int y=0;y<sh;++y){
+            for (int x=0;x<sw;++x){
                 if (!isSameColor(pixelLine0[x],pixelLine1[x],colorMask))
                     return false;
             }
@@ -174,11 +174,11 @@ namespace frg{
         return true;
     }
 
-    static bool isSameAlpha_up_down(const TPixels32Ref& ref,TInt32 curX,TInt32 curY,TInt32 ox,TInt32 oy,TInt32 sw,TInt32 sh){
+    static bool isSameAlpha_up_down(const TPixels32Ref& ref,int curX,int curY,int ox,int oy,int sw,int sh){
         const Color32* pixelLine0=&ref.pixels(curX,curY);
         const Color32* pixelLine1=&ref.pixels(ox,oy+(sh-1));
-        for (TInt32 y=0;y<sh;++y){
-            for (TInt32 x=0;x<sw;++x){
+        for (int y=0;y<sh;++y){
+            for (int x=0;x<sw;++x){
                 if (pixelLine0[x].a!=pixelLine1[x].a)
                     return false;
             }
@@ -196,26 +196,26 @@ namespace frg{
             return;
 
         std::vector<TCountInfos> ci_xList(ref.width);
-        for (TInt32 x=0;x<ref.width;++x){
+        for (int x=0;x<ref.width;++x){
             ci_xList[x].addVLine(ref,x,0,kFrg_ClipHeight-1,colorMask);
         }
 
-        for (TInt32 y=0;y<=ref.height-kFrg_ClipHeight;++y){
-            const TInt32 hy=y+kFrg_ClipHeight-1;
+        for (int y=0;y<=ref.height-kFrg_ClipHeight;++y){
+            const int hy=y+kFrg_ClipHeight-1;
             const Color32* pline=ref.getLinePixels(hy);
-            for (TInt32 x=0;x<ref.width;++x)
+            for (int x=0;x<ref.width;++x)
                 ci_xList[x].addColor(pline[x],colorMask);
             if(y>0){
                 const Color32* npline=ref.getLinePixels(y-1);
-                for (TInt32 x=0;x<ref.width;++x){
+                for (int x=0;x<ref.width;++x){
                     ci_xList[x].delColor(npline[x],colorMask);
                 }
             }
             TCountInfos ci_x0;
-            for (TInt32 x=0;x<kFrg_ClipWidth-1;++x)
+            for (int x=0;x<kFrg_ClipWidth-1;++x)
                 ci_x0.addCount(ci_xList[x]);
-            for (TInt32 x=0;x<=ref.width-kFrg_ClipWidth;++x){
-                TInt32 vx=x+kFrg_ClipWidth-1;
+            for (int x=0;x<=ref.width-kFrg_ClipWidth;++x){
+                int vx=x+kFrg_ClipWidth-1;
                 ci_x0.addCount(ci_xList[vx]);
                 if (x>0) ci_x0.delCount(ci_xList[x-1]);
                 if (filterFunc(ci_x0.keyValue(),x,y))
@@ -232,7 +232,7 @@ namespace frg{
             const TFRG_map<TUInt,int>&          m_nodeKeysSet;
             inline TCreateMatchMap_filter(const TFRG_map<TUInt,int>& nodeKeysSet,TColorMatch::TMatchMap& matchMap)
                 :m_matchMap(matchMap),m_nodeKeysSet(nodeKeysSet){ }
-            inline bool operator()(TUInt key,TInt32 x,TInt32 y){
+            inline bool operator()(TUInt key,int x,int y){
                 TFRG_map<TUInt,int>::const_iterator keyIt(m_nodeKeysSet.find(key));
                 if (keyIt==m_nodeKeysSet.end())
                     return false;
@@ -264,8 +264,8 @@ namespace frg{
     }
 
     void TColorMatch::initColorMatch(const TPixels32Ref& ref,TUInt32 colorMask){
-        assert(ref.width<(1<<16));
-        assert(ref.height<(1<<16));
+        assert((TUInt)ref.width<=kMaxImageWidth);
+        assert((TUInt)ref.height<=kMaxImageHeight);
         m_ref=ref;
         m_colorMask=colorMask;
 
@@ -273,15 +273,13 @@ namespace frg{
         m_nodeKeys.clear();
         m_nodeWidth =(m_ref.width +kFrg_ClipWidth -1)/kFrg_ClipWidth;
         int nodeHeight=(m_ref.height+kFrg_ClipHeight-1)/kFrg_ClipHeight;
-        TFRG_map<TUInt,int> out_nodeKeysSet;
-        createNodeKeys(out_nodeKeysSet,m_nodeKeys,m_nodeWidth,nodeHeight,m_ref,m_colorMask);
-        {
-            TCreateMatchMap_filter  createMatchMap_filter(out_nodeKeysSet,m_matchMap);
-            filter<TCreateMatchMap_filter&>(ref,colorMask,createMatchMap_filter);
-        }
+        TFRG_map<TUInt,int> nodeKeysSet;
+        createNodeKeys(nodeKeysSet,m_nodeKeys,m_nodeWidth,nodeHeight,m_ref,m_colorMask);
+        TCreateMatchMap_filter  createMatchMap_filter(nodeKeysSet,m_matchMap);
+        filter<TCreateMatchMap_filter&>(ref,colorMask,createMatchMap_filter);
     }
 
-    bool TColorMatch::isMatchAt(TInt32 subX0,TInt32 subY0,TInt32 subWidth,TInt32 subHeight,TInt32 match_x0,TInt32 match_y0,frg_TMatchType* out_matchType){
+    bool TColorMatch::isMatchAt(int subX0,int subY0,int subWidth,int subHeight,int match_x0,int match_y0,frg_TMatchType* out_matchType){
         if ((match_x0<0)||(match_x0+subWidth>m_ref.width)) return false;
         if ((match_y0<0)||(match_y0+subHeight>m_ref.height)) return false;
         if ((match_y0+subHeight<=subY0)||((match_y0<=subY0)&&(match_x0+subWidth<=subX0))){
@@ -311,7 +309,7 @@ namespace frg{
         }
     }
 
-    bool TColorMatch::findMatch(TInt32 nodeX,TInt32 nodeY,TInt32* out_x0,TInt32* out_y0,frg_TMatchType* out_matchType){
+    bool TColorMatch::findMatch(int nodeX,int nodeY,int* out_x0,int* out_y0,frg_TMatchType* out_matchType){
         const TUInt32 keyValue=m_nodeKeys[nodeY*m_nodeWidth+nodeX];
 
         std::pair<TMatchMap::const_iterator,TMatchMap::const_iterator> itPair(m_matchMap.equal_range(keyValue));
@@ -319,13 +317,13 @@ namespace frg{
         TMatchMap::const_iterator itEnd(itPair.second);
         if (it==itEnd) return false;
 
-        const TInt32 subX0=nodeX*kFrg_ClipWidth;
-        const TInt32 subY0=nodeY*kFrg_ClipHeight;
+        const int subX0=nodeX*kFrg_ClipWidth;
+        const int subY0=nodeY*kFrg_ClipHeight;
         bool isMatched=false;
         for (;it!=itEnd;++it){
             const TUInt32 packedXY=it->second;
-            TInt32 cur_x0=unpackMatchX(packedXY);
-            TInt32 cur_y0=unpackMatchY(packedXY);
+            int cur_x0=unpackMatchX(packedXY);
+            int cur_y0=unpackMatchY(packedXY);
             isMatched=isMatchAt(subX0,subY0,kFrg_ClipWidth,kFrg_ClipHeight,cur_x0,cur_y0,out_matchType);
             if (isMatched){
                 *out_x0=cur_x0;

@@ -35,25 +35,26 @@ namespace frg{
     
     static inline TUInt colorMatchHash(const Color24& color,TUInt32 colorMask){
         const TUInt32 v4=color.getBGR()&colorMask;
-        TUInt32 hash=(TUInt32)hash_value((const char*)&v4,sizeof(v4));
+        TUInt hash=hash_value((const char*)&v4,sizeof(v4));
+        //if (sizeof(TUInt)>sizeof(TUInt32)) hash^=(hash>>32);
         hash^=(hash>>16);
         hash^=(hash>>8);
         return ((TUInt)1)<<(hash & (sizeof(TUInt)*8-1) );
     }
     
-    static void cacheFastMatch(std::vector<TUInt>& fastMatch,int matchSize,const std::vector<Color24>&  colorTable,int oldColorTableSize,TUInt32 colorMask){
-        int tabSize=(int)colorTable.size();
-        int oldFastMatchSize=(int)fastMatch.size();
+    static void cacheFastMatch(std::vector<TUInt>& fastMatch,int matchSize,const std::vector<Color24>&  colorTable,TUInt oldColorTableSize,TUInt32 colorMask){
+        TInt tabSize=colorTable.size();
+        TInt oldFastMatchSize=fastMatch.size();
         fastMatch.resize(oldFastMatchSize+(tabSize-oldColorTableSize));
-        for (int i=oldColorTableSize,j=oldFastMatchSize;i<tabSize;++i,++j){
+        for (TInt i=oldColorTableSize,j=oldFastMatchSize;i<tabSize;++i,++j){
             TUInt v=0;
-            for (int h=i; (h>=0)&&(i-h+1<=matchSize);--h) {
+            for (TInt h=i; (h>=0)&&(i-h+1<=matchSize);--h) {
                 v|=colorMatchHash(colorTable[h],colorMask);
             }
             fastMatch[j]=v;
         }
         
-        if (fastMatch.size()>=kMaxMatchLength*2+kFrg_MaxSubTableSize){
+        if (fastMatch.size()>=(TUInt)(kMaxMatchLength*2+kFrg_MaxSubTableSize)){
             fastMatch.erase(fastMatch.begin(),fastMatch.end()-(kMaxMatchLength+kFrg_MaxSubTableSize));
         }
     }
@@ -72,29 +73,29 @@ namespace frg{
     }
 
     int TTableMatch::_findMatch(const std::vector<Color24>& subTable,int windowTableSize){
-        const int subSize=(int)subTable.size();
-        const int tabSize=(int)m_colorTable.size();
+        const TInt subSize=subTable.size();
+        const TInt tabSize=m_colorTable.size();
         assert(subSize>1);
         TUInt sub_v=0;
-        for (int h=0;h<subSize;++h)
+        for (TInt h=0;h<subSize;++h)
             sub_v|=colorMatchHash(subTable[h],m_colorMask);
         
-        int last_mhi=tabSize-kMaxMatchLength;
+        TInt last_mhi=tabSize-kMaxMatchLength;
         if (last_mhi<0) last_mhi=0;
-        int mi=-1;
-        for (int hmi=tabSize-1,fastMatchi=(int)m_fastMatch4bitCache.size()-1; hmi>=last_mhi; --hmi,--fastMatchi) {
+        TInt mi=-1;
+        for (TInt hmi=tabSize-1,fastMatchi=(TInt)m_fastMatch4bitCache.size()-1; hmi>=last_mhi; --hmi,--fastMatchi) {
             if ((m_fastMatch4bitCache[fastMatchi]&sub_v)!=sub_v)
                 continue;
             
-            int min_mi=hmi-windowTableSize+1;
+            TInt min_mi=hmi-windowTableSize+1;
             if (min_mi<0) min_mi=0;
             //init set
-            for (int i=min_mi;i<=hmi;++i){
+            for (TInt i=min_mi;i<=hmi;++i){
                 setBit(&m_subColorSets[0],m_colorTable[i].getBGR()&m_colorMask,true);
             }
             
             bool isMatch=true;
-            for (int i=0;i<subSize;++i){
+            for (TInt i=0;i<subSize;++i){
                 if (!getBit(&m_subColorSets[0],subTable[i].getBGR()&m_colorMask)){
                     isMatch=false;
                     break;
@@ -102,15 +103,15 @@ namespace frg{
             }
             
             //reset set
-            for (int i=min_mi;i<=hmi;++i)
+            for (TInt i=min_mi;i<=hmi;++i)
                 setBit(&m_subColorSets[0],m_colorTable[i].getBGR()&m_colorMask,false);
             
             if (isMatch){
                 //find best mi
-                for (int i=0;i<subSize;++i)
+                for (TInt i=0;i<subSize;++i)
                     setBit(&m_subColorSets[0],subTable[i].getBGR()&m_colorMask,true);
                 
-                for (int i=hmi;i>=min_mi;--i){
+                for (TInt i=hmi;i>=min_mi;--i){
                     int bindex=m_colorTable[i].getBGR()&m_colorMask;
                     if (!getBit(&m_subColorSets[0],bindex)) continue;
                     setBit(&m_subColorSets[0],bindex,false);
@@ -120,7 +121,7 @@ namespace frg{
                 break; //ok
             }
         }
-        return mi;
+        return (int)mi;
     }
     
     int TTableMatch::findMatch(const std::vector<Color24>& subTable,int* out_matchTableBit){
@@ -129,9 +130,9 @@ namespace frg{
         const int kWindowTableSize_2bit=(1<<2);
         const int kWindowTableSize_1bit=(1<<1);
 
-        int subSize=(int)subTable.size();
+        TInt subSize=(TInt)subTable.size();
         assert(subSize>0);
-        int tabSize=(int)m_colorTable.size();
+        TInt tabSize=(TInt)m_colorTable.size();
         if (tabSize>m_oldColorTableSize){
             cacheFastMatch(m_fastMatch4bitCache,kWindowTableSize_4bit,m_colorTable,m_oldColorTableSize,m_colorMask);
             m_oldColorTableSize=tabSize;
@@ -140,10 +141,10 @@ namespace frg{
         if (subSize==1){
             //只用支持较短的前匹配.
             Color24 singleColor=subTable[0];
-            int mi=(int)m_colorTable.size()-1;
-            for (int i=1;(mi>=0)&&(i<=kFrg_MaxShortForwardLength);--mi,++i){
+            TInt mi=(TInt)m_colorTable.size()-1;
+            for (TInt i=1;(mi>=0)&&(i<=kFrg_MaxShortForwardLength);--mi,++i){
                 if (m_colorTable[mi].getBGR()==singleColor.getBGR()){
-                    return mi;
+                    return (int)mi;
                 }
             }
             return -1;

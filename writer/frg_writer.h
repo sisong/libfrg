@@ -30,14 +30,19 @@
 #define _LIBFRG_frg_writer_h
 
 #include <vector>
+#include <stdexcept>  //std::runtime_error
 
 namespace frg{
     
+	struct TFrgRunTimeError:public std::runtime_error{
+        inline explicit TFrgRunTimeError(const std::string&  _errorInfo):std::runtime_error(_errorInfo){}
+    };
     struct TFrgParameter;
     struct TFrgPixels32Ref;
 
 //save as frg 
-void writeFrgImage(std::vector<unsigned char>& outFrgCode,const TFrgPixels32Ref& srcImage,const TFrgParameter& parameter);
+void writeFrgImage(std::vector<unsigned char>& outFrgCode,const TFrgPixels32Ref& srcImage,
+                   const TFrgParameter& parameter); //throw TFrgRunTimeError()
 
     //质量控制.
     static const float kFrg_quality_max=100;    //无损压缩,不推荐.

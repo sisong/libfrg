@@ -80,9 +80,9 @@ struct frg_TFrgImageInfo{
     unsigned int    imageFileSize;
     int             imageWidth;
     int             imageHeight;
-    int             decoder_tempMemoryByteSize;
+    unsigned int    decoder_tempMemoryByteSize;
 };
-    
+
 //返回获得frg数据类型信息的大小. //在某些只需要知道文件头信息的时候就不用读取整个文件的数据了.
 int FRG_READER_EXPORT_API getFrgHeadSize(void);
 

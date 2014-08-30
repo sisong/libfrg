@@ -40,14 +40,13 @@ namespace frg{
         TPixels32Ref    colors;         //本块像素.
         int             subX0;          //本块在源图片中的位置x
         int             subY0;          //本块在源图片中的位置y
-        frg_TClipType   type;           //本块当前判定的类型.
         std::vector<Color24> sub_table; //本块的局部调色板.
-        TByte           matchTableBit;  //匹配的调色板的bit数.
-        TInt32          forwardLength;  //调色板向前匹配位置.
+        frg_TClipType   type;           //本块当前判定的类型.
         frg_TMatchType  matchType;      //帧内匹配类型.
-        int             matchIndex;     //帧内匹配的位置数据的索引.
+        TByte           matchTableBit;  //匹配的调色板的bit数.
         TByte           directColorTypeData; //无损压缩的类型数据.
-
+        TInt            matchIndex;     //帧内匹配的位置数据的索引.
+        TUInt           forwardLength;  //调色板向前匹配位置.
 
         inline bool isSingleColorType()const{//单色.
             return (type==kFrg_ClipType_single_bgr)||(type==kFrg_ClipType_single_bgra_w8);
@@ -70,7 +69,7 @@ namespace frg{
                     break;
                 case kFrg_ClipType_single_bgr:
                 case kFrg_ClipType_single_bgra_w8:
-                    return (type<<4)|forwardLength;
+                    return (type<<4)|(TByte)forwardLength;
                     break;
                 case kFrg_ClipType_directColor:
                     return (type<<4)| directColorTypeData;
@@ -104,7 +103,7 @@ namespace frg{
             m_colorMatcher.initColorMatch(m_srcRef,matchColorMask);
             m_tableZiper.setImageSize(m_srcRef.width,m_srcRef.height);
             m_tableMatcher.initSetColorMask(matchColorMask);
-            
+
             createClipNodes();
             createSubColorTable();
             createMatchs();
@@ -114,15 +113,14 @@ namespace frg{
         }
 
         void writeOut(std::vector<TByte>& out_buf){
-            const TUInt32 nodeCount=(TUInt32)m_clipNodeList.size();
+            const TUInt32 nodeCount=ToUInt32(m_clipNodeList.size(),"TColorZip::writeOut() m_clipNodeList.size() over 32bit.");
             packUInt(out_buf,nodeCount);
-            const TUInt32 tableSize=(TUInt32)m_colorTable.size();
+            const TUInt32 tableSize=ToUInt32(m_colorTable.size(),"TColorZip::writeOut() m_colorTable.size() over 32bit.");
             packUInt(out_buf,tableSize);
-            const TUInt32 index2Size=(TUInt32)m_indexList.size();
+            const TUInt32 index2Size=ToUInt32(m_indexList.size(),"TColorZip::writeOut() m_indexList.size() over 32bit.");
             packUInt(out_buf,index2Size);
-            const TUInt32 matchCount=(TUInt32)m_matchXYList.size();
+            const TUInt32 matchCount=ToUInt32(m_matchXYList.size(),"TColorZip::writeOut() m_matchXYList.size() over 32bit.");
             packUInt(out_buf,matchCount);
-
 
             for (TUInt32 i=0;i<nodeCount;++i){
                 const TClipNode& node=m_clipNodeList[i];
@@ -142,10 +140,10 @@ namespace frg{
                 writeUInt32(out_buf,m_matchXYList[i]);
             }
         }
-        
+
         void createClipNodes(){
             //分割块.
-            const int nodeCount=m_nodeWidth*m_nodeHeight;
+            const TUInt nodeCount=(TUInt)m_nodeWidth*(TUInt)m_nodeHeight;
             m_clipNodeList.resize(nodeCount);
             TClipNode* cur_node=&m_clipNodeList[0];
             for (int ny=0; ny<m_nodeHeight;++ny) {
@@ -163,12 +161,11 @@ namespace frg{
                 }
             }
         }
-        
+
         void createSubColorTable(){
             //计算出局部调色板.
             TClipNode* cur_node=&m_clipNodeList[0];
-            //#pragma omp parallel for
-            for (int i=0; i<(int)m_clipNodeList.size();++i,++cur_node){
+            for (TUInt i=0; i<m_clipNodeList.size();++i,++cur_node){
                 m_tableZiper.getBestColorTable(cur_node->sub_table,cur_node->colors,kFrg_MaxSubTableSize);
                 bool isSingleColor=(cur_node->sub_table.size()==1);
                 TByte _tmpAlpha;
@@ -204,7 +201,7 @@ namespace frg{
                         continue;
                     //查找匹配位置.
                     frg_TMatchType matchType;
-                    TInt32  matchX0,matchY0;
+                    int  matchX0,matchY0;
                     if (findMatch(nx,ny,&matchX0,&matchY0,&matchType)){
                         //match ok
                         cur_node->type=kFrg_ClipType_match_image;
@@ -215,12 +212,12 @@ namespace frg{
                 }
             }
         }
-        
+
         void createPublicColorTable(){
             //创建公共调色板，并处理颜色表共享匹配.
             m_colorTable.clear();
             TClipNode* cur_node=&m_clipNodeList[0];
-            for (int ni=0; ni<(int)m_clipNodeList.size();++ni,++cur_node) {
+            for (TUInt ni=0; ni<m_clipNodeList.size();++ni,++cur_node) {
                std::vector<Color24>& sub_table=cur_node->sub_table;
                 if (cur_node->type==kFrg_ClipType_match_image)
                     continue; //next node;
@@ -232,20 +229,23 @@ namespace frg{
 
                 bool isSingleColor=cur_node->isSingleColorType();
 
-                int forwardLength=0;
+                TUInt forwardLength=0;
                 int matchTableBit;
-                int tableMatchIndex=m_tableMatcher.findMatch(sub_table,&matchTableBit); //颜色表匹配.
+                TInt tableMatchIndex=m_tableMatcher.findMatch(sub_table,&matchTableBit); //颜色表匹配.
                 if (tableMatchIndex>=0){
-                    forwardLength=(int)m_colorTable.size()-tableMatchIndex;
+                    forwardLength=(TUInt)(m_colorTable.size()-tableMatchIndex);
                     //note!  mybe forwardLength < sub_table.size()
                     if (isSingleColor){
-                        if (forwardLength>kFrg_MaxShortForwardLength) //singleColor时只支持短匹配.
+                        if (forwardLength>(TUInt)kFrg_MaxShortForwardLength) //singleColor时只支持短匹配.
                             tableMatchIndex=-1;
                     }
+                    if (((TUInt32)forwardLength)!=forwardLength){ //限制长度.
+                        tableMatchIndex=1;
+                    }
                 }
-                
-                /*
-                if (tableMatchIndex>=0){//check findMatch result, must saved bytes !
+
+                /* //check findMatch result, must saved bytes !
+                if (tableMatchIndex>=0){
                     int curBestSavedBytes=0;
                     const int indexBitOld=kFrg_SubTableSize_to_indexBit[sub_table.size()];
                     if (isSingleColor)
@@ -259,7 +259,7 @@ namespace frg{
                         tableMatchIndex=-1;
                     }
                 }
-                */
+                //*/
 
                 if (tableMatchIndex>=0){
                      cur_node->matchTableBit=matchTableBit;
@@ -281,7 +281,7 @@ namespace frg{
                 }
             }
         }
-        
+
         void createIndexList(){
             m_indexList.clear();
 
@@ -289,7 +289,7 @@ namespace frg{
             std::vector<TByte> sub_indexList; sub_indexList.reserve(kFrg_ClipWidth*kFrg_ClipHeight);
             const Color24* cur_table=&m_colorTable[0];
             const Color24* table_end=cur_table+m_colorTable.size();
-            for (int i=0;i<(int)m_clipNodeList.size();++i){
+            for (TUInt i=0;i<m_clipNodeList.size();++i){
                 TClipNode& cur_node=m_clipNodeList[i];
                 switch (cur_node.type) {
                     case kFrg_ClipType_index:
@@ -311,19 +311,19 @@ namespace frg{
                             bit=cur_node.matchTableBit;
                         else
                             bit=kFrg_SubTableSize_to_indexBit[cur_node.sub_table.size()];
-                        TInt32 subTableSafeSize=(1<<bit);
+                        int subTableSafeSize=(1<<bit);
                         if (subTableSafeSize>(table_end-subTable))
-                            subTableSafeSize=(TInt32)(table_end-subTable);
+                            subTableSafeSize=(int)(table_end-subTable);
                         m_tableZiper.getBestColorIndex(sub_indexList, subTable,subTableSafeSize,cur_node.colors,cur_node.subX0,cur_node.subY0);
                         packIndexs(sub_indexList,bit);
 
                         std::vector<TByte> ctrlData;
                         if (isMatchTable){//match table
-                            int tableForwardLength=cur_node.forwardLength;
+                            TUInt tableForwardLength=cur_node.forwardLength;
                             cur_node.forwardLength=0;
                             packUInt(ctrlData,(TUInt32)tableForwardLength);
                         }
-                        
+
                         m_indexList.insert(m_indexList.end(), ctrlData.begin(),ctrlData.end());
                         m_indexList.insert(m_indexList.end(), sub_indexList.begin(),sub_indexList.end());
 
@@ -346,14 +346,14 @@ namespace frg{
             }
         }
 
-        
-        
-        bool findMatch(TInt32 cur_nx,TInt32 cur_ny,TInt32* out_matchX0,TInt32* out_matchY0,frg_TMatchType* out_matchType){
-            const int curNodeIndex=cur_ny*m_nodeWidth+cur_nx;
+
+
+        bool findMatch(TInt32 cur_nx,TInt32 cur_ny,int* out_matchX0,int* out_matchY0,frg_TMatchType* out_matchType){
+            const TInt curNodeIndex=cur_ny*m_nodeWidth+cur_nx;
             const TClipNode& _curNode=m_clipNodeList[curNodeIndex];
             const int subWidth=_curNode.colors.width;
             const int subHeight=_curNode.colors.height;
-            
+
             if ((subWidth==kFrg_ClipWidth)&&(subHeight==kFrg_ClipHeight)){
                 return m_colorMatcher.findMatch(cur_nx,cur_ny,out_matchX0,out_matchY0,out_matchType);
             }else{
@@ -432,24 +432,24 @@ namespace frg{
             }
         }
 
-        int addAMatch(TUInt32 matchX0,TUInt32 matchY0){
+        TInt addAMatch(TUInt32 matchX0,TUInt32 matchY0){
             TUInt32 matchPosXY=packMatchXY(matchX0, matchY0);
-            int matchIndex=(int)m_matchXYList.size();
+            TInt matchIndex=(TInt)m_matchXYList.size();
             m_matchXYList.push_back(matchPosXY);
             return matchIndex;
         }
 
     private:
         float                   m_colorQuality;
+        TPixels32Ref            m_srcRef;
+        int                     m_nodeWidth;
+        int                     m_nodeHeight;
+        std::vector<TClipNode>  m_clipNodeList;
+        std::vector<Color24>    m_colorTable;       //公共调色板.
         TColorTableZiper        m_tableZiper;
+        std::vector<TByte>      m_indexList;        //索引.
         TColorMatch             m_colorMatcher;
         TTableMatch             m_tableMatcher;
-        TPixels32Ref            m_srcRef;
-        TInt32                  m_nodeWidth;
-        TInt32                  m_nodeHeight;
-        std::vector<TClipNode>  m_clipNodeList;
-        std::vector<TByte>      m_indexList;
-        std::vector<Color24>    m_colorTable;       //公共调色板.
         std::vector<TUInt32>    m_matchXYList;      //帧内匹配列表.
         TUInt*                  m_out_bgrColorTableLength;
     };

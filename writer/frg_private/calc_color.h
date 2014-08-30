@@ -54,13 +54,13 @@ namespace frg{
         inline void add(const TBaseColor& rgb) { add(SelfType(rgb)); }
         inline void sub(const SelfType& clColor) { r-=clColor.r; g-=clColor.g; b-=clColor.b; }
         inline void sub(const TBaseColor& rgb) { sub(SelfType(rgb)); }
-        inline void mul(int mulValue) { r*=mulValue; g*=mulValue; b*=mulValue;  }
-        inline void div(int divValue) { r/=divValue; g/=divValue; b/=divValue;  }
-        inline void divUseRound(int divValue) { int half=divValue>>1; r+=half; g+=half; b+=half; div(divValue); }
+        inline void mul(TValueType mulValue) { r*=mulValue; g*=mulValue; b*=mulValue;  }
+        inline void div(TValueType divValue) { r/=divValue; g/=divValue; b/=divValue;  }
+        inline void divUseRound(TValueType divValue) { TValueType half=divValue>>1; r+=half; g+=half; b+=half; div(divValue); }
         inline void sar(int sarBit) { r>>=sarBit; g>>=sarBit; b>>=sarBit;  }
-        inline void addWithMul(const SelfType& clColor,int mulValue) {
+        inline void addWithMul(const SelfType& clColor,TValueType mulValue) {
             r+=clColor.r*mulValue; g+=clColor.g*mulValue; b+=clColor.b*mulValue; }
-        inline void setWithMul(const SelfType& clColor,int mulValue) {
+        inline void setWithMul(const SelfType& clColor,TValueType mulValue) {
             r=clColor.r*mulValue; g=clColor.g*mulValue; b=clColor.b*mulValue; }
         
         inline void min(const SelfType& clColor) {
@@ -74,7 +74,7 @@ namespace frg{
             if (clColor.b>b) b=clColor.b; }
         inline void max(const TBaseColor& rgb) { max(SelfType(rgb)); }
     public:
-        inline static int toFitColor(TValueType selfColor,TValueType minColor,TValueType maxColor) {
+        inline static TValueType toFitColor(TValueType selfColor,TValueType minColor,TValueType maxColor) {
             selfColor>>=kIntFloatBit;
             if (selfColor<=minColor)
                 return minColor;

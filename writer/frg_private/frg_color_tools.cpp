@@ -33,24 +33,29 @@ namespace frg{
 
 void pixelsFill(const TPixels32Ref& dst,TBGRA32 color){
     for (int y=0;y<dst.height;++y){
+        TBGRA32* pDstLine=dst.getLinePixels(y);
         for (int x=0;x<dst.width;++x){
-            dst.pixels(x, y)=color;
+            pDstLine[x]=color;
         }
     }
 }
 
 void pixelsCopy(const TPixels32Ref& dst,const TPixels32Ref& src){
+    int minX=std::min(dst.width,src.width);
     for (int y=0;y<std::min(dst.height,src.height);++y){
-        for (int x=0;x<std::min(dst.width,src.width);++x){
-            dst.pixels(x, y)=src.pixels(x, y);
+        TBGRA32* pDstLine=dst.getLinePixels(y);
+        const TBGRA32* pSrcLine=src.getLinePixels(y);
+        for (int x=0;x<minX;++x){
+            pDstLine[x]=pSrcLine[x];
         }
     }
 }
 
 static bool findFirstNotEmptyAlpha(const TPixels32Ref& src,int* out_x,int* out_y){
     for (int y=0;y<src.height;++y){
+        const TBGRA32* pSrcLine=src.getLinePixels(y);
         for (int x=0;x<src.width;++x){
-            if (src.pixels(x, y).a!=0){
+            if (pSrcLine[x].a!=0){
                 *out_x=x;
                 *out_y=y;
                 return true;
@@ -70,8 +75,9 @@ bool getIsSigleRGBColor(const TPixels32Ref& src,TBGRA32* out_BGR){
     TBGRA32 BGR=src.pixels(aX,aY);
     BGR.a=0;
     for (int y=aY;y<src.height;++y){
+        const TBGRA32* pSrcLine=src.getLinePixels(y);
         for (int x=0;x<src.width;++x){
-            if ((src.pixels(x,y).getBGR()!=BGR.getBGR())&&(src.pixels(x,y).a!=0)){
+            if ((pSrcLine[x].getBGR()!=BGR.getBGR())&&(pSrcLine[x].a!=0)){
                 return false;
             }
         }
@@ -86,8 +92,9 @@ bool getIsSigleAlphaColor(const TPixels32Ref& src,TByte* out_Alpha){
         A=src.pixels(0,0).a;
 
     for (int y=0;y<src.height;++y){
+        const TBGRA32* pSrcLine=src.getLinePixels(y);
         for (int x=0;x<src.width;++x){
-            if (src.pixels(x,y).a!=A){
+            if (pSrcLine[x].a!=A){
                 return false;
             }
         }
@@ -108,9 +115,10 @@ void delEmptyColor(const TPixels32Ref& dst){
     if (getIsSigleRGBColor(dst,&rgb)){//相同rgb
         rgb.a=0;
         for (int y=0;y<dst.height;++y){
+            TBGRA32* pDstLine=dst.getLinePixels(y);
             for (int x=0;x<dst.width;++x){
-                if (dst.pixels(x,y).a==0){
-                    dst.pixels(x,y)=rgb;
+                if (pDstLine[x].a==0){
+                    pDstLine[x]=rgb;
                 }
             }
         }
@@ -118,19 +126,21 @@ void delEmptyColor(const TPixels32Ref& dst){
     }
 
     /*全透明像素直接填充0
-     for (int y=0;y<dst.height;++y){
-         for (int x=0;x<dst.width;++x){
-             if (dst.pixels(x,y).a==0){
-                 dst.pixels(x,y)=TBGRA32(0,0,0,0);
-             }
-         }
-     }
+    for (int y=0;y<dst.height;++y){
+        TBGRA32* pDstLine=dst.getLinePixels(y);
+        for (int x=0;x<dst.width;++x){
+            if (pDstLine[x].a==0){
+                pDstLine[x].fromBGRA(0);
+            }
+        }
+    }
     //*/
-    //*尽量填充全透明像素；但排除有效像素的边界,减少被缩放时出现黑边的可能.
+    //*尽量填充全透明像素；但排除有效像素的边界,减少被缩放时出现黑边的可能(某些情况可能无效).
     const int kBorder=1;
     for (int y=0;y<dst.height;++y){
+        TBGRA32* pDstLine=dst.getLinePixels(y);
         for (int x=0;x<dst.width;++x){
-            if (dst.pixels(x,y).a!=0) continue;
+            if (pDstLine[x].a!=0) continue;
             TFRG_map<TUInt32,TUInt32> set;
             for (int dy=-kBorder;dy<=kBorder;++dy){
                 for (int dx=-kBorder;dx<=kBorder;++dx){
@@ -143,7 +153,7 @@ void delEmptyColor(const TPixels32Ref& dst){
                 }
             }
             if (set.empty())
-                dst.pixels(x,y)=TBGRA32(0,0,0,0);
+                pDstLine[x].fromBGRA(0);
             else{
                 TUInt32 maxSumAlpha=0;
                 TUInt32 bestBGRColor=0;
@@ -153,7 +163,7 @@ void delEmptyColor(const TPixels32Ref& dst){
                         bestBGRColor=it->first;
                     }
                 }
-                dst.pixels(x,y)=TBGRA32::fromBGRA(bestBGRColor);
+                pDstLine[x]=TBGRA32::fromBGRA(bestBGRColor);
             }
         }
     }

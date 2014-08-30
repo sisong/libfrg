@@ -79,13 +79,13 @@ namespace frg{
         if (colorQuality>100) colorQuality=100;
         else if (colorQuality<0) colorQuality=0;
 
-        const int kDiffuseCoeff0=(1<<kColorErrorDiffuseCoefficientIntFloatBit)*87/100;
-        const int kDiffuseCoeff100=(1<<kColorErrorDiffuseCoefficientIntFloatBit)*97/100;
-        out_errorParameter->errorDiffuse_coefficient=(int)(0.5f+kDiffuseCoeff0+(kDiffuseCoeff100-kDiffuseCoeff0)*colorQuality/100);
+        const TInt32 kDiffuseCoeff0=(1<<kColorErrorDiffuseCoefficientIntFloatBit)*87/100;
+        const TInt32 kDiffuseCoeff100=(1<<kColorErrorDiffuseCoefficientIntFloatBit)*97/100;
+        out_errorParameter->errorDiffuse_coefficient=(TInt32)(0.5f+kDiffuseCoeff0+(kDiffuseCoeff100-kDiffuseCoeff0)*colorQuality/100);
 
-        const int kMaxDiffuseValue0=(1<<kColorErrorDiffuseCoefficientIntFloatBit)*(1<<5);
-        const int kMaxDiffuseValue100=(1<<kColorErrorDiffuseCoefficientIntFloatBit)*(1<<2);
-        out_errorParameter->maxErrorDiffuseValue=(int)(0.5f+kMaxDiffuseValue0+(kMaxDiffuseValue100-kMaxDiffuseValue0)*colorQuality/100);
+        const TInt32 kMaxDiffuseValue0=(1<<kColorErrorDiffuseCoefficientIntFloatBit)*(1<<5);
+        const TInt32 kMaxDiffuseValue100=(1<<kColorErrorDiffuseCoefficientIntFloatBit)*(1<<2);
+        out_errorParameter->maxErrorDiffuseValue=(TInt32)(0.5f+kMaxDiffuseValue0+(kMaxDiffuseValue100-kMaxDiffuseValue0)*colorQuality/100);
 
         out_errorParameter->isMustFitColorTable=isMustFitColorTable;//colorQuality<=80;
 
@@ -99,19 +99,19 @@ namespace frg{
         static TInt32 kTableSize80=16;
 
         if ((80<=colorQuality)&&(colorQuality<=100)){
-            out_errorParameter->minColorError=(int)(0.5f+(colorQuality-80)*(kSingleColorError100-kSingleColorError80)/(100-80)+kSingleColorError80);
+            out_errorParameter->minColorError=(TInt32)(0.5f+(colorQuality-80)*(kSingleColorError100-kSingleColorError80)/(100-80)+kSingleColorError80);
             out_errorParameter->minColorError_optimize=(out_errorParameter->minColorError)>>1;
             out_errorParameter->maxTableSize=16;
             return;
         }else if ((60<=colorQuality)&&(colorQuality<80)){
-            out_errorParameter->minColorError=(int)(0.5f+(colorQuality-60)*(kSingleColorError80-kSingleColorError60)/(80-60)+kSingleColorError60);
+            out_errorParameter->minColorError=(TInt32)(0.5f+(colorQuality-60)*(kSingleColorError80-kSingleColorError60)/(80-60)+kSingleColorError60);
             out_errorParameter->minColorError_optimize=(out_errorParameter->minColorError)>>1;
-            out_errorParameter->maxTableSize=(int)(0.5f+(colorQuality-60)*(kTableSize80-kTableSize60)/(80-60)+kTableSize60);
+            out_errorParameter->maxTableSize=(TInt32)(0.5f+(colorQuality-60)*(kTableSize80-kTableSize60)/(80-60)+kTableSize60);
             return;
         }else if ((0<=colorQuality)&&(colorQuality<60)){
-            out_errorParameter->minColorError=(int)(0.5f+(colorQuality-0)*(kSingleColorError60-kSingleColorError0)/(60-0)+kSingleColorError0);
+            out_errorParameter->minColorError=(TInt32)(0.5f+(colorQuality-0)*(kSingleColorError60-kSingleColorError0)/(60-0)+kSingleColorError0);
             out_errorParameter->minColorError_optimize=(out_errorParameter->minColorError)>>1;
-            out_errorParameter->maxTableSize=(int)(0.5f+(colorQuality-0)*(kTableSize60-kTableSize0)/(60-0)+kTableSize0);
+            out_errorParameter->maxTableSize=(TInt32)(0.5f+(colorQuality-0)*(kTableSize60-kTableSize0)/(60-0)+kTableSize0);
             return;
         }
         assert(false);
@@ -186,8 +186,8 @@ namespace frg{
         inline ~TColorsDistance(){ m_colorSet.resize(m_colorCount); }
         void initColorSet(std::vector<TColorTableZiper::TColorNode>* colorSet);
         inline int getColorCount()const{ return m_colorCount; }
-        TInt32 getMinColorDistance(TInt32* out_index0,TInt32* out_index1)const;
-        void  deleteAColor(TInt32 index0,TInt32 index1);
+        TInt32 getMinColorDistance(int* out_index0,int* out_index1)const;
+        void  deleteAColor(int index0,int index1);
     private:
         std::vector<TColorTableZiper::TColorNode>&    m_colorSet;
         int                         m_colorCount;
@@ -197,12 +197,12 @@ namespace frg{
         }
     };
 
-    TInt32 TColorsDistance::getMinColorDistance(TInt32* out_index0,TInt32* out_index1)const{
+    TInt32 TColorsDistance::getMinColorDistance(int* out_index0,int* out_index1)const{
         assert(m_colorCount>=2);
         
         TUInt32 curMinDistance=(1<<30)-1+(1<<30);
-        TInt32 curMinIndex0=-1;
-        TInt32 curMinIndex1=-1;
+        int curMinIndex0=-1;
+        int curMinIndex1=-1;
         for (int index0=0;index0<m_colorCount-1;++index0){
             for (int index1=index0+1;index1<m_colorCount;++index1){
                 TUInt32 distance=getNodeColorDistance(m_colorSet[index0],m_colorSet[index1]);
@@ -220,7 +220,7 @@ namespace frg{
         
     }
     
-    void TColorsDistance::deleteAColor(TInt32 index0,TInt32 index1){
+    void TColorsDistance::deleteAColor(int index0,int index1){
         assert(index0<index1);
         //del color
         m_colorSet[index0].uniteColor(m_colorSet[index1]);
@@ -233,9 +233,9 @@ namespace frg{
     void TColorTableZiper::deleteColor(std::vector<TColorNode>& colorSet,int maxTableSize,const TColorErrorParameter& errorParameter){
         maxTableSize=std::min(maxTableSize,errorParameter.maxTableSize);
         TColorsDistance colorsDistance(colorSet);
-        TInt32 curMinColorError=0;
+        TUInt32 curMinColorError=0;
         while (colorsDistance.getColorCount()>maxTableSize) {
-            TInt32 index0,index1;
+            int index0,index1;
             curMinColorError=colorsDistance.getMinColorDistance(&index0,&index1);
             if ((!errorParameter.isMustFitColorTable)&&(curMinColorError>errorParameter.minColorError))
                 return; //fail;
@@ -244,9 +244,9 @@ namespace frg{
 
         //succeed,continue optimize size
 
-        const TInt32 kMinTableSize =2;
+        const int kMinTableSize =2;
         while ((curMinColorError<errorParameter.minColorError_optimize)&&(colorsDistance.getColorCount()>kMinTableSize)){
-            TInt32 index0,index1;
+            int index0,index1;
             curMinColorError=colorsDistance.getMinColorDistance(&index0,&index1);
             if (curMinColorError>errorParameter.minColorError_optimize)
                 return; //finish optimize;
@@ -257,7 +257,7 @@ namespace frg{
     template <class TCalcColor>
     static int getABestColorIndex(const Color24* table,TInt32 tableSize,const TCalcColor& color){
         TUInt32 curMinDistance=(1<<30)-1+(1<<30);
-        TInt32 curMinIndex=-1;
+        int curMinIndex=-1;
         for (int index=0;index<tableSize;++index){
             TUInt32 distance=getColorDistance(TCalcColor(Color32(table[index].r,table[index].g,table[index].b)),color);
             if (distance<curMinDistance){
@@ -298,16 +298,16 @@ namespace frg{
         }
 
     public:
-       inline TIndextColors(std::vector<TByte>& out_indexList,const Color24* table,TInt32 tableSize,
+       inline TIndextColors(std::vector<TByte>& out_indexList,const Color24* table,int tableSize,
                             const TColorErrorParameter& errorParameter)
             :m_out_indexList(out_indexList),m_table(table),m_tableSize(tableSize),m_errorParameter(errorParameter){
         }
     private:
         std::vector<TByte>&     m_out_indexList;
         const Color24*          m_table;
-        TInt32                  m_tableSize;
+        int                     m_tableSize;
         TColorErrorParameter    m_errorParameter;
-        inline int optimizeLimitError(int c){
+        inline TInt32 optimizeLimitError(TInt32 c){
             c=c*m_errorParameter.errorDiffuse_coefficient/(1<<kColorErrorDiffuseCoefficientIntFloatBit);
             if (c<(-m_errorParameter.maxErrorDiffuseValue)){
                 return (c-m_errorParameter.maxErrorDiffuseValue)/2;
@@ -317,7 +317,7 @@ namespace frg{
                 return c;
             }
         }
-        inline int limitError(int c){
+        inline TInt32 limitError(TInt32 c){
             const int limit=m_errorParameter.maxErrorDiffuseValue>>1;
             if (c<(-limit)){
                 return -limit;
@@ -330,7 +330,7 @@ namespace frg{
     };
 
 
-    void TColorTableZiper::getBestColorIndex(std::vector<TByte>& out_indexList,const Color24* table,TInt32 tableSize,const TPixels32Ref& subColors,int subX0,int subY0){
+    void TColorTableZiper::getBestColorIndex(std::vector<TByte>& out_indexList,const Color24* table,int tableSize,const TPixels32Ref& subColors,int subX0,int subY0){
         out_indexList.clear();
         TIndextColors dstIndexs(out_indexList,table,tableSize,m_errorParameter);
         
@@ -353,7 +353,7 @@ namespace frg{
         TErrorColor*  PrevHLineErr =errRef.pColor;
         TErrorColor*  NextHLineErr =errRef.nextLine(PrevHLineErr);
         dstIndexs.toBeginLine();
-        for  ( int  y = 0 ;y < subColors.height; ++ y){
+        for  (int y=0; y<subColors.height; ++y){
             TErrorDiffuse<TPixelsRefBase<TIndextColors::TErrorColor>,TIndextColors,TPixels32Ref>::errorDiffuse_Line(
                 dstIndexs,pSrc,subColors.width,PrevHLineErr+1+1+subX0,NextHLineErr+1+1,&NextHLineErr[0]);
             PrevHLineErr=NextHLineErr; NextHLineErr=errRef.nextLine(PrevHLineErr);
@@ -399,10 +399,10 @@ namespace frg{
             pline=colors.nextLine(pline);
         }
 
-        int colorCountsSize=(int)colorSet.size();
+        TUInt colorCountsSize=colorSet.size();
         out_colorSet->resize(colorCountsSize);
         TFRG_map<TUInt32,TUInt32>::const_iterator it(colorSet.begin());
-        for (int i=0;i<colorCountsSize;++i,++it){
+        for (TUInt i=0;i<colorCountsSize;++i,++it){
             Color24 color; color.setBGR(it->first);
             (*out_colorSet)[i].setColor(color,it->second);
         }
@@ -416,9 +416,9 @@ namespace frg{
     }
 
     void TColorTableZiper::writeTable(std::vector<Color24>& out_table,std::vector<TColorNode>& colorSet){
-        int colorSetSize=(int)colorSet.size();
+        TUInt colorSetSize=colorSet.size();
         out_table.resize(colorSetSize);
-        for (int i=0;i<colorSetSize; ++i) {
+        for (TUInt i=0;i<colorSetSize; ++i) {
             out_table[i]=colorSet[i].asColor24();
         }
     }

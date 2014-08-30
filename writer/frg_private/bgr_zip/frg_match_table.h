@@ -46,7 +46,7 @@ namespace frg{
         const std::vector<Color24>&  m_colorTable;
         std::vector<TByte>  m_subColorSets;
         std::vector<TUInt>  m_fastMatch4bitCache;
-        int                 m_oldColorTableSize;
+        TInt                m_oldColorTableSize;
         TUInt32             m_colorMask;
         int _findMatch(const std::vector<Color24>& subTable,int windowTableSize);
     };

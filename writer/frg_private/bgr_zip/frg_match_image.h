@@ -38,14 +38,14 @@ namespace frg{
     public:
         TColorMatch():m_colorMask(0xFFFFFF),m_nodeWidth(0){}
         void initColorMatch(const TPixels32Ref& ref,TUInt32 colorMask);
-        bool findMatch(TInt32 nodeX,TInt32 nodeY,TInt32* out_x0,TInt32* out_y0,frg_TMatchType* out_matchType);
-        bool isMatchAt(TInt32 subX0,TInt32 subY0,TInt32 subWidth,TInt32 subHeight,TInt32 match_x0,TInt32 match_y0,frg_TMatchType* out_matchType);
+        bool findMatch(int nodeX,int nodeY,int* out_x0,int* out_y0,frg_TMatchType* out_matchType);
+        bool isMatchAt(int subX0,int subY0,int subWidth,int subHeight,int match_x0,int match_y0,frg_TMatchType* out_matchType);
         typedef TFRG_multimap<TUInt32,TUInt32> TMatchMap;
     private:
         TPixels32Ref            m_ref;
         TUInt32                 m_colorMask;
         TMatchMap               m_matchMap;
-        TInt32                  m_nodeWidth;
+        int                     m_nodeWidth;
         std::vector<TUInt32>    m_nodeKeys;
     };
 
