@@ -245,11 +245,11 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
     code_data.assign(kFrgTagAndVersion, kFrgTagAndVersion+kFrgTagAndVersionSize);
     //imageFileSize
     TUInt32 imageFileSize=sizeof(TUInt32)+(TUInt32)code_data.size();//throw
-    imageFileSize+=sizeof(TUInt32)+code_head.size();
+    imageFileSize+=(TUInt32)(sizeof(TUInt32)+code_head.size());
     if (!isSingleAlpha)
-        imageFileSize+=sizeof(TUInt32)+code_alpha.size();
+        imageFileSize+=(TUInt32)(sizeof(TUInt32)+code_alpha.size());
     if (!isSingleBGR)
-        imageFileSize+=sizeof(TUInt32)+code_bgr.size();
+        imageFileSize+=(TUInt32)(sizeof(TUInt32)+code_bgr.size());
     writeUInt32(code_data,imageFileSize);
     
     //head code

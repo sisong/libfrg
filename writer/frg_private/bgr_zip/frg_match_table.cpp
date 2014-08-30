@@ -58,7 +58,7 @@ namespace frg{
         }
     }
     
-    static inline void setBit(std::vector<TByte>& bitVector,int i,bool value){
+    static inline void setBit(TByte* bitVector,TUInt i,bool value){
         TByte& v8=bitVector[i>>3];
         if (value)
             v8|=1<<(i&7);
@@ -66,7 +66,7 @@ namespace frg{
             v8&=~(1<<(i&7));
     }
     
-    static inline bool getBit(const std::vector<TByte>& bitVector,int i){
+    static inline bool getBit(const TByte* bitVector,TUInt i){
         const TByte v8=bitVector[i>>3];
         return ( v8&(1<<(i&7)) )!=0;
     }
@@ -90,12 +90,12 @@ namespace frg{
             if (min_mi<0) min_mi=0;
             //init set
             for (int i=min_mi;i<=hmi;++i){
-                setBit(m_subColorSets,m_colorTable[i].getBGR()&m_colorMask,true);
+                setBit(&m_subColorSets[0],m_colorTable[i].getBGR()&m_colorMask,true);
             }
             
             bool isMatch=true;
             for (int i=0;i<subSize;++i){
-                if (!getBit(m_subColorSets,subTable[i].getBGR()&m_colorMask)){
+                if (!getBit(&m_subColorSets[0],subTable[i].getBGR()&m_colorMask)){
                     isMatch=false;
                     break;
                 }
@@ -103,17 +103,17 @@ namespace frg{
             
             //reset set
             for (int i=min_mi;i<=hmi;++i)
-                setBit(m_subColorSets,m_colorTable[i].getBGR()&m_colorMask,false);
+                setBit(&m_subColorSets[0],m_colorTable[i].getBGR()&m_colorMask,false);
             
             if (isMatch){
                 //find best mi
                 for (int i=0;i<subSize;++i)
-                    setBit(m_subColorSets,subTable[i].getBGR()&m_colorMask,true);
+                    setBit(&m_subColorSets[0],subTable[i].getBGR()&m_colorMask,true);
                 
                 for (int i=hmi;i>=min_mi;--i){
                     int bindex=m_colorTable[i].getBGR()&m_colorMask;
-                    if (!getBit(m_subColorSets,bindex)) continue;
-                    setBit(m_subColorSets,bindex,false);
+                    if (!getBit(&m_subColorSets[0],bindex)) continue;
+                    setBit(&m_subColorSets[0],bindex,false);
                     mi=i;
                 }
                 
@@ -184,6 +184,7 @@ namespace frg{
             } break;
             default:{
                 assert(false);
+                return -1;
             } break;
         }
     }

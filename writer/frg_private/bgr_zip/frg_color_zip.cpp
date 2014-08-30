@@ -93,15 +93,15 @@ namespace frg{
         explicit TColorZip(float colorQuality,bool isMustFitColorTable,TUInt* out_bgrColorTableLength)
             :m_colorQuality(colorQuality),
              m_tableZiper(colorQuality,isMustFitColorTable),
-             m_out_bgrColorTableLength(out_bgrColorTableLength),
-             m_tableMatcher(m_colorTable){ }
+             m_tableMatcher(m_colorTable),
+             m_out_bgrColorTableLength(out_bgrColorTableLength) { }
         void saveTo(std::vector<TByte>& out_buf,const TPixels32Ref& ref){
             if (ref.getIsEmpty()) return;
             m_srcRef=ref;
             m_nodeWidth=(m_srcRef.width+kFrg_ClipWidth-1)/kFrg_ClipWidth;
             m_nodeHeight=(m_srcRef.height+kFrg_ClipHeight-1)/kFrg_ClipHeight;
             TUInt32 matchColorMask=TColorTableZiper::qualityToMatchColorMask(m_colorQuality);
-            m_colorMatcher.initColorMatch(m_srcRef, kFrg_ClipWidth, kFrg_ClipHeight,matchColorMask);
+            m_colorMatcher.initColorMatch(m_srcRef,matchColorMask);
             m_tableZiper.setImageSize(m_srcRef.width,m_srcRef.height);
             m_tableMatcher.initSetColorMask(matchColorMask);
             
@@ -346,37 +346,42 @@ namespace frg{
             }
         }
 
+        
+        
         bool findMatch(TInt32 cur_nx,TInt32 cur_ny,TInt32* out_matchX0,TInt32* out_matchY0,frg_TMatchType* out_matchType){
             const int curNodeIndex=cur_ny*m_nodeWidth+cur_nx;
-            const TClipNode& curNode=m_clipNodeList[curNodeIndex];
-            const int subWidth=curNode.colors.width;
-            const int subHeight=curNode.colors.height;
-            //m_colorMatcher.findMatch 只支持标准大小node, 边界的node做了一些特殊优化匹配.
-            
-#warning //todo: 也要考虑匹配方向？！
-            if (cur_nx>0){
-                const TClipNode& curNodeLeft=m_clipNodeList[curNodeIndex-1];
-                if (curNodeLeft.type==kFrg_ClipType_match_image){
-                    *out_matchX0=unpackMatchX(m_matchXYList[curNodeLeft.matchIndex])+kFrg_ClipWidth;
-                    *out_matchY0=unpackMatchY(m_matchXYList[curNodeLeft.matchIndex])+kFrg_ClipHeight;
-                    if (m_colorMatcher.isMatchAt(cur_nx*kFrg_ClipWidth,cur_ny*kFrg_ClipHeight,subWidth,subHeight,*out_matchX0,*out_matchY0,out_matchType))
-                        return true;
-                }
-            }
-            
-            if (cur_ny>0){
-                const TClipNode& curNodeTop=m_clipNodeList[curNodeIndex-m_nodeWidth];
-                if (curNodeTop.type==kFrg_ClipType_match_image){
-                    *out_matchX0=unpackMatchX(m_matchXYList[curNodeTop.matchIndex])+kFrg_ClipWidth;
-                    *out_matchY0=unpackMatchY(m_matchXYList[curNodeTop.matchIndex])+kFrg_ClipHeight;
-                    if (m_colorMatcher.isMatchAt(cur_nx*kFrg_ClipWidth,cur_ny*kFrg_ClipHeight,subWidth,subHeight,*out_matchX0,*out_matchY0,out_matchType))
-                        return true;
-                }
-            }
+            const TClipNode& _curNode=m_clipNodeList[curNodeIndex];
+            const int subWidth=_curNode.colors.width;
+            const int subHeight=_curNode.colors.height;
             
             if ((subWidth==kFrg_ClipWidth)&&(subHeight==kFrg_ClipHeight)){
-                return m_colorMatcher.findMatch(cur_nx*kFrg_ClipWidth,cur_ny*kFrg_ClipHeight,subWidth,subHeight,out_matchX0,out_matchY0,out_matchType);
+                return m_colorMatcher.findMatch(cur_nx,cur_ny,out_matchX0,out_matchY0,out_matchType);
             }else{
+                //m_colorMatcher.findMatch 只支持标准大小node, 边界的node做了一些特殊匹配.
+                const int subX0=cur_nx*kFrg_ClipWidth;
+                const int subY0=cur_ny*kFrg_ClipHeight;
+                if (cur_nx>0){
+                    const TClipNode& curNodeLeft=m_clipNodeList[curNodeIndex-1];
+                    if (curNodeLeft.type==kFrg_ClipType_match_image){
+                        TUInt32 matchX0=unpackMatchX(m_matchXYList[curNodeLeft.matchIndex]);
+                        TUInt32 matchY0=unpackMatchY(m_matchXYList[curNodeLeft.matchIndex]);
+                        if (m_colorMatcher.isMatchAt(subX0,subY0,subWidth,subHeight,matchX0+kFrg_ClipWidth,matchY0,out_matchType))
+                            { *out_matchX0=matchX0+kFrg_ClipWidth; *out_matchY0=matchY0; return true; }
+                        if (m_colorMatcher.isMatchAt(subX0,subY0,subWidth,subHeight,matchX0-kFrg_ClipWidth,matchY0,out_matchType))
+                            { *out_matchX0=matchX0-kFrg_ClipWidth; *out_matchY0=matchY0; return true; }
+                    }
+                }
+                if (cur_ny>0){
+                    const TClipNode& curNodeTop=m_clipNodeList[curNodeIndex-m_nodeWidth];
+                    if (curNodeTop.type==kFrg_ClipType_match_image){
+                        TUInt32 matchX0=unpackMatchX(m_matchXYList[curNodeTop.matchIndex]);
+                        TUInt32 matchY0=unpackMatchY(m_matchXYList[curNodeTop.matchIndex]);
+                        if (m_colorMatcher.isMatchAt(subX0,subY0,subWidth,subHeight,matchX0,matchY0+kFrg_ClipHeight,out_matchType))
+                            { *out_matchX0=matchX0; *out_matchY0=matchY0+kFrg_ClipHeight; return true; }
+                        if (m_colorMatcher.isMatchAt(subX0,subY0,subWidth,subHeight,matchX0,matchY0-kFrg_ClipHeight,out_matchType))
+                            { *out_matchX0=matchX0; *out_matchY0=matchY0-kFrg_ClipHeight; return true; }
+                    }
+                }
                 return false;
             }
         }
