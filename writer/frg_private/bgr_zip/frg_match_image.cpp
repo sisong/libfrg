@@ -32,73 +32,63 @@
 namespace frg{
 
     struct TCountInfos{
-        TUInt32 sum0;
-        TUInt32 sum1;
-        TUInt32 sum2;
+        TUInt32 sum;
         TUInt32 xorValue;
 
         TCountInfos():
-            sum0(0),sum1(0),sum2(0),
-            xorValue(0) {}
+            sum(0),xorValue(0) {}
         TCountInfos(const TCountInfos& ci):
-            sum0(ci.sum0),sum1(ci.sum1),sum2(ci.sum2),
-            xorValue(ci.xorValue) {}
-       inline void addColor(const Color32& color){
-            sum0+=color.b;
-            sum1+=color.g;
-            sum2+=color.r;
-            xorValue^=color.getBGR();
+            sum(ci.sum),xorValue(ci.xorValue) {}
+        inline void addColor(const Color32& color,TUInt32 colorMask){
+            TUInt32 bgr=color.getBGR()&colorMask;
+            sum+=bgr;
+            xorValue^=bgr;
         }
-       inline void delColor(const Color32& color){
-            sum0-=color.b;
-            sum1-=color.g;
-            sum2-=color.r;
-            xorValue^=color.getBGR();
+        inline void delColor(const Color32& color,TUInt32 colorMask){
+            TUInt32 bgr=color.getBGR()&colorMask;
+            sum-=bgr;
+            xorValue^=bgr;
         }
-       inline void addHLine(const TPixels32Ref& ref,TInt32 y,TInt32 x0,TInt32 x1){
+        inline void addHLine(const TPixels32Ref& ref,TInt32 y,TInt32 x0,TInt32 x1,TUInt32 colorMask){
             const Color32* pixelsLine=ref.getLinePixels(y);
             for (TInt32 x=x0;x<x1;++x)
-                addColor(pixelsLine[x]);
+                addColor(pixelsLine[x],colorMask);
         }
-       inline void delHLine(const TPixels32Ref& ref,TInt32 y,TInt32 x0,TInt32 x1){
+       inline void delHLine(const TPixels32Ref& ref,TInt32 y,TInt32 x0,TInt32 x1,TUInt32 colorMask){
             const Color32* pixelsLine=ref.getLinePixels(y);
             for (TInt32 x=x0;x<x1;++x)
-                delColor(pixelsLine[x]);
+                delColor(pixelsLine[x],colorMask);
         }
-       inline void addVLine(const TPixels32Ref& ref,TInt32 x,TInt32 y0,TInt32 y1){
+       inline void addVLine(const TPixels32Ref& ref,TInt32 x,TInt32 y0,TInt32 y1,TUInt32 colorMask){
             const Color32* pixel=&ref.pixels(x,y0);
             for (TInt32 y=y0;y<y1;++y){
-                addColor(*pixel);
+                addColor(*pixel,colorMask);
                 pixel=ref.nextLine(pixel);
             }
         }
-       inline void delVLine(const TPixels32Ref& ref,TInt32 x,TInt32 y0,TInt32 y1){
+       inline void delVLine(const TPixels32Ref& ref,TInt32 x,TInt32 y0,TInt32 y1,TUInt32 colorMask){
             const Color32* pixel=&ref.pixels(x,y0);
             for (TInt32 y=y0;y<y1;++y){
-                delColor(*pixel);
+                delColor(*pixel,colorMask);
                 pixel=ref.nextLine(pixel);
             }
         }
        inline void addCount(const TCountInfos& c){
-            sum0+=c.sum0;
-            sum1+=c.sum1;
-            sum2+=c.sum2;
+            sum+=c.sum;
             xorValue^=c.xorValue;
         }
        inline void delCount(const TCountInfos& c){
-            sum0-=c.sum0;
-            sum1-=c.sum1;
-            sum2-=c.sum2;
+            sum-=c.sum;
             xorValue^=c.xorValue;
         }
 
-        void addRef(const TPixels32Ref& ref,TInt32 x0,TInt32 y0,TInt32 x1,TInt32 y1){
+        void addRef(const TPixels32Ref& ref,TInt32 x0,TInt32 y0,TInt32 x1,TInt32 y1,TUInt32 colorMask){
             for (TInt32 y=y0;y<y1;++y){
-                addHLine(ref,y,x0,x1);
+                addHLine(ref,y,x0,x1,colorMask);
             }
         }
-       inline void addRef(const TPixels32Ref& ref){
-            addRef(ref,0,0,ref.width,ref.height);
+       inline void addRef(const TPixels32Ref& ref,TUInt32 colorMask){
+            addRef(ref,0,0,ref.width,ref.height,colorMask);
         }
 
        inline TUInt32 keyValue()const{
@@ -200,11 +190,12 @@ namespace frg{
 
 ////////////////////////////////////////////
 
-    void TColorMatch::initColorMatch(const TPixels32Ref& ref,TInt32 subWidth,TInt32 subHeight){
+    void TColorMatch::initColorMatch(const TPixels32Ref& ref,TInt32 subWidth,TInt32 subHeight,TUInt32 colorMask){
         m_ref=ref;
         m_matchSubWidth=subWidth;
         m_matchSubHeight=subHeight;
-        createMatchMap(m_ref,m_matchSubWidth,m_matchSubHeight,m_matchMap);
+        m_colorMask=colorMask;
+        createMatchMap(m_ref,m_matchSubWidth,m_matchSubHeight,m_matchMap,m_colorMask);
     }
        
     bool TColorMatch::isMatchAt(TInt32 subX0,TInt32 subY0,TInt32 subWidth,TInt32 subHeight,TInt32 match_x0,TInt32 match_y0,frg_TMatchType* out_matchType){
@@ -240,6 +231,8 @@ namespace frg{
     }
 
     bool TColorMatch::findMatch(TInt32 subX0,TInt32 subY0,TInt32 subWidth,TInt32 subHeight,TInt32* out_x0,TInt32* out_y0,frg_TMatchType* out_matchType){
+        assert(subX0%kFrg_ClipWidth==0);
+        assert(subY0%kFrg_ClipHeight==0);
         const TInt32 sw=subWidth;
         const TInt32 sh=subHeight;
         if ((sw!=m_matchSubWidth)||(sh!=m_matchSubHeight)) 
@@ -248,7 +241,7 @@ namespace frg{
         TUInt32 keyValue;
         {
             TCountInfos ci;
-            ci.addRef(m_ref,subX0,subY0,subX0+sw,subY0+sh);
+            ci.addRef(m_ref,subX0,subY0,subX0+sw,subY0+sh,m_colorMask);
             keyValue=ci.keyValue();
         }
 
@@ -301,7 +294,7 @@ namespace frg{
         }
     }
 
-    void TColorMatch::createMatchMap(const TPixels32Ref& ref,TInt32 subWidth,TInt32 subHeight,TMatchMap& out_matchMap){
+    void TColorMatch::createMatchMap(const TPixels32Ref& ref,TInt32 subWidth,TInt32 subHeight,TMatchMap& out_matchMap,TUInt32 colorMask){
         const TInt32 sw=subWidth;
         const TInt32 sh=subHeight;
         assert(sw>0);
@@ -313,18 +306,18 @@ namespace frg{
         if ((ref.width>=subWidth)&&(ref.height>=subHeight)){
             std::vector<TCountInfos> ci_xList(ref.width);
             for (TInt32 x=0;x<ref.width;++x){
-                ci_xList[x].addVLine(ref,x,0,sh-1);
+                ci_xList[x].addVLine(ref,x,0,sh-1,colorMask);
             }
 
             for (TInt32 y=0;y<=ref.height-sh;++y){
                 const TInt32 hy=y+sh-1;
                 const Color32* pline=ref.getLinePixels(hy);
                 for (TInt32 x=0;x<ref.width;++x)
-                    ci_xList[x].addColor(pline[x]);
+                    ci_xList[x].addColor(pline[x],colorMask);
                 if(y>0){
                     const Color32* npline=ref.getLinePixels(y-1);
                     for (TInt32 x=0;x<ref.width;++x){
-                        ci_xList[x].delColor(npline[x]);
+                        ci_xList[x].delColor(npline[x],colorMask);
                     }
                 }
                 TCountInfos ci_x0;

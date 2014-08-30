@@ -36,19 +36,20 @@ namespace frg{
 
     class TColorMatch{
     public:
-        TColorMatch():m_matchSubWidth(0),m_matchSubHeight(0){}
-        void initColorMatch(const TPixels32Ref& ref,TInt32 subWidth,TInt32 subHeight);
+        TColorMatch():m_matchSubWidth(0),m_matchSubHeight(0),m_colorMask(0xFFFFFF){}
+        void initColorMatch(const TPixels32Ref& ref,TInt32 subWidth,TInt32 subHeight,TUInt32 colorMask);
         bool findMatch(TInt32 subX0,TInt32 subY0,TInt32 subWidth,TInt32 subHeight,TInt32* out_x0,TInt32* out_y0,frg_TMatchType* out_matchType);
         bool isMatchAt(TInt32 subX0,TInt32 subY0,TInt32 subWidth,TInt32 subHeight,TInt32 match_x0,TInt32 match_y0,frg_TMatchType* out_matchType);
     private:
         typedef TFRG_multimap<TUInt32,TUInt32> TMatchMap;
 
         TPixels32Ref     m_ref;
+        TUInt32          m_colorMask;
         TInt32           m_matchSubWidth;
         TInt32           m_matchSubHeight;
         TMatchMap        m_matchMap;
 
-        static void createMatchMap(const TPixels32Ref& ref,TInt32 subWidth,TInt32 subHeight,TMatchMap& out_matchMaps);
+        static void createMatchMap(const TPixels32Ref& ref,TInt32 subWidth,TInt32 subHeight,TMatchMap& out_matchMaps,TUInt32 colorMask);
     };
 
 }//end namespace frg
