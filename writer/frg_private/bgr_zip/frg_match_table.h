@@ -36,19 +36,17 @@ namespace frg{
 
     class TTableMatch{
     public:
-        explicit TTableMatch():m_subColors(1<<24,0),m_oldColorTableSize(0),m_colorMask(0xFFFFFF){}
-        void initSetColorMask( TUInt32 colorMask ){ assert(m_oldColorTableSize==0); m_colorMask=colorMask;  }
+        explicit TTableMatch(const std::vector<Color24>&  colorTable,TUInt32 colorMask)
+            :m_colorTable(colorTable),m_subColorSets((1<<24)/8,0),m_oldColorTableSize(0),m_colorMask(colorMask){ }
         
-        int findMatch(const std::vector<Color24>&  colorTable,const std::vector<Color24>& subTable,int* out_matchTableBit); //return -1 is not find
+        int findMatch(const std::vector<Color24>& subTable,int* out_matchTableBit); //return -1 is not find
     private:
-        std::vector<TByte>   m_subColors;
-        std::vector<TUInt>  m_fastMatch4bit;
-        //std::vector<UInt>  m_fastMatch3bit;
-        //std::vector<UInt>  m_fastMatch2bit;
-        //std::vector<UInt>  m_fastMatch1bit;
-        int              m_oldColorTableSize;
-        TUInt32          m_colorMask;
-        int _findMatch(const std::vector<Color24>& colorTable,const std::vector<Color24>& subTable,const std::vector<TUInt>& fastMatch,int windowTableSize);
+        const std::vector<Color24>&  m_colorTable;
+        std::vector<TByte>  m_subColorSets;
+        std::vector<TUInt>  m_fastMatch4bitCache;
+        TInt                m_oldColorTableSize;
+        TUInt32             m_colorMask;
+        int _findMatch(const std::vector<Color24>& subTable,int windowTableSize);
     };
 
 }//end namespace frg

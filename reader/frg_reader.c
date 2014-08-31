@@ -81,15 +81,16 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const TByte* frgCode_begin,const
         return frg_FALSE;
     
     out_frgImageInfo->imageFileSize=loadUInt32(&fhead->imageFileSize);
-    if(out_frgImageInfo->imageFileSize<kFrgFileHeadSize) return frg_FALSE;
+    if(out_frgImageInfo->imageFileSize<(TUInt32)kFrgFileHeadSize) return frg_FALSE;
     out_frgImageInfo->imageWidth=loadUInt32(&fhead->headInfo.imageWidth);
     if(out_frgImageInfo->imageWidth<0) return frg_FALSE;
     out_frgImageInfo->imageHeight=loadUInt32(&fhead->headInfo.imageHeight);
     if(out_frgImageInfo->imageHeight<0) return frg_FALSE;
     out_frgImageInfo->decoder_tempMemoryByteSize=loadUInt32(&fhead->headInfo.decoder_tempMemoryByteSize);
-    if(out_frgImageInfo->decoder_tempMemoryByteSize<0) return frg_FALSE;
 #ifdef __RUN_MEM_SAFE_CHECK
-    out_frgImageInfo->decoder_tempMemoryByteSize+=kSafeColorTable_extendMemSize;
+    unsigned int tempMemoryByteSize_safe=out_frgImageInfo->decoder_tempMemoryByteSize+kSafeColorTable_extendMemSize;
+    if (tempMemoryByteSize_safe < out_frgImageInfo->decoder_tempMemoryByteSize) return frg_FALSE;
+    out_frgImageInfo->decoder_tempMemoryByteSize=tempMemoryByteSize_safe;
 #endif
     //特殊实现的解码器可以对decoder_tempMemoryByteSize送回0,并自己申请解码需要的内存;或者返回自己需要的内存(较困难).
     

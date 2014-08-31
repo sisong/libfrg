@@ -35,25 +35,27 @@
 #include <vector>
 #include <algorithm>
 #include "pack_uint.h"
+#include "../frg_writer.h"
 
 //定义TFRG_map和TFRG_multimap; 可以尝试使用<unordered_map>或<hash_map>,编码速度略快.
 #include <map>
 #define TFRG_map        std::map
 #define TFRG_multimap   std::multimap
 
-//PACKED 紧缩数据格式  用于和文件保存相关的类型.
-#ifndef PACKED
-  #if defined(__GNUC__)
-    #define PACKED __attribute__((packed))
-  #elif defined(_MSC_VER)
-    #define PACKED __declspec(align(1))
-  #else
-    #define PACKED
-  #endif
-#endif
-
-
 namespace frg {
+    
+    typedef ptrdiff_t   TInt;
+    typedef size_t      TUInt;
+    typedef signed int  TInt32;
+    
+#ifdef _MSC_VER
+    typedef    signed __int64      TInt64;
+#else
+    typedef    signed long long    TInt64;
+#endif
+    
+static const TUInt32 kMaxImageWidth =(1<<16)-1;
+static const TUInt32 kMaxImageHeight=kMaxImageWidth;
 
 inline static TUInt32 packMatchXY(TUInt32 x,TUInt32 y){
     assert((x|y)<(1<<16));
@@ -66,6 +68,16 @@ inline static int unpackMatchX(TUInt32 xy){
 inline static int unpackMatchY(TUInt32 xy){
     return xy>>16;
 }
+    
+inline static TUInt32 SafeToUInt32(TUInt v,const char* _outLimit_errorMsg){
+    if (sizeof(TUInt)==sizeof(TUInt32))
+        return (TUInt32)v;
+    TUInt32 v32=(TUInt32)v;
+    if (v32!=v)
+        throw TFrgRunTimeError(_outLimit_errorMsg);
+    return v32;
+}
+
 
 inline static void writeUInt16(std::vector<TByte>& out_code,TUInt32 value){
     assert((value>>16)==0);

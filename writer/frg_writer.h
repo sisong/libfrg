@@ -30,14 +30,19 @@
 #define _LIBFRG_frg_writer_h
 
 #include <vector>
+#include <stdexcept>  //std::runtime_error
 
 namespace frg{
     
+	struct TFrgRunTimeError:public std::runtime_error{
+        inline explicit TFrgRunTimeError(const char* _errorInfo):std::runtime_error(_errorInfo){}
+    };
     struct TFrgParameter;
     struct TFrgPixels32Ref;
 
 //save as frg 
-void writeFrgImage(std::vector<unsigned char>& outFrgCode,const TFrgPixels32Ref& srcImage,const TFrgParameter& parameter);
+void writeFrgImage(std::vector<unsigned char>& outFrgCode,const TFrgPixels32Ref& srcImage,
+                   const TFrgParameter& parameter,bool isCanWriteSrcImageData=false); //throw TFrgRunTimeError()
 
     //质量控制.
     static const float kFrg_quality_max=100;    //无损压缩,不推荐.
@@ -45,8 +50,9 @@ void writeFrgImage(std::vector<unsigned char>& outFrgCode,const TFrgPixels32Ref&
     static const float kFrg_quality_min=0;      //不推荐小kFrg_quality_default太多的值,质量较差.
     //保持质量的情况下的压缩大小控制.
     static const float kFrg_size_maxUnZipSpeed=100;//最大化内存解压速度,但生成的文件较大(从磁盘加载可能较慢).
-    static const float kFrg_size_default=50; //推荐: 在大多数设备上,硬盘加载时间+内存解压的时间最少.
-    static const float kFrg_size_minSize=0; //最小化生成的文件大小,但内存解压较慢.
+    static const float kFrg_size_default=50; //推荐: 在大多数设备上50的参数,硬盘加载时间+内存解压的时间最少;
+                                              // 如果磁盘性能较差或希望保持较快速度解压的情况下文件再小一点，推荐设置为15.
+    static const float kFrg_size_minSize=0;  //最小化生成的文件大小,但内存解压会慢一点.
     
     struct TFrgBGRA32{
         unsigned char b;    //blue
@@ -54,12 +60,9 @@ void writeFrgImage(std::vector<unsigned char>& outFrgCode,const TFrgPixels32Ref&
         unsigned char r;    //red
         unsigned char a;    //alpha     (if no alpha,must set a=255)
     };
-    inline TFrgBGRA32 getFrgBGRA32(unsigned char r8,unsigned char g8,unsigned char b8,unsigned char a8) {
+    inline TFrgBGRA32 getFrgBGRA32(unsigned char r8,unsigned char g8,unsigned char b8,unsigned char a8=255) {
         TFrgBGRA32 result; result.b=b8;  result.g=g8;  result.r=r8;  result.a=a8;
         return result;
-    }
-    inline TFrgBGRA32 getFrgColor(unsigned char r8,unsigned char g8,unsigned char b8) {
-        return getFrgBGRA32(r8,g8,b8,255);
     }
     
     struct TFrgPixels32Ref{
@@ -72,13 +75,12 @@ void writeFrgImage(std::vector<unsigned char>& outFrgCode,const TFrgPixels32Ref&
     struct TFrgParameter{
         //frg支持的几个压缩调节参数. 
         float  quality;                     //质量设置,值域[0--100].
-        float  compressRatio;               //=(压缩后大小/压缩前大小);编码压缩时大于这个值就不使用数据压缩(低效压缩)，而直接存储.
-                                                //为了最优化第一次加载速度,该参数最优值本质上=1-目标平台磁盘速度/目标平台解压速度.
+        float  compressRatio;               //=(压缩后大小/压缩前大小);编码压缩时大于这个值就不使用数据压缩(防止低效压缩)，而直接存储.
+                                             // 为了最优化第一次加载速度,该参数最优值本质上=1-目标平台磁盘速度/目标平台解压速度.
         bool   isMustFitColorTable;         //对于颜色较多的块,是否也必须使用调色板(这样的话文件会更小但质量可能变差).
         bool   isDeleteEmptyColor;          //全透明的区域,颜色会被忽略,设置为true.
         bool   isAlphaUseRleAdvance;        //alpha数据压缩前是否用rle预压缩(这样数据会被压缩的更小一些).
         int    alphaRleAdvanceParameter;    //alpha数据rle预压缩参数,一般取6--16.
-        float  alphaRleAdvanceCompressRatio;//alpha数据rle预压缩压缩了要求.
         
         //setCtrlParameter将frg编码的多个控制参数映射到两个正交的控制参数上:质量和压缩大小.
         //该函数的实现是按作者的经验设定的系数值,你也可以手工定制你的TFrgParameter控制参数).

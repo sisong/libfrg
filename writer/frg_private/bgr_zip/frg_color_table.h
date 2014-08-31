@@ -35,31 +35,29 @@
 
 namespace frg{
 
-    //处理调色板
+    //处理调色板.
     class TColorTableZiper{
     public:
-        static TUInt32 getMatchColorMask(float colorQuality);
-    public:        
+        static TUInt32 qualityToMatchColorMask(float colorQuality);
+    public:
         TColorTableZiper(float colorQuality,bool isMustFitColorTable);
         void setImageSize(int imageWidth,int imageHeight);
 
-        bool getBestColorTable(std::vector<Color24>& out_table,const TPixels32Ref& colors,const int maxTableSize=kFrg_MaxSubTableSize)const;//计算最佳调色板.
-        void getBestColorIndex(std::vector<TByte>& out_indexList,const Color24* table,TInt32 tableSize,const TPixels32Ref& subColors,int subX0,int subY0);//计算颜色序号.
-        //void uniteColorTable(std::vector<Color24>& dstTable,const std::vector<Color24>& srcTable);
+        bool getBestColorTable(std::vector<Color24>& out_table,const TPixels32Ref& colors,const int maxTableSize)const;//计算最佳调色板.
+        void getBestColorIndex(std::vector<TByte>& out_indexList,const Color24* table,int tableSize,const TPixels32Ref& subColors,int subX0,int subY0);//计算像素在调色板中的序号.
     public:
         struct TColorErrorParameter{
-            TInt32       minColorError; //最大允许误差  当调色板过大时，允许删除颜色产生的最大误差.
-            TInt32       minColorError_optimize;    //最大允许误差-优化  当调色板大小已经合适，允许删除颜色产生的最大误差.
+            TUInt32      minColorError;             //最大允许误差距离  当调色板过大时，允许删除颜色而产生的最大误差.
+            TUInt32      minColorError_optimize;    //最大允许误差距离-优化  当调色板大小已经合适，允许继续删除颜色而产生的最大误差.
             TInt32       errorDiffuse_coefficient;  //误差扩散系数.
-            //Int32       errorDiffuse_randError;   //随机扩散.
             TInt32       maxErrorDiffuseValue;      //最大扩散值.
-            bool        isMustFitColorTable;
             TInt32       maxTableSize;
+            bool         isMustFitColorTable;
         };
         
         struct TColorNode {
         public:
-            typedef TCalcColor<Color24,8,int> TColor;
+            typedef TCalcColor<Color24,8,TInt32> TColor;
         private:
             TColor  m_sumColor;
             TColor  m_color;
@@ -73,11 +71,11 @@ namespace frg{
             void uniteColor(const TColorNode& n);
            inline const TColor& getColor()const{ return m_color; }
            inline int getCount()const { return m_count; }
-           inline  Color24 asColor24()const { return m_color.asColor(); }
+           inline  Color24 asColor24()const { return m_color.asColor(0,255); }
         };
         
-        enum{ kColorErrorIntFloatBit=9};
-        typedef TCalcColor<Color32,kColorErrorIntFloatBit,int> TErrorColor;
+        enum{ kColorErrorIntFloatBit=8};
+        typedef TCalcColor<Color32,kColorErrorIntFloatBit,TInt32> TErrorColor;
     private:
         float                   m_colorQuality;
         TColorErrorParameter    m_errorParameter;

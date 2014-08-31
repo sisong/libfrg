@@ -35,7 +35,7 @@
 namespace frg{
     
     typedef TBGRA32 Color32;
-    struct PACKED Color24{
+    struct Color24{
         TByte b;
         TByte g;
         TByte r;
@@ -43,16 +43,8 @@ namespace frg{
         inline Color24(const Color24& v):b(v.b),g(v.g),r(v.r){}
         inline Color24(TByte _r,TByte _g,TByte _b):b(_b),g(_g),r(_r){}
         inline TUInt32 getBGR()const{ return b|(g<<8)|(r<<16); }
+        inline void setBGR(TUInt32 bgr) { b=(TByte)(bgr); g=(TByte)(bgr>>8); r=(TByte)(bgr>>16); }
     };
-    
-    typedef signed   int    TInt32;
-    typedef size_t          TUInt;
-    
-#ifdef _MSC_VER
-    typedef    signed __int64      TInt64;
-#else
-    typedef    signed long long    TInt64;
-#endif 
 
     template<class T>
     inline static const T sqr(const T& a){
@@ -62,7 +54,7 @@ namespace frg{
 	inline static size_t hash_value(const char* str,const char* strEnd){
 		size_t result = 2166136261U;
 		while(str!=strEnd){
-            result = ((result<<5)-result) + (*(const unsigned char*)str);
+            result = (result<<5) - result + (*(const unsigned char*)str);
 			++str;
 		}
 		return result;
