@@ -33,8 +33,8 @@
 namespace frg{
 
     const TUInt32 gray_r_coeff=19;//(0.299*(1<<6));
-	const TUInt32 gray_g_coeff=37;//(0.587*(1<<6));
-	const TUInt32 gray_b_coeff=(1<<6)-gray_r_coeff-gray_g_coeff;//(0.114*(1<<6));
+    const TUInt32 gray_g_coeff=37;//(0.587*(1<<6));
+    const TUInt32 gray_b_coeff=(1<<6)-gray_r_coeff-gray_g_coeff;//(0.114*(1<<6));
     //颜色距离.
     static inline TUInt32 getColorDistance(const Color24& c0,const Color24& c1){
         return   (TUInt32)sqr(c0.r-c1.r)*gray_r_coeff
@@ -147,7 +147,7 @@ namespace frg{
     void TColorTableZiper::setImageSize(int imageWidth,int imageHeight){// null   ,boader,boader,boader,...
         m_errorBuffer.resizeFast(1+1+imageWidth+1,1+kFrg_ClipHeight);   // HErrCur,boader,..........,boader
         clearErrorColors(m_errorBuffer.getRef());                       // HErrCur,boader,..........,boader
-    }
+    }                                                                   //...
     
     //int _temp_nums[64+1]={0};
     bool TColorTableZiper::getBestColorTable(std::vector<Color24>& out_table,const TPixels32Ref& colors,const int maxTableSize)const{
@@ -200,7 +200,7 @@ namespace frg{
     TInt32 TColorsDistance::getMinColorDistance(int* out_index0,int* out_index1)const{
         assert(m_colorCount>=2);
         
-        TUInt32 curMinDistance=(1<<30)-1+(1<<30);
+        TUInt32 curMinDistance=~0;
         int curMinIndex0=-1;
         int curMinIndex1=-1;
         for (int index0=0;index0<m_colorCount-1;++index0){
@@ -256,7 +256,7 @@ namespace frg{
 
     template <class TCalcColor>
     static int getABestColorIndex(const Color24* table,TInt32 tableSize,const TCalcColor& color){
-        TUInt32 curMinDistance=(1<<30)-1+(1<<30);
+        TUInt32 curMinDistance=~0;
         int curMinIndex=-1;
         for (int index=0;index<tableSize;++index){
             TUInt32 distance=getColorDistance(TCalcColor(Color32(table[index].r,table[index].g,table[index].b)),color);
@@ -291,9 +291,9 @@ namespace frg{
 
         TErrorColor  optimizeErrorColor(const TErrorColor& eColor) {
             TErrorColor rt;
-            rt.r=optimizeLimitError(eColor.r);
-            rt.g=optimizeLimitError(eColor.g);
-            rt.b=optimizeLimitError(eColor.b);
+            rt.r=optimizeEiffuseError(eColor.r);
+            rt.g=optimizeEiffuseError(eColor.g);
+            rt.b=optimizeEiffuseError(eColor.b);
             return rt;
         }
 
@@ -307,7 +307,7 @@ namespace frg{
         const Color24*          m_table;
         int                     m_tableSize;
         TColorErrorParameter    m_errorParameter;
-        inline TInt32 optimizeLimitError(TInt32 c){
+        inline TInt32 optimizeEiffuseError(TInt32 c){
             c=c*m_errorParameter.errorDiffuse_coefficient/(1<<kColorErrorDiffuseCoefficientIntFloatBit);
             if (c<(-m_errorParameter.maxErrorDiffuseValue)){
                 return (c-m_errorParameter.maxErrorDiffuseValue)/2;

@@ -104,7 +104,7 @@ namespace frg{
 
     static inline bool tryCompressCodeData(std::vector<TByte>& data_ziped,const std::vector<TByte>& data,TUInt limitZipSize){
         assert(data_ziped.empty());
-        TUInt32 dataSize=ToUInt32(data.size(),"tryCompressCodeData() data.size() over 32bit.");
+        TUInt32 dataSize=SafeToUInt32(data.size(),"tryCompressCodeData() data.size() over 32bit.");
         writeUInt32(data_ziped,dataSize);
         frgZip_compress(data_ziped,&data[0],&data[0]+data.size());
         return (data_ziped.size()<=limitZipSize);
@@ -218,7 +218,7 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
     {
         writeUInt32(code_head, src.width);
         writeUInt32(code_head, src.height);
-        writeUInt32(code_head,ToUInt32(tempMemoryByteSize_max,"writeFrgImage() tempMemoryByteSize over 32bit."));//throw
+        writeUInt32(code_head,SafeToUInt32(tempMemoryByteSize_max,"writeFrgImage() tempMemoryByteSize over 32bit."));//throw
         code_head.push_back(kEncodingFormat_stream);
         code_head.push_back(kSavedColorFormat_A8R8G8B8);
 
@@ -248,20 +248,20 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
         imageFileSize+=sizeof(TUInt32)+code_alpha.size();
     if (!isSingleBGR)
         imageFileSize+=sizeof(TUInt32)+code_bgr.size();
-    writeUInt32(code_data,ToUInt32(imageFileSize,"writeFrgImage() imageFileSize over 32bit."));
+    writeUInt32(code_data,SafeToUInt32(imageFileSize,"writeFrgImage() imageFileSize over 32bit."));
 
     //head code
-    writeUInt32(code_data,ToUInt32(code_head.size(),"writeFrgImage() code_head.size() over 32bit."));
+    writeUInt32(code_data,SafeToUInt32(code_head.size(),"writeFrgImage() code_head.size() over 32bit."));
     code_data.insert(code_data.end(), code_head.begin(),code_head.end());
 
     //alpha code
     if (!isSingleAlpha){
-        writeUInt32(code_data,ToUInt32(code_alpha.size(),"writeFrgImage() code_alpha.size() over 32bit."));
+        writeUInt32(code_data,SafeToUInt32(code_alpha.size(),"writeFrgImage() code_alpha.size() over 32bit."));
         code_data.insert(code_data.end(), code_alpha.begin(),code_alpha.end());
     }
     //BGR code
     if (!isSingleBGR){
-        writeUInt32(code_data,ToUInt32(code_bgr.size(),"writeFrgImage() code_bgr.size() over 32bit."));
+        writeUInt32(code_data,SafeToUInt32(code_bgr.size(),"writeFrgImage() code_bgr.size() over 32bit."));
         code_data.insert(code_data.end(), code_bgr.begin(),code_bgr.end());
     }
 }

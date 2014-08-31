@@ -191,7 +191,7 @@ namespace frg{
     ///
 
     template<class TFilterFunc>
-    void filter(const TPixels32Ref& ref,TUInt32 colorMask,TFilterFunc filterFunc){
+    void filterCountInfos(const TPixels32Ref& ref,TUInt32 colorMask,TFilterFunc filterFunc){
         if ((ref.width<kFrg_ClipWidth) || (ref.height<kFrg_ClipHeight))
             return;
 
@@ -276,7 +276,7 @@ namespace frg{
         TFRG_map<TUInt,int> nodeKeysSet;
         createNodeKeys(nodeKeysSet,m_nodeKeys,m_nodeWidth,nodeHeight,m_ref,m_colorMask);
         TCreateMatchMap_filter  createMatchMap_filter(nodeKeysSet,m_matchMap);
-        filter<TCreateMatchMap_filter&>(ref,colorMask,createMatchMap_filter);
+        filterCountInfos<TCreateMatchMap_filter&>(ref,colorMask,createMatchMap_filter);
     }
 
     bool TColorMatch::isMatchAt(int subX0,int subY0,int subWidth,int subHeight,int match_x0,int match_y0,frg_TMatchType* out_matchType){
@@ -319,19 +319,29 @@ namespace frg{
 
         const int subX0=nodeX*kFrg_ClipWidth;
         const int subY0=nodeY*kFrg_ClipHeight;
-        bool isMatched=false;
+        bool isFindedMatch=false;
+        int bestX0=-1;
+        int bestY0=-1;
+        frg_TMatchType best_matchType;
         for (;it!=itEnd;++it){
-            const TUInt32 packedXY=it->second;
-            int cur_x0=unpackMatchX(packedXY);
-            int cur_y0=unpackMatchY(packedXY);
-            isMatched=isMatchAt(subX0,subY0,kFrg_ClipWidth,kFrg_ClipHeight,cur_x0,cur_y0,out_matchType);
-            if (isMatched){
-                *out_x0=cur_x0;
-                *out_y0=cur_y0;
+            int cur_x0=unpackMatchX(it->second);
+            int cur_y0=unpackMatchY(it->second);
+            frg_TMatchType cur_matchType;
+            bool cur_isMatched=isMatchAt(subX0,subY0,kFrg_ClipWidth,kFrg_ClipHeight,cur_x0,cur_y0,&cur_matchType);
+            if (cur_isMatched){
+                isFindedMatch=true;
+                bestX0=cur_x0;
+                bestY0=cur_y0;
+                best_matchType=cur_matchType;
                 break;// ok finded one; 也可以继续寻找更好的匹配,但可能会很慢.
             }
         }
-        return isMatched;
+        if (isFindedMatch){
+            *out_x0=bestX0;
+            *out_y0=bestY0;
+            *out_matchType=best_matchType;
+        }
+        return isFindedMatch;
     }
 
 }//end namespace frg

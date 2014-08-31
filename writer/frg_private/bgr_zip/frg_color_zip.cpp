@@ -113,13 +113,13 @@ namespace frg{
         }
 
         void writeOut(std::vector<TByte>& out_buf){
-            const TUInt32 nodeCount=ToUInt32(m_clipNodeList.size(),"TColorZip::writeOut() m_clipNodeList.size() over 32bit.");
+            const TUInt32 nodeCount=SafeToUInt32(m_clipNodeList.size(),"TColorZip::writeOut() m_clipNodeList.size() over 32bit.");
             packUInt(out_buf,nodeCount);
-            const TUInt32 tableSize=ToUInt32(m_colorTable.size(),"TColorZip::writeOut() m_colorTable.size() over 32bit.");
+            const TUInt32 tableSize=SafeToUInt32(m_colorTable.size(),"TColorZip::writeOut() m_colorTable.size() over 32bit.");
             packUInt(out_buf,tableSize);
-            const TUInt32 index2Size=ToUInt32(m_indexList.size(),"TColorZip::writeOut() m_indexList.size() over 32bit.");
+            const TUInt32 index2Size=SafeToUInt32(m_indexList.size(),"TColorZip::writeOut() m_indexList.size() over 32bit.");
             packUInt(out_buf,index2Size);
-            const TUInt32 matchCount=ToUInt32(m_matchXYList.size(),"TColorZip::writeOut() m_matchXYList.size() over 32bit.");
+            const TUInt32 matchCount=SafeToUInt32(m_matchXYList.size(),"TColorZip::writeOut() m_matchXYList.size() over 32bit.");
             packUInt(out_buf,matchCount);
 
             for (TUInt32 i=0;i<nodeCount;++i){
@@ -353,7 +353,7 @@ namespace frg{
             const TClipNode& _curNode=m_clipNodeList[curNodeIndex];
             const int subWidth=_curNode.colors.width;
             const int subHeight=_curNode.colors.height;
-
+            
             if ((subWidth==kFrg_ClipWidth)&&(subHeight==kFrg_ClipHeight)){
                 return m_colorMatcher.findMatch(cur_nx,cur_ny,out_matchX0,out_matchY0,out_matchType);
             }else{
@@ -365,10 +365,10 @@ namespace frg{
                     if (curNodeLeft.type==kFrg_ClipType_match_image){
                         TUInt32 matchX0=unpackMatchX(m_matchXYList[curNodeLeft.matchIndex]);
                         TUInt32 matchY0=unpackMatchY(m_matchXYList[curNodeLeft.matchIndex]);
-                        if (m_colorMatcher.isMatchAt(subX0,subY0,subWidth,subHeight,matchX0+kFrg_ClipWidth,matchY0,out_matchType))
-                            { *out_matchX0=matchX0+kFrg_ClipWidth; *out_matchY0=matchY0; return true; }
-                        if (m_colorMatcher.isMatchAt(subX0,subY0,subWidth,subHeight,matchX0-kFrg_ClipWidth,matchY0,out_matchType))
-                            { *out_matchX0=matchX0-kFrg_ClipWidth; *out_matchY0=matchY0; return true; }
+                        if (m_colorMatcher.isMatchAt(subX0,subY0,subWidth,subHeight,matchX0+kFrg_ClipWidth,matchY0,out_matchType)){
+                            *out_matchX0=matchX0+kFrg_ClipWidth; *out_matchY0=matchY0; return true; }
+                        if (m_colorMatcher.isMatchAt(subX0,subY0,subWidth,subHeight,matchX0-kFrg_ClipWidth,matchY0,out_matchType)){
+                            *out_matchX0=matchX0-kFrg_ClipWidth; *out_matchY0=matchY0; return true; }
                     }
                 }
                 if (cur_ny>0){
@@ -376,10 +376,10 @@ namespace frg{
                     if (curNodeTop.type==kFrg_ClipType_match_image){
                         TUInt32 matchX0=unpackMatchX(m_matchXYList[curNodeTop.matchIndex]);
                         TUInt32 matchY0=unpackMatchY(m_matchXYList[curNodeTop.matchIndex]);
-                        if (m_colorMatcher.isMatchAt(subX0,subY0,subWidth,subHeight,matchX0,matchY0+kFrg_ClipHeight,out_matchType))
-                            { *out_matchX0=matchX0; *out_matchY0=matchY0+kFrg_ClipHeight; return true; }
-                        if (m_colorMatcher.isMatchAt(subX0,subY0,subWidth,subHeight,matchX0,matchY0-kFrg_ClipHeight,out_matchType))
-                            { *out_matchX0=matchX0; *out_matchY0=matchY0-kFrg_ClipHeight; return true; }
+                        if (m_colorMatcher.isMatchAt(subX0,subY0,subWidth,subHeight,matchX0,matchY0+kFrg_ClipHeight,out_matchType)){
+                            *out_matchX0=matchX0; *out_matchY0=matchY0+kFrg_ClipHeight; return true; }
+                        if (m_colorMatcher.isMatchAt(subX0,subY0,subWidth,subHeight,matchX0,matchY0-kFrg_ClipHeight,out_matchType)){
+                            *out_matchX0=matchX0; *out_matchY0=matchY0-kFrg_ClipHeight; return true; }
                     }
                 }
                 return false;

@@ -69,7 +69,7 @@ inline static int unpackMatchY(TUInt32 xy){
     return xy>>16;
 }
     
-inline static TUInt32 ToUInt32(TUInt v,const char* _outLimit_errorMsg){
+inline static TUInt32 SafeToUInt32(TUInt v,const char* _outLimit_errorMsg){
     if (sizeof(TUInt)==sizeof(TUInt32))
         return (TUInt32)v;
     TUInt32 v32=(TUInt32)v;
