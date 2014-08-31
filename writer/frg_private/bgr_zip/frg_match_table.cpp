@@ -34,12 +34,12 @@ namespace frg{
     const int kMaxMatchLength=1024*16;//增大该值可能增大匹配机率(从而增大压缩率),但可能会降低压缩速度.
     
     static inline TUInt colorMatchHash(const Color24& color,TUInt32 colorMask){
-        const TUInt32 v4=color.getBGR()&colorMask;
-        TUInt hash=hash_value((const char*)&v4,sizeof(v4));
-        //if (sizeof(TUInt)>sizeof(TUInt32)) hash^=(hash>>32);
-        hash^=(hash>>16);
-        hash^=(hash>>8);
-        return ((TUInt)1)<<(hash & (sizeof(TUInt)*8-1) );
+        const TUInt32 bgr=color.getBGR()&colorMask;
+        TUInt v=hash_value((const char*)&bgr,3);
+        v= v ^ (v << (v&15));
+        v^=(v>>16);
+        v^=(v>>8);
+        return ((TUInt)1)<<(v & (sizeof(TUInt)*8-1) );
     }
     
     static void cacheFastMatch(std::vector<TUInt>& fastMatch,int matchSize,const std::vector<Color24>&  colorTable,TUInt oldColorTableSize,TUInt32 colorMask){
@@ -54,7 +54,7 @@ namespace frg{
             fastMatch[j]=v;
         }
         
-        if (fastMatch.size()>=(TUInt)(kMaxMatchLength*2+kFrg_MaxSubTableSize)){
+        if (fastMatch.size()>=(TUInt)(kMaxMatchLength*2+kFrg_MaxSubTableSize)){//只缓存一段数据.
             fastMatch.erase(fastMatch.begin(),fastMatch.end()-(kMaxMatchLength+kFrg_MaxSubTableSize));
         }
     }

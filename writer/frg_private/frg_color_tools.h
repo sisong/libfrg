@@ -45,13 +45,13 @@ struct TBGRA32 {
     inline TUInt32 getBGRA()const{ return getBGR()|(a<<24); }
     inline TUInt32 getBGR()const{ return b|(g<<8)|(r<<16); }
     inline void setBGRA(TUInt32 bgra) { b=(TByte)(bgra); g=(TByte)(bgra>>8); r=(TByte)(bgra>>16); a=(TByte)(bgra>>24); }
-    static TBGRA32 fromBGRA(TUInt32 bgra) {  TBGRA32 result; result.setBGRA(bgra); return result;  }
 };
 
 template <class _TColorType>
 struct TPixelsRefBase{
     typedef _TColorType     TColor;
     typedef _TColorType*    TPLineColor;
+    typedef TPixelsRefBase<_TColorType> TPixelsRef;
 
     TColor*     pColor;
     int         width;
@@ -72,6 +72,12 @@ struct TPixelsRefBase{
     inline TColor* prevLine(const TColor* pline)const { return (TColor*)((TByte*)pline-byte_width); }
     inline bool getIsEmpty()const{
         return (width<=0)||(height<=0);
+    }
+    inline void fastGetSubRef(TPixelsRef* subRef,int x0,int y0,int x1,int y1)const{
+        subRef->pColor=&pixels(x0,y0);
+        subRef->width =x1-x0;
+        subRef->height=y1-y0;
+        subRef->byte_width=byte_width;
     }
 };
 

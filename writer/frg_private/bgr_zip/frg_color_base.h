@@ -54,7 +54,7 @@ namespace frg{
 	inline static size_t hash_value(const char* str,const char* strEnd){
 		size_t result = 2166136261U;
 		while(str!=strEnd){
-            result = ((result*31) ^ (result>>4)) + (*(const unsigned char*)str);
+            result = (result<<5) - result + (*(const unsigned char*)str);
 			++str;
 		}
 		return result;

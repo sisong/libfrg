@@ -33,51 +33,57 @@ namespace frg{
 
     struct TCountInfos{
         TUInt32 sum;
-        TUInt32 xorValue;
+        TUInt   xorValue;
 
         TCountInfos():
             sum(0),xorValue(0) {}
         TCountInfos(const TCountInfos& ci):
             sum(ci.sum),xorValue(ci.xorValue) {}
+        inline static TUInt ToXorValue(TUInt32 bgr){
+            TUInt v=hash_value((const char*)&bgr,3);
+            return v ^ (v << (v&15));
+        }
+        
         inline void addColor(const Color32& color,TUInt32 colorMask){
+            //Color count limit: assert(kFrg_ClipWidth*kFrg_ClipHeight<=256);
             TUInt32 bgr=color.getBGR()&colorMask;
             sum+=bgr;
-            xorValue^=bgr;
+            xorValue^=ToXorValue(bgr);
         }
         inline void delColor(const Color32& color,TUInt32 colorMask){
             TUInt32 bgr=color.getBGR()&colorMask;
             sum-=bgr;
-            xorValue^=bgr;
+            xorValue^=ToXorValue(bgr);
         }
         inline void addHLine(const TPixels32Ref& ref,int y,int x0,int x1,TUInt32 colorMask){
             const Color32* pixelsLine=ref.getLinePixels(y);
             for (int x=x0;x<x1;++x)
                 addColor(pixelsLine[x],colorMask);
         }
-       inline void delHLine(const TPixels32Ref& ref,int y,int x0,int x1,TUInt32 colorMask){
+        inline void delHLine(const TPixels32Ref& ref,int y,int x0,int x1,TUInt32 colorMask){
             const Color32* pixelsLine=ref.getLinePixels(y);
             for (int x=x0;x<x1;++x)
                 delColor(pixelsLine[x],colorMask);
         }
-       inline void addVLine(const TPixels32Ref& ref,int x,int y0,int y1,TUInt32 colorMask){
+        inline void addVLine(const TPixels32Ref& ref,int x,int y0,int y1,TUInt32 colorMask){
             const Color32* pixel=&ref.pixels(x,y0);
             for (int y=y0;y<y1;++y){
                 addColor(*pixel,colorMask);
                 pixel=ref.nextLine(pixel);
             }
         }
-       inline void delVLine(const TPixels32Ref& ref,int x,int y0,int y1,TUInt32 colorMask){
+        inline void delVLine(const TPixels32Ref& ref,int x,int y0,int y1,TUInt32 colorMask){
             const Color32* pixel=&ref.pixels(x,y0);
             for (int y=y0;y<y1;++y){
                 delColor(*pixel,colorMask);
                 pixel=ref.nextLine(pixel);
             }
         }
-       inline void addCount(const TCountInfos& c){
+        inline void addCount(const TCountInfos& c){
             sum+=c.sum;
             xorValue^=c.xorValue;
         }
-       inline void delCount(const TCountInfos& c){
+        inline void delCount(const TCountInfos& c){
             sum-=c.sum;
             xorValue^=c.xorValue;
         }
@@ -87,12 +93,12 @@ namespace frg{
                 addHLine(ref,y,x0,x1,colorMask);
             }
         }
-       inline void addRef(const TPixels32Ref& ref,TUInt32 colorMask){
+        inline void addRef(const TPixels32Ref& ref,TUInt32 colorMask){
             addRef(ref,0,0,ref.width,ref.height,colorMask);
         }
 
-       inline TUInt keyValue()const{
-           return (TUInt)hash_value((const char*)this,sizeof(*this));
+        inline TUInt keyValue()const{
+            return xorValue ^ sum;
         }
     };
 
@@ -251,11 +257,18 @@ namespace frg{
         for (int y=0;y<ref.height;y+=kFrg_ClipHeight){
             for (int x=0; x<ref.width; x+=kFrg_ClipWidth) {
                 if ((y+kFrg_ClipHeight<=ref.height)&&(x+kFrg_ClipWidth<=ref.width)){
-                    TCountInfos ci;
-                    ci.addRef(ref,x,y,x+kFrg_ClipWidth,y+kFrg_ClipHeight,colorMask);
-                    TUInt key=ci.keyValue();
-                    ++out_nodeKeysSet[key];
-                    out_nodeKeys.push_back((TUInt32)key);
+                    TPixels32Ref  sub_ref;
+                    ref.fastGetSubRef(&sub_ref,x,y,x+kFrg_ClipWidth,y+kFrg_ClipHeight);
+                    TBGRA32 _tmp;
+                    if (!getIsSigleRGBColor(sub_ref,&_tmp)){
+                        TCountInfos ci;
+                        ci.addRef(sub_ref,colorMask);
+                        TUInt key=ci.keyValue();
+                        ++out_nodeKeysSet[key];
+                        out_nodeKeys.push_back((TUInt32)key);
+                    }else{
+                        out_nodeKeys.push_back(0);
+                    }
                 }else{
                     out_nodeKeys.push_back(0);
                 }
@@ -263,11 +276,9 @@ namespace frg{
         }
     }
 
-    void TColorMatch::initColorMatch(const TPixels32Ref& ref,TUInt32 colorMask){
-        assert((TUInt)ref.width<=kMaxImageWidth);
-        assert((TUInt)ref.height<=kMaxImageHeight);
-        m_ref=ref;
-        m_colorMask=colorMask;
+    void TColorMatch::initColorMatch(){
+        assert((TUInt)m_ref.width<=kMaxImageWidth);
+        assert((TUInt)m_ref.height<=kMaxImageHeight);
 
         //create MatchSets
         m_nodeKeys.clear();
@@ -276,10 +287,11 @@ namespace frg{
         TFRG_map<TUInt,int> nodeKeysSet;
         createNodeKeys(nodeKeysSet,m_nodeKeys,m_nodeWidth,nodeHeight,m_ref,m_colorMask);
         TCreateMatchMap_filter  createMatchMap_filter(nodeKeysSet,m_matchMap);
-        filterCountInfos<TCreateMatchMap_filter&>(ref,colorMask,createMatchMap_filter);
+        filterCountInfos<TCreateMatchMap_filter&>(m_ref,m_colorMask,createMatchMap_filter);
     }
 
-    bool TColorMatch::isMatchAt(int subX0,int subY0,int subWidth,int subHeight,int match_x0,int match_y0,frg_TMatchType* out_matchType){
+    bool TColorMatch::isMatchAt(int subX0,int subY0,int subWidth,int subHeight,
+                                int match_x0,int match_y0,frg_TMatchType* out_matchType)const{
         if ((match_x0<0)||(match_x0+subWidth>m_ref.width)) return false;
         if ((match_y0<0)||(match_y0+subHeight>m_ref.height)) return false;
         if ((match_y0+subHeight<=subY0)||((match_y0<=subY0)&&(match_x0+subWidth<=subX0))){
@@ -309,7 +321,7 @@ namespace frg{
         }
     }
 
-    bool TColorMatch::findMatch(int nodeX,int nodeY,int* out_x0,int* out_y0,frg_TMatchType* out_matchType){
+    bool TColorMatch::findNodeMatch(int nodeX,int nodeY,int* out_x0,int* out_y0,frg_TMatchType* out_matchType)const{
         const TUInt32 keyValue=m_nodeKeys[nodeY*m_nodeWidth+nodeX];
 
         std::pair<TMatchMap::const_iterator,TMatchMap::const_iterator> itPair(m_matchMap.equal_range(keyValue));
@@ -333,7 +345,7 @@ namespace frg{
                 bestX0=cur_x0;
                 bestY0=cur_y0;
                 best_matchType=cur_matchType;
-                break;// ok finded one; 也可以继续寻找更好的匹配,但可能会很慢.
+                break;// ok finded one; 也可以继续寻找某种标准下更好的匹配,但可能会慢些.
             }
         }
         if (isFindedMatch){

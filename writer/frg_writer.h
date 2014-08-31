@@ -35,14 +35,14 @@
 namespace frg{
     
 	struct TFrgRunTimeError:public std::runtime_error{
-        inline explicit TFrgRunTimeError(const std::string&  _errorInfo):std::runtime_error(_errorInfo){}
+        inline explicit TFrgRunTimeError(const char* _errorInfo):std::runtime_error(_errorInfo){}
     };
     struct TFrgParameter;
     struct TFrgPixels32Ref;
 
 //save as frg 
 void writeFrgImage(std::vector<unsigned char>& outFrgCode,const TFrgPixels32Ref& srcImage,
-                   const TFrgParameter& parameter); //throw TFrgRunTimeError()
+                   const TFrgParameter& parameter,bool isCanWriteSrcImageData=false); //throw TFrgRunTimeError()
 
     //质量控制.
     static const float kFrg_quality_max=100;    //无损压缩,不推荐.

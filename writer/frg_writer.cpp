@@ -111,7 +111,7 @@ namespace frg{
     }
 
 
-void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcImage,const TFrgParameter& parameter){
+void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcImage,const TFrgParameter& parameter,bool isCanWriteSrcImageData){
     assert(_srcImage.width>=0);
     assert(_srcImage.height>=0);
     if ((TUInt)_srcImage.width>kMaxImageWidth) throw TFrgRunTimeError("writeFrgImage() srcImage.width>kMaxImageWidth.");
@@ -125,11 +125,13 @@ void writeFrgImage(std::vector<TByte>& outFrgCode,const TFrgPixels32Ref& _srcIma
 
     //预处理,删除全透明像素.
     if(parameter.isDeleteEmptyColor){
-        //复制.
-        _srcBuf.resizeFast(src.width,src.height);
-        pixelsCopy(_srcBuf.getRef(),src);
-        delEmptyColor(_srcBuf.getRef());
-        src=_srcBuf.getRef();
+        if (!isCanWriteSrcImageData) {
+            //复制.
+            _srcBuf.resizeFast(src.width,src.height);
+            pixelsCopy(_srcBuf.getRef(),src);
+            src=_srcBuf.getRef();
+        }
+        delEmptyColor(src);
     }
 
     //单色判断.

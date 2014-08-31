@@ -41,11 +41,11 @@ void pixelsFill(const TPixels32Ref& dst,TBGRA32 color){
 }
 
 void pixelsCopy(const TPixels32Ref& dst,const TPixels32Ref& src){
-    int minX=std::min(dst.width,src.width);
+    int minWidth=std::min(dst.width,src.width);
     for (int y=0;y<std::min(dst.height,src.height);++y){
         TBGRA32* pDstLine=dst.getLinePixels(y);
         const TBGRA32* pSrcLine=src.getLinePixels(y);
-        for (int x=0;x<minX;++x){
+        for (int x=0;x<minWidth;++x){
             pDstLine[x]=pSrcLine[x];
         }
     }
@@ -130,7 +130,7 @@ void delEmptyColor(const TPixels32Ref& dst){
         TBGRA32* pDstLine=dst.getLinePixels(y);
         for (int x=0;x<dst.width;++x){
             if (pDstLine[x].a==0){
-                pDstLine[x].fromBGRA(0);
+                pDstLine[x].setBGRA(0);
             }
         }
     }
@@ -153,7 +153,7 @@ void delEmptyColor(const TPixels32Ref& dst){
                 }
             }
             if (set.empty())
-                pDstLine[x].fromBGRA(0);
+                pDstLine[x].setBGRA(0);
             else{
                 TUInt32 maxSumAlpha=0;
                 TUInt32 bestBGRColor=0;
@@ -163,7 +163,7 @@ void delEmptyColor(const TPixels32Ref& dst){
                         bestBGRColor=it->first;
                     }
                 }
-                pDstLine[x]=TBGRA32::fromBGRA(bestBGRColor);
+                pDstLine[x].setBGRA(bestBGRColor);
             }
         }
     }

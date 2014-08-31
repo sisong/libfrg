@@ -36,10 +36,8 @@ namespace frg{
 
     class TTableMatch{
     public:
-        explicit TTableMatch(const std::vector<Color24>&  colorTable)
-            :m_colorTable(colorTable),m_subColorSets((1<<24)/8,0),m_oldColorTableSize(0),m_colorMask(0xFFFFFF){}
-        void initSetColorMask( TUInt32 colorMask )
-            { assert(m_oldColorTableSize==0); m_colorMask=colorMask;  }
+        explicit TTableMatch(const std::vector<Color24>&  colorTable,TUInt32 colorMask)
+            :m_colorTable(colorTable),m_subColorSets((1<<24)/8,0),m_oldColorTableSize(0),m_colorMask(colorMask){ }
         
         int findMatch(const std::vector<Color24>& subTable,int* out_matchTableBit); //return -1 is not find
     private:
