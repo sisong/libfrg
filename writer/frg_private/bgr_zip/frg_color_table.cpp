@@ -29,6 +29,7 @@
 */
 #include "frg_color_table.h"
 #include "../color_error_diffuse.h"
+#include <queue>
 
 namespace frg{
 
@@ -178,56 +179,92 @@ namespace frg{
     }
 
     /////////////////
+    struct TColorDistanceInfo{
+    private:
+        friend class TColorsDistance;
+        int iX;
+        int iY;
+    };
     
-    class TColorsDistance{//算法复杂度现在O(N*N).
+    class TColorsDistance{
     public:
         inline TColorsDistance(std::vector<TColorTableZiper::TColorNode>& colorSet)
-            :m_colorSet(colorSet),m_colorCount((int)colorSet.size()){ }
-        inline ~TColorsDistance(){ m_colorSet.resize(m_colorCount); }
-        void initColorSet(std::vector<TColorTableZiper::TColorNode>* colorSet);
+            :m_colorSet(colorSet),m_colorCount((int)colorSet.size()){ initCache(); }
+        inline ~TColorsDistance(){ resetSetSize(); }
+        
         inline int getColorCount()const{ return m_colorCount; }
-        TInt32 getMinColorDistance(int* out_index0,int* out_index1)const;
-        void  deleteAColor(int index0,int index1);
+        TUInt32 getMinDistanceColor(TColorDistanceInfo* out_cdInfo){
+            assert(m_colorCount>=2);
+            while (true) {
+                const TDistanceCache& cur=m_distanceCaches.top();
+                if ((m_colorSet[cur.iX].getCount()==0)||(m_colorSet[cur.iY].getCount()==0))
+                    m_distanceCaches.pop();
+                else{
+                    out_cdInfo->iX=cur.iX;
+                    out_cdInfo->iY=cur.iY;
+                    return cur.distance;
+                }
+            }
+        }
+        void  deleteMinDistanceColor(const TColorDistanceInfo& cdInfo){
+            //assert(cdInfo.iX<cdInfo.iY);
+            //assert(m_distanceCaches.top().iX==cdInfo.iX);
+            //assert(m_distanceCaches.top().iY==cdInfo.iY);
+            
+            //del color
+            m_distanceCaches.pop();
+            int newIndex=(int)m_colorSet.size();
+            m_colorSet.push_back(m_colorSet[cdInfo.iX]);
+            m_colorSet[newIndex].uniteColor(m_colorSet[cdInfo.iY]);
+            m_colorSet[cdInfo.iX].setCount(0);
+            m_colorSet[cdInfo.iY].setCount(0);
+            --m_colorCount;
+            
+            reCache();
+        }
     private:
-        std::vector<TColorTableZiper::TColorNode>&    m_colorSet;
-        int                         m_colorCount;
+        std::vector<TColorTableZiper::TColorNode>&      m_colorSet;
+        int                                             m_colorCount;
+        void resetSetSize(){
+            int insertIndex=0;
+            for (int i=0;i<(int)m_colorSet.size();++i){
+                if (m_colorSet[i].getCount()==0) continue;
+                m_colorSet[insertIndex]=m_colorSet[i]; ++insertIndex;
+            }
+            assert(insertIndex==m_colorCount);
+            m_colorSet.resize(insertIndex);
+        }
+        struct TDistanceCache{
+            short       iX;
+            short       iY;
+            TUInt32     distance;
+            inline TDistanceCache(int _iX,int _iY,TUInt32 _distance):iX(_iX),iY(_iY),distance(_distance){}
+            inline bool operator <(const TDistanceCache& y)const{
+                return distance>y.distance;
+            }
+        };
+        std::priority_queue<TDistanceCache>             m_distanceCaches;
+        void initCache(){
+            for (int index0=0;index0<m_colorCount-1;++index0){
+                for (int index1=index0+1;index1<m_colorCount;++index1){
+                    TUInt32 distance=getNodeColorDistance(m_colorSet[index0],m_colorSet[index1]);
+                    m_distanceCaches.push(TDistanceCache(index0,index1,distance));
+                }
+            }
+        }
+        void reCache(){
+            int index1=(int)m_colorSet.size()-1;
+            for (int index0=0;index0<index1-1;++index0){
+                if (m_colorSet[index0].getCount()==0) continue;
+                TUInt32 distance=getNodeColorDistance(m_colorSet[index0],m_colorSet[index1]);
+                m_distanceCaches.push(TDistanceCache(index0,index1,distance));
+            }
+        }
 
         inline static TUInt32 getNodeColorDistance(const TColorTableZiper::TColorNode& na,const TColorTableZiper::TColorNode& nb){
             return getColorDistance(na.getColor(),nb.getColor())*std::min(na.getCount(),nb.getCount());
         }
     };
-
-    TInt32 TColorsDistance::getMinColorDistance(int* out_index0,int* out_index1)const{
-        assert(m_colorCount>=2);
-        
-        TUInt32 curMinDistance=~0;
-        int curMinIndex0=-1;
-        int curMinIndex1=-1;
-        for (int index0=0;index0<m_colorCount-1;++index0){
-            for (int index1=index0+1;index1<m_colorCount;++index1){
-                TUInt32 distance=getNodeColorDistance(m_colorSet[index0],m_colorSet[index1]);
-                if (distance<curMinDistance){
-                    curMinDistance=distance;
-                    curMinIndex0=index0;
-                    curMinIndex1=index1;
-                }
-            }
-        }
-        
-        *out_index0=curMinIndex0;
-        *out_index1=curMinIndex1;
-        return curMinDistance;
-        
-    }
-    
-    void TColorsDistance::deleteAColor(int index0,int index1){
-        assert(index0<index1);
-        //del color
-        m_colorSet[index0].uniteColor(m_colorSet[index1]);
-        m_colorSet.erase(m_colorSet.begin()+index1);
-        --m_colorCount;
-    }
-  
     ///
 
     void TColorTableZiper::deleteColor(std::vector<TColorNode>& colorSet,int maxTableSize,const TColorErrorParameter& errorParameter){
@@ -235,22 +272,22 @@ namespace frg{
         TColorsDistance colorsDistance(colorSet);
         TUInt32 curMinColorError=0;
         while (colorsDistance.getColorCount()>maxTableSize) {
-            int index0,index1;
-            curMinColorError=colorsDistance.getMinColorDistance(&index0,&index1);
+            TColorDistanceInfo cdInfo;
+            curMinColorError=colorsDistance.getMinDistanceColor(&cdInfo);
             if ((!errorParameter.isMustFitColorTable)&&(curMinColorError>errorParameter.minColorError))
                 return; //fail;
-            colorsDistance.deleteAColor(index0,index1);
+            colorsDistance.deleteMinDistanceColor(cdInfo);
         }
 
         //succeed,continue optimize size
 
         const int kMinTableSize =2;
         while ((curMinColorError<errorParameter.minColorError_optimize)&&(colorsDistance.getColorCount()>kMinTableSize)){
-            int index0,index1;
-            curMinColorError=colorsDistance.getMinColorDistance(&index0,&index1);
+            TColorDistanceInfo cdInfo;
+            curMinColorError=colorsDistance.getMinDistanceColor(&cdInfo);
             if (curMinColorError>errorParameter.minColorError_optimize)
                 return; //finish optimize;
-            colorsDistance.deleteAColor(index0,index1);
+            colorsDistance.deleteMinDistanceColor(cdInfo);
         }
     }
 
