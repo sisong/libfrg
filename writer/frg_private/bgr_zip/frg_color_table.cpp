@@ -189,12 +189,18 @@ namespace frg{
     class TColorsDistance{
     public:
         inline TColorsDistance(std::vector<TColorTableZiper::TColorNode>& colorSet)
-            :m_colorSet(colorSet),m_colorCount((int)colorSet.size()){ initCache(); }
+            :m_colorSet(colorSet),m_colorCount((int)colorSet.size()),m_isNeedUpdateCache(false){ }
         inline ~TColorsDistance(){ resetSetSize(); }
         
         inline int getColorCount()const{ return m_colorCount; }
         TUInt32 getMinDistanceColor(TColorDistanceInfo* out_cdInfo){
             assert(m_colorCount>=2);
+            if (m_distanceCaches.empty())
+                initCache();
+            else if (m_isNeedUpdateCache)
+                updateCache();
+            m_isNeedUpdateCache=false;
+            
             while (true) {
                 const TDistanceCache& cur=m_distanceCaches.top();
                 if ((m_colorSet[cur.iX].getCount()==0)||(m_colorSet[cur.iY].getCount()==0))
@@ -210,30 +216,24 @@ namespace frg{
             //assert(cdInfo.iX<cdInfo.iY);
             //assert(m_distanceCaches.top().iX==cdInfo.iX);
             //assert(m_distanceCaches.top().iY==cdInfo.iY);
-            
-            //del color
-            m_distanceCaches.pop();
             int newIndex=(int)m_colorSet.size();
+            //del color
             m_colorSet.push_back(m_colorSet[cdInfo.iX]);
             m_colorSet[newIndex].uniteColor(m_colorSet[cdInfo.iY]);
             m_colorSet[cdInfo.iX].setCount(0);
             m_colorSet[cdInfo.iY].setCount(0);
             --m_colorCount;
             
-            reCache();
+            if ((newIndex+1)>(m_colorCount)*2){
+                //clear all chaches
+                m_distanceCaches=std::priority_queue<TDistanceCache>();
+                resetSetSize();
+            }else{
+                m_isNeedUpdateCache=true;
+                m_distanceCaches.pop();
+            }
         }
     private:
-        std::vector<TColorTableZiper::TColorNode>&      m_colorSet;
-        int                                             m_colorCount;
-        void resetSetSize(){
-            int insertIndex=0;
-            for (int i=0;i<(int)m_colorSet.size();++i){
-                if (m_colorSet[i].getCount()==0) continue;
-                m_colorSet[insertIndex]=m_colorSet[i]; ++insertIndex;
-            }
-            assert(insertIndex==m_colorCount);
-            m_colorSet.resize(insertIndex);
-        }
         struct TDistanceCache{
             short       iX;
             short       iY;
@@ -243,7 +243,19 @@ namespace frg{
                 return distance>y.distance;
             }
         };
+        std::vector<TColorTableZiper::TColorNode>&      m_colorSet;
+        int                                             m_colorCount;
         std::priority_queue<TDistanceCache>             m_distanceCaches;
+        bool                                            m_isNeedUpdateCache;
+        void resetSetSize(){
+            int insertIndex=0;
+            for (int i=0;i<(int)m_colorSet.size();++i){
+                if (m_colorSet[i].getCount()==0) continue;
+                m_colorSet[insertIndex]=m_colorSet[i]; ++insertIndex;
+            }
+            assert(insertIndex==m_colorCount);
+            m_colorSet.resize(insertIndex);
+        }
         void initCache(){
             for (int index0=0;index0<m_colorCount-1;++index0){
                 for (int index1=index0+1;index1<m_colorCount;++index1){
@@ -252,7 +264,7 @@ namespace frg{
                 }
             }
         }
-        void reCache(){
+        void updateCache(){
             int index1=(int)m_colorSet.size()-1;
             for (int index0=0;index0<index1-1;++index0){
                 if (m_colorSet[index0].getCount()==0) continue;
