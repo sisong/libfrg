@@ -63,15 +63,18 @@ namespace frg{
             TColor  m_color;
             int     m_count;
         public:
-           inline void setColor(const Color24& rgb,int count){
+            inline void setColor(const Color24& rgb,int count){
                 m_color.setWithMul(TColor(rgb), 1);
                 m_sumColor.setWithMul(TColor(rgb), count);
                 m_count=count;
             }
+            inline void setCount(int count){
+                m_count=count;
+            }
             void uniteColor(const TColorNode& n);
-           inline const TColor& getColor()const{ return m_color; }
-           inline int getCount()const { return m_count; }
-           inline  Color24 asColor24()const { return m_color.asColor(0,255); }
+            inline const TColor& getColor()const{ return m_color; }
+            inline int getCount()const { return m_count; }
+            inline  Color24 asColor24()const { return m_color.asColor(0,255); }
         };
         
         enum{ kColorErrorIntFloatBit=8};
