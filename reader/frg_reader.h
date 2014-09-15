@@ -32,16 +32,11 @@
 //用来启动内存访问越界检查,用以避免损坏的frg文件数据或构造特殊frg编码的攻击;速度影响较小(打开可能慢2%).
 //#define FRG_READER_RUN_MEM_SAFE_CHECK
 
-#if defined(__BCPLUSPLUS__) || defined( _BORLANDC_ )
-  #define _BCC32_OBJ_FOR_DELPHI
-  #define _IS_NEED_INLINE_FRG_DRAW_CODE
-  //uses bcc32 compile out one ".obj" file can link to Delphi App.
-  #pragma option push -V?-
-  #define FRG_READER_EXPORT_API  __stdcall 
-  #define FRG_READER_STATIC   static 
-#else
-  #define FRG_READER_EXPORT_API  
-  #define FRG_READER_STATIC  
+#ifndef FRG_READER_EXPORT_API
+#   define FRG_READER_EXPORT_API
+#endif
+#ifndef FRG_READER_STATIC
+#   define FRG_READER_STATIC
 #endif
 
 #ifdef __cplusplus
