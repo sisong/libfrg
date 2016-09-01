@@ -71,7 +71,7 @@ bool frgImage_decodeTo_bmpImage(const unsigned char* frgCode,const unsigned char
     bmpImage.width=frgInfo.imageWidth;
     bmpImage.height=frgInfo.imageHeight;
     bmpImage.colorType=kFrg_ColorType_32bit_A8R8G8B8;
-    bool isok=frg_FALSE!=readFrgImage(frgCode,frgCode_end,&bmpImage,tempMemory,tempMemory+frgInfo.decoder_tempMemoryByteSize);
+    bool isok=frg_FALSE!=readFrgImage(frgCode,frgCode_end,&bmpImage,tempMemory,tempMemory+frgInfo.decoder_tempMemoryByteSize,0);
 
     delete []tempMemory;
     return isok;

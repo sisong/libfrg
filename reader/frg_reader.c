@@ -69,6 +69,19 @@ static /* inline */ frg_BOOL frgZip_decompress(unsigned char* out_data,unsigned 
 
 ///////
 
+
+//判断是否是Frg数据.
+frg_BOOL FRG_READER_EXPORT_API isFrgImage(const TByte* frgCode_begin,const TByte* frgCode_end){
+    if (frgCode_end-frgCode_begin<kFrgTagAndVersionSize)
+        return frg_FALSE;
+    for (int i=0; i<kFrgTagAndVersionSize-1; ++i) {
+        if (frgCode_begin[i]!=kFrgTagAndVersion[i])
+            return frg_FALSE;
+    }
+    return frg_TRUE;
+}
+
+
 int FRG_READER_EXPORT_API getFrgHeadSize(void){
     return kFrgFileHeadSize;
 }
@@ -107,7 +120,7 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const TByte* frgCode_begin,const
 
 ////
 
-frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TByte* frgCode_end,const struct frg_TPixelsRef* dst_image,TByte* tempMemory,TByte* tempMemory_end){
+frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TByte* frgCode_end,const struct frg_TPixelsRef* dst_image,TByte* tempMemory,TByte* tempMemory_end,frg_BOOL* _out_isUseAlpha){
     const struct TFrgFileHead* fhead=(const struct TFrgFileHead*)frgCode_begin;
     {   //head check
         struct frg_TFrgImageInfo frgInfo;
@@ -142,6 +155,11 @@ frg_BOOL FRG_READER_EXPORT_API readFrgImage(const TByte* frgCode_begin,const TBy
         
         const TByte* alphaBuf=0;
         int alpha_byte_width=0;
+        
+        if (_out_isUseAlpha!=0){
+            frg_BOOL isNeedUseAlpha=isSingleAlpha&(singleBGRA[3]!=255);
+            *_out_isUseAlpha=isNeedUseAlpha;
+        }
         
         //single color
         if (isSingleAlpha&&isSingleBGR){
