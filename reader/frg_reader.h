@@ -32,16 +32,11 @@
 //用来启动内存访问越界检查,用以避免损坏的frg文件数据或构造特殊frg编码的攻击;速度影响较小(打开可能慢2%).
 //#define FRG_READER_RUN_MEM_SAFE_CHECK
 
-#if defined(__BCPLUSPLUS__) || defined( _BORLANDC_ )
-  #define _BCC32_OBJ_FOR_DELPHI
-  #define _IS_NEED_INLINE_FRG_DRAW_CODE
-  //uses bcc32 compile out one ".obj" file can link to Delphi App.
-  #pragma option push -V?-
-  #define FRG_READER_EXPORT_API  __stdcall 
-  #define FRG_READER_STATIC   static 
-#else
-  #define FRG_READER_EXPORT_API  
-  #define FRG_READER_STATIC  
+#ifndef FRG_READER_EXPORT_API
+#   define FRG_READER_EXPORT_API
+#endif
+#ifndef FRG_READER_STATIC
+#   define FRG_READER_STATIC
 #endif
 
 #ifdef __cplusplus
@@ -55,12 +50,18 @@ typedef enum frg_TColorType {
 
 //你可以修改kFrg_outColor_*这4个值以支持你需要的rgba32bit颜色输出格式(需要重新编译解码器源代码).
 //outColor32 = (b8<<blue_shl) | (g8<<green_shl) | (r8<<red_shl) | (a8<<alpha_shl);
-enum {
-    kFrg_outColor_blue_shl    =0,
-    kFrg_outColor_green_shl   =8,
-    kFrg_outColor_red_shl     =16,
-    kFrg_outColor_alpha_shl   =24
-};
+#ifndef kFrg_outColor_blue_shl
+#    define kFrg_outColor_blue_shl  0
+#endif
+#ifndef kFrg_outColor_green_shl
+#    define kFrg_outColor_green_shl 8
+#endif
+#ifndef kFrg_outColor_red_shl
+#    define kFrg_outColor_red_shl   16
+#endif
+#ifndef kFrg_outColor_alpha_shl
+#    define kFrg_outColor_alpha_shl 24
+#endif
 static const int kFrg_outColor_size =4;
 
 struct frg_TPixelsRef{
@@ -82,16 +83,21 @@ struct frg_TFrgImageInfo{
     int             imageHeight;
     unsigned int    decoder_tempMemoryByteSize;
 };
+    
+//判断是否是Frg数据.
+frg_BOOL FRG_READER_EXPORT_API isFrgImage(const unsigned char* frgCode_begin,const unsigned char* frgCode_end);
+
 
 //返回获得frg数据类型信息的大小. //在某些只需要知道文件头信息的时候就不用读取整个文件的数据了.
 int FRG_READER_EXPORT_API getFrgHeadSize(void);
+    
 
 //获得frg图片基本信息. //assert(frgCode_end-frgCode_begin>=frgHeadSize) ;  out_frgImageInfo pointer can null;
 frg_BOOL FRG_READER_EXPORT_API readFrgImageInfo(const unsigned char* frgCode_begin,const unsigned char* frgCode_end,struct frg_TFrgImageInfo* out_frgImageInfo);
 
 
-//解码frg格式的图片数据.
-frg_BOOL FRG_READER_EXPORT_API readFrgImage(const unsigned char* frgCode_begin,const unsigned char* frgCode_end,const struct frg_TPixelsRef* dst_image,unsigned char* tempMemory,unsigned char* tempMemory_end);
+//解码frg格式的图片数据. // _out_isUseAlpha can nil
+frg_BOOL FRG_READER_EXPORT_API readFrgImage(const unsigned char* frgCode_begin,const unsigned char* frgCode_end,const struct frg_TPixelsRef* dst_image,unsigned char* tempMemory,unsigned char* tempMemory_end,frg_BOOL* _out_isUseAlpha);
 
 #ifdef __cplusplus
 }

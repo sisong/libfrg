@@ -49,13 +49,7 @@ struct TPairColor{
     TUInt32     c1;
 };
 
-static /* inline */ struct TPairColor _initPairColor(TUInt32 _c0,TUInt32 _c1){
-     struct TPairColor temp={_c0,_c1};
-    return temp;
-}
-
-//#define DefinePairColor(pairColorName,_c0,_c1)  const struct TPairColor pairColorName={_c0,_c1} //xcode 64-bit,fill8Pixels slow!
-#define DefinePairColor(pairColorName,_c0,_c1)  const struct TPairColor pairColorName=_initPairColor(_c0,_c1)
+#define DefinePairColor(pairColorName,_c0,_c1)  struct TPairColor pairColorName; { pairColorName.c0=(_c0); pairColorName.c1=(_c1); }
 #define SetPairColor(pdst,_c0,_c1) { ((TUInt32*)(pdst))[0]=(_c0); ((TUInt32*)(pdst))[1]=(_c1); }
     
 ///
@@ -181,9 +175,9 @@ void frg_fillPixels_32bit(const struct frg_TPixelsRef* dst,const TByte* pBGRA32)
     const int width=dst->width;
     const int fast_width=width&(~7);
     const TUInt32 color32=BRGToColor32(pBGRA32[0],pBGRA32[1],pBGRA32[2],pBGRA32[3]);
-    DefinePairColor(pairColor,color32,color32);
     TUInt32* pline=(TUInt32*)dst->pColor;
     int y;
+    DefinePairColor(pairColor,color32,color32);
     
     for (y=0; y<height; ++y) {
         int x;
@@ -218,9 +212,9 @@ void frg_fillPixels_32bit_withAlpha(const struct frg_TPixelsRef* dst,const TByte
 void frg_copyPixels_32bit_single_bgra_w8(const struct frg_TPixelsRef* dst,TUInt32 color32){
     const int height=dst->height;
     const int byte_width=dst->byte_width;
-    DefinePairColor(pairColor,color32,color32);
     TUInt32* pline=(TUInt32*)dst->pColor;
     int y;
+    DefinePairColor(pairColor,color32,color32);
     /*
     for (y=0; y<height; ++y) {
         fill8Pixels(pline,pairColor);
@@ -268,22 +262,7 @@ void frg_copyPixels_32bit_index_single_a_w8_4bit(const struct frg_TPixelsRef* ds
     const int byte_width=dst->byte_width;
     const TUInt32 alpha32=alpha<<kFrg_outColor_alpha_shl;
     TUInt32* pline=(TUInt32*)dst->pColor;
-    /*
-    int y;
-    for (y=0; y<height; ++y) {
-        const TFastUInt index01=indexsList[0];
-        const TFastUInt index23=indexsList[1];
-        const TFastUInt index45=indexsList[2];
-        const TFastUInt index67=indexsList[3];
-        copy8PixelsFromTable_single_a(pline,alpha32,colorTable,
-                                      (index01&15),(index01>>4),
-                                      (index23&15),(index23>>4),
-                                      (index45&15),(index45>>4),
-                                      (index67&15),(index67>>4));
-        indexsList+=4;
-        pline=(TUInt32*)( ((TByte*)pline)+byte_width );
-    }
-    */
+
     struct TByte4{
         TByte b0;
         TByte b1;
@@ -299,15 +278,15 @@ void frg_copyPixels_32bit_index_single_a_w8_4bit(const struct frg_TPixelsRef* ds
     
     if (kIs_LITTLE_ENDIAN){
         int y;
-        struct TPackByte4 indexs; indexs.value=0;
         indexsList+=height*4;
         for (y=-height;;) {
+            struct TPackByte4 indexs;
             indexs.bs=((const struct TByte4*)indexsList)[y];
             copy8PixelsFromTable_single_a(pline,alpha32,colorTable,
                                           ((indexs.value    )&15),((indexs.value>>(   4))&15),
                                           ((indexs.value>> 8)&15),((indexs.value>>( 8+4))&15),
                                           ((indexs.value>>16)&15),((indexs.value>>(16+4))&15),
-                                          ((indexs.value>>24)&15),((indexs.value>>(24+4))   ) );
+                                          ((indexs.value>>24)&15),((indexs.value>>(24+4))&15));
             
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
             ++y; if (!y) break;
@@ -373,21 +352,7 @@ void frg_copyPixels_32bit_index_single_a_w8_3bit(const struct frg_TPixelsRef* ds
     const int byte_width=dst->byte_width;
     const TUInt32 alpha32=alpha<<kFrg_outColor_alpha_shl;
     TUInt32* pline=(TUInt32*)dst->pColor;
-    /*
-    int y;
-    for (y=0; y<height; ++y) {
-        const TFastUInt index0=indexsList[0];
-        const TFastUInt index1=indexsList[1];
-        const TFastUInt index2=indexsList[2];
-        copy8PixelsFromTable_single_a(pline,alpha32,colorTable,
-                                      (                   index0&7),(              (index0>>3)&7),
-                                      (((index0>>6)|(index1<<2))&7),(              (index1>>1)&7),
-                                      (              (index1>>4)&7),(((index1>>7)|(index2<<1))&7),
-                                      (              (index2>>2)&7),(                  index2>>5));
-        indexsList+=3;
-        pline=(TUInt32*)( ((TByte*)pline)+byte_width );
-    }
-    */
+
     struct TByte3{
         TByte b0;
         TByte b1;
@@ -401,14 +366,14 @@ void frg_copyPixels_32bit_index_single_a_w8_3bit(const struct frg_TPixelsRef* ds
     };
     if (kIs_LITTLE_ENDIAN){
         int y;
-        struct TPackByte3 indexs; indexs.value=0;
         for (y=-height;;) {
+            struct TPackByte3 indexs;
             indexs.bs=*(const struct TByte3*)indexsList;
             copy8PixelsFromTable_single_a(pline,alpha32,colorTable,
                                           ((indexs.value    )&7),((indexs.value>> 3)&7),
                                           ((indexs.value>> 6)&7),((indexs.value>> 9)&7),
                                           ((indexs.value>>12)&7),((indexs.value>>15)&7),
-                                          ((indexs.value>>18)&7),((indexs.value>>21)  ) );
+                                          ((indexs.value>>18)&7),((indexs.value>>21)&7));
             indexsList+=3;
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
             ++y; if (!y) break;
@@ -423,7 +388,7 @@ void frg_copyPixels_32bit_index_single_a_w8_3bit(const struct frg_TPixelsRef* ds
                                           (                   index0&7),(              (index0>>3)&7),
                                           (((index0>>6)|(index1<<2))&7),(              (index1>>1)&7),
                                           (              (index1>>4)&7),(((index1>>7)|(index2<<1))&7),
-                                          (              (index2>>2)&7),(                  index2>>5));
+                                          (              (index2>>2)&7),(               index2>>5   ));
             indexsList+=3;
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
             ++y; if (!y) break;
@@ -444,10 +409,10 @@ void frg_copyPixels_32bit_index_3bit(const struct frg_TPixelsRef* dst,const TUIn
             const TFastUInt index1=indexsList[1];
             const TFastUInt index2=indexsList[2];
             copy8PixelsFromTableWithAlpha(pline,alphaLine,colorTable,
-                                         (                   index0&7),(              (index0>>3)&7),
-                                         (((index0>>6)|(index1<<2))&7),(              (index1>>1)&7),
-                                         (              (index1>>4)&7),(((index1>>7)|(index2<<1))&7),
-                                         (              (index2>>2)&7),(                  index2>>5));
+                                          (                   index0&7),(              (index0>>3)&7),
+                                          (((index0>>6)|(index1<<2))&7),(              (index1>>1)&7),
+                                          (              (index1>>4)&7),(((index1>>7)|(index2<<1))&7),
+                                          (              (index2>>2)&7),(               index2>>5   ));
             indexsList+=3;
             alphaLine+=alpha_byte_width;
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
@@ -480,20 +445,7 @@ void frg_copyPixels_32bit_index_single_a_w8_2bit(const struct frg_TPixelsRef* ds
     const int byte_width=dst->byte_width;
     const TUInt32 alpha32=alpha<<kFrg_outColor_alpha_shl;
     TUInt32* pline=(TUInt32*)dst->pColor;
-    /*
-    int y;
-    for (y=0; y<height; ++y) {
-        const TFastUInt index0123=indexsList[0];
-        const TFastUInt index4567=indexsList[1];
-        copy8PixelsFromTable_single_a(pline,alpha32,colorTable,
-                                      ( index0123    &3),((index0123>>2)&3),
-                                      ((index0123>>4)&3),((index0123>>6)&3),
-                                      ( index4567    &3),((index4567>>2)&3),
-                                      ((index4567>>4)&3),((index4567>>6)&3));
-        indexsList+=2;
-        pline=(TUInt32*)( ((TByte*)pline)+byte_width );
-    }
-    */
+
     struct TByte2{
         TByte b0;
         TByte b1;
@@ -507,15 +459,15 @@ void frg_copyPixels_32bit_index_single_a_w8_2bit(const struct frg_TPixelsRef* ds
     
     if (kIs_LITTLE_ENDIAN){
         int y;
-        struct TPackByte2 indexs; indexs.value=0;
         indexsList+=height*2;
         for (y=-height;;) {
+            struct TPackByte2 indexs;
             indexs.bs=((const struct TByte2*)indexsList)[y];
             copy8PixelsFromTable_single_a(pline,alpha32,colorTable,
                                           ((indexs.value    )&3),((indexs.value>>(   2))&3),
                                           ((indexs.value>> 4)&3),((indexs.value>>( 4+2))&3),
                                           ((indexs.value>> 8)&3),((indexs.value>>( 8+2))&3),
-                                          ((indexs.value>>12)&3),((indexs.value>>(12+2))  ) );
+                                          ((indexs.value>>12)&3),((indexs.value>>(12+2))&3));
             
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
             ++y; if (!y) break;
@@ -527,9 +479,9 @@ void frg_copyPixels_32bit_index_single_a_w8_2bit(const struct frg_TPixelsRef* ds
             const TFastUInt index4567=indexsList[1];
             copy8PixelsFromTable_single_a(pline,alpha32,colorTable,
                                           ( index0123    &3),((index0123>>2)&3),
-                                          ((index0123>>4)&3),((index0123>>6)&3),
+                                          ((index0123>>4)&3),((index0123>>6)  ),
                                           ( index4567    &3),((index4567>>2)&3),
-                                          ((index4567>>4)&3),((index4567>>6)&3));
+                                          ((index4567>>4)&3),((index4567>>6)  ));
             indexsList+=2;
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
             ++y; if (!y) break;
@@ -550,9 +502,9 @@ void frg_copyPixels_32bit_index_2bit(const struct frg_TPixelsRef* dst,const TUIn
             const TFastUInt index4567=indexsList[1];
             copy8PixelsFromTableWithAlpha(pline,alphaLine,colorTable,
                                          ( index0123    &3),((index0123>>2)&3),
-                                         ((index0123>>4)&3),((index0123>>6)&3),
+                                         ((index0123>>4)&3),((index0123>>6)  ),
                                          ( index4567    &3),((index4567>>2)&3),
-                                         ((index4567>>4)&3),((index4567>>6)&3));
+                                         ((index4567>>4)&3),((index4567>>6)  ));
             
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
             indexsList+=2;
@@ -590,7 +542,7 @@ void frg_copyPixels_32bit_index_single_a_w8_1bit(const struct frg_TPixelsRef* ds
                              ( indexs    &1),((indexs>>1)&1),
                              ((indexs>>2)&1),((indexs>>3)&1),
                              ((indexs>>4)&1),((indexs>>5)&1),
-                             ((indexs>>6)&1),((indexs>>7)&1));
+                             ((indexs>>6)&1),((indexs>>7)  ));
         
         pline=(TUInt32*)( ((TByte*)pline)+byte_width );
     }
@@ -610,7 +562,7 @@ void frg_copyPixels_32bit_index_1bit(const struct frg_TPixelsRef* dst,const TUIn
                                          ( indexs    &1),((indexs>>1)&1),
                                          ((indexs>>2)&1),((indexs>>3)&1),
                                          ((indexs>>4)&1),((indexs>>5)&1),
-                                         ((indexs>>6)&1),((indexs>>7)&1));
+                                         ((indexs>>6)&1),((indexs>>7)  ));
             
             pline=(TUInt32*)( ((TByte*)pline)+byte_width );
             indexsList+=1;

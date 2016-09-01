@@ -87,10 +87,11 @@ bool getIsSigleRGBColor(const TPixels32Ref& src,TBGRA32* out_BGR){
 }
 
 bool getIsSigleAlphaColor(const TPixels32Ref& src,TByte* out_Alpha){
-    TUInt32 A=0;
+    TUInt32 A;
     if ((src.width>0)&&(src.height>0))
         A=src.pixels(0,0).a;
-
+    else
+        A=255;//no alpha
     for (int y=0;y<src.height;++y){
         const TBGRA32* pSrcLine=src.getLinePixels(y);
         for (int x=0;x<src.width;++x){
