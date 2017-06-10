@@ -199,7 +199,6 @@ namespace frg{
                 initCache();
             else if (m_isNeedUpdateCache)
                 updateCache();
-            m_isNeedUpdateCache=false;
             
             while (true) {
                 const TDistanceCache& cur=m_distanceCaches.top();
@@ -226,7 +225,6 @@ namespace frg{
             
             if ((newIndex+1)>(m_colorCount)*2){
                 //clear all chaches
-                m_distanceCaches=std::priority_queue<TDistanceCache>();
                 resetSetSize();
             }else{
                 m_isNeedUpdateCache=true;
@@ -248,6 +246,7 @@ namespace frg{
         std::priority_queue<TDistanceCache>             m_distanceCaches;
         bool                                            m_isNeedUpdateCache;
         void resetSetSize(){
+            m_distanceCaches=std::priority_queue<TDistanceCache>();
             int insertIndex=0;
             for (int i=0;i<(int)m_colorSet.size();++i){
                 if (m_colorSet[i].getCount()==0) continue;
@@ -257,6 +256,7 @@ namespace frg{
             m_colorSet.resize(insertIndex);
         }
         void initCache(){
+            m_distanceCaches=std::priority_queue<TDistanceCache>();
             for (int index0=0;index0<m_colorCount-1;++index0){
                 for (int index1=index0+1;index1<m_colorCount;++index1){
                     TUInt32 distance=getNodeColorDistance(m_colorSet[index0],m_colorSet[index1]);
@@ -266,11 +266,12 @@ namespace frg{
         }
         void updateCache(){
             int index1=(int)m_colorSet.size()-1;
-            for (int index0=0;index0<index1-1;++index0){
+            for (int index0=0;index0<index1;++index0){
                 if (m_colorSet[index0].getCount()==0) continue;
                 TUInt32 distance=getNodeColorDistance(m_colorSet[index0],m_colorSet[index1]);
                 m_distanceCaches.push(TDistanceCache(index0,index1,distance));
             }
+            m_isNeedUpdateCache=false;
         }
 
         inline static TUInt32 getNodeColorDistance(const TColorTableZiper::TColorNode& na,const TColorTableZiper::TColorNode& nb){
