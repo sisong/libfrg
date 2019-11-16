@@ -27,7 +27,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
 */
 #include "frg_reader.h"
-#include "../../lz4/lz4.h"//http://code.google.com/p/lz4/
+#include "lz4.h" // https://github.com/lz4/lz4
 #include "frg_draw.h"
 #ifdef _IS_NEED_INLINE_FRG_DRAW_CODE
     #undef  _IS_NEED_INLINE_FRG_DRAW_CODE
@@ -72,9 +72,10 @@ static /* inline */ frg_BOOL frgZip_decompress(unsigned char* out_data,unsigned 
 
 //判断是否是Frg数据.
 frg_BOOL FRG_READER_EXPORT_API isFrgImage(const TByte* frgCode_begin,const TByte* frgCode_end){
+	int i;
     if (frgCode_end-frgCode_begin<kFrgTagAndVersionSize)
         return frg_FALSE;
-    for (int i=0; i<kFrgTagAndVersionSize-1; ++i) {
+    for (i=0; i<kFrgTagAndVersionSize-1; ++i) {
         if (frgCode_begin[i]!=kFrgTagAndVersion[i])
             return frg_FALSE;
     }

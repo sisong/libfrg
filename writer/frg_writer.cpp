@@ -30,8 +30,8 @@
 #include "frg_private/frg_color_tools.h"
 #include "frg_private/bytes_rle.h"
 #include "frg_private/bgr_zip/frg_color_zip.h"
-#include "../../lz4/lz4.h"
-#include "../../lz4/lz4hc.h" //http://code.google.com/p/lz4/
+#include "lz4.h"   // https://github.com/lz4/lz4
+#include "lz4hc.h" // https://github.com/lz4/lz4
 
 
 namespace frg{

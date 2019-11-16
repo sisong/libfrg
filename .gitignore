@@ -1,3 +1,10 @@
 .DS_Store
 xcuserdata
-demo/builds
+frg_demo.depend
+frg_demo.layout
+demo/builds/codeblocks/bin
+demo/builds/codeblocks/obj
+*.suo
+demo/builds/vc/Debug
+demo/builds/vc/Release
+demo/builds/vc/x64/Release
