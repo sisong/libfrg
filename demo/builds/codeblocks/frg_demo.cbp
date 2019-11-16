@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="frg_demo" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/frg_demo" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/frg_demo" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+			<Add directory="../../../../lz4/lib" />
+		</Compiler>
+		<Unit filename="../../../../lz4/lib/lz4.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../../lz4/lib/lz4.h" />
+		<Unit filename="../../../../lz4/lib/lz4hc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../../lz4/lib/lz4hc.h" />
+		<Unit filename="../../../reader/frg_draw.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../reader/frg_draw.h" />
+		<Unit filename="../../../reader/frg_private_reader_base.h" />
+		<Unit filename="../../../reader/frg_reader.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../reader/frg_reader.h" />
+		<Unit filename="../../../writer/frg_private/bgr_zip/frg_color_base.h" />
+		<Unit filename="../../../writer/frg_private/bgr_zip/frg_color_table.cpp" />
+		<Unit filename="../../../writer/frg_private/bgr_zip/frg_color_table.h" />
+		<Unit filename="../../../writer/frg_private/bgr_zip/frg_color_zip.cpp" />
+		<Unit filename="../../../writer/frg_private/bgr_zip/frg_color_zip.h" />
+		<Unit filename="../../../writer/frg_private/bgr_zip/frg_match_image.cpp" />
+		<Unit filename="../../../writer/frg_private/bgr_zip/frg_match_image.h" />
+		<Unit filename="../../../writer/frg_private/bgr_zip/frg_match_table.cpp" />
+		<Unit filename="../../../writer/frg_private/bgr_zip/frg_match_table.h" />
+		<Unit filename="../../../writer/frg_private/bytes_rle.cpp" />
+		<Unit filename="../../../writer/frg_private/bytes_rle.h" />
+		<Unit filename="../../../writer/frg_private/calc_color.h" />
+		<Unit filename="../../../writer/frg_private/color_error_diffuse.h" />
+		<Unit filename="../../../writer/frg_private/frg_color_tools.cpp" />
+		<Unit filename="../../../writer/frg_private/frg_color_tools.h" />
+		<Unit filename="../../../writer/frg_private/frg_writer_base.h" />
+		<Unit filename="../../../writer/frg_writer.cpp" />
+		<Unit filename="../../../writer/frg_writer.h" />
+		<Unit filename="../../frg_demo.cpp" />
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<lib_finder disable_auto="1" />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

@@ -32,6 +32,8 @@
 #include "../../reader/frg_private_reader_base.h"
 #include "assert.h" //assert
 #include "string.h" //memset
+#include <stddef.h> //ptrdiff_t
+#include <stdlib.h> //size_t
 #include <vector>
 #include <algorithm>
 #include "pack_uint.h"

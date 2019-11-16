@@ -30,8 +30,8 @@
 #include "frg_private/frg_color_tools.h"
 #include "frg_private/bytes_rle.h"
 #include "frg_private/bgr_zip/frg_color_zip.h"
-#include "../../lz4/lz4.h"
-#include "../../lz4/lz4hc.h" //http://code.google.com/p/lz4/
+#include "lz4.h"   // https://github.com/lz4/lz4
+#include "lz4hc.h" // https://github.com/lz4/lz4
 
 
 namespace frg{
@@ -41,11 +41,11 @@ namespace frg{
         TUInt srcSize=(TUInt)(src_end-src);
         if (srcSize>LZ4_MAX_INPUT_SIZE) throw TFrgRunTimeError("frgZip_compress() srcSize>LZ4_MAX_INPUT_SIZE.");
         TUInt oldSize=(TUInt)out_code.size();
-        out_code.resize(oldSize+LZ4_compressBound((int)srcSize));
-        //int codeSize=LZ4_compressHC((const char*)src,(char*)&out_code[oldSize],(int)srcSize);
-        const int kLZ4HC2MaxCompressionLevel=16;
-        int codeSize=LZ4_compressHC2((const char*)src,(char*)&out_code[oldSize],(int)srcSize,kLZ4HC2MaxCompressionLevel);
-        if (codeSize<=0) throw TFrgRunTimeError("LZ4_compressHC2() codeSize<=0.");
+        int codeBufSize=LZ4_compressBound((int)srcSize);
+        out_code.resize(oldSize+codeBufSize);
+        int codeSize=LZ4_compress_HC((const char*)src,(char*)&out_code[oldSize],
+                                     (int)srcSize,codeBufSize,LZ4HC_CLEVEL_OPT_MIN);
+        if (codeSize<=0) throw TFrgRunTimeError("frgZip_compress() LZ4_compress_HC result codeSize<=0.");
         out_code.resize(oldSize+codeSize);
     }
 

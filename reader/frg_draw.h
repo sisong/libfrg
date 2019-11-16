@@ -1,5 +1,5 @@
 //  frg_draw.h
-//  for frg_reader
+//  private for frg_reader
 //
 /*
  This is the frg copyright.

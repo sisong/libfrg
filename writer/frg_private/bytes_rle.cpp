@@ -27,6 +27,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include <stdlib.h> //size_t
 #include "bytes_rle.h"
 #include "assert.h"
 #include "pack_uint.h"
