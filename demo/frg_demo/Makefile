@@ -1,25 +1,26 @@
 
+FRG_PATH := ../..
 READER_OBJ := \
-    ../reader/frg_reader.o \
-    ../reader/frg_draw.o \
+    $(FRG_PATH)/reader/frg_reader.o \
+    $(FRG_PATH)/reader/frg_draw.o
 
 WRITER_OBJ := \
-    ../writer/frg_writer.o \
-    ../writer/frg_private/bytes_rle.o \
-    ../writer/frg_private/frg_color_tools.o \
-    ../writer/frg_private/bgr_zip/frg_color_table.o \
-    ../writer/frg_private/bgr_zip/frg_color_zip.o \
-    ../writer/frg_private/bgr_zip/frg_match_image.o \
-    ../writer/frg_private/bgr_zip/frg_match_table.o
+    $(FRG_PATH)/writer/frg_writer.o \
+    $(FRG_PATH)/writer/frg_private/bytes_rle.o \
+    $(FRG_PATH)/writer/frg_private/frg_color_tools.o \
+    $(FRG_PATH)/writer/frg_private/bgr_zip/frg_color_table.o \
+    $(FRG_PATH)/writer/frg_private/bgr_zip/frg_color_zip.o \
+    $(FRG_PATH)/writer/frg_private/bgr_zip/frg_match_image.o \
+    $(FRG_PATH)/writer/frg_private/bgr_zip/frg_match_table.o
 
-# https://github.com/lz4/lz4
-LZ4_PATH := ../../lz4/lib
+# https://github.com/lz4/lz4 
+LZ4_PATH := ../../../lz4/lib
 LZ4_OBJ := \
     $(LZ4_PATH)/lz4.o \
     $(LZ4_PATH)/lz4hc.o 
 
-CFLAGS      += -O3 -DNDEBUG -I'../../lz4/lib'
-CXXFLAGS   += -O3 -DNDEBUG -I'../../lz4/lib'
+CFLAGS     += -O3 -DNDEBUG -I'../../../lz4/lib'
+CXXFLAGS   += -O3 -DNDEBUG -I'../../../lz4/lib'
 
 .PHONY: all install clean
 

@@ -68,7 +68,7 @@
 		<Unit filename="../../../writer/frg_private/frg_writer_base.h" />
 		<Unit filename="../../../writer/frg_writer.cpp" />
 		<Unit filename="../../../writer/frg_writer.h" />
-		<Unit filename="../../frg_demo.cpp" />
+		<Unit filename="../frg_demo.cpp" />
 		<Extensions>
 			<envvars />
 			<code_completion />

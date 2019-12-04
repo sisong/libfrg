@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -172,7 +172,7 @@
     <ClCompile Include="..\..\..\writer\frg_private\bytes_rle.cpp" />
     <ClCompile Include="..\..\..\writer\frg_private\frg_color_tools.cpp" />
     <ClCompile Include="..\..\..\writer\frg_writer.cpp" />
-    <ClCompile Include="..\..\frg_demo.cpp" />
+    <ClCompile Include="..\frg_demo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\lz4\lib\lz4.h" />

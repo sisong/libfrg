@@ -44,7 +44,7 @@
 		80A04A46181AABE700FDDE18 /* lz4hc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lz4hc.c; path = lib/lz4hc.c; sourceTree = "<group>"; };
 		80A04A47181AABE700FDDE18 /* lz4hc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lz4hc.h; path = lib/lz4hc.h; sourceTree = "<group>"; };
 		80AEDF75175D404A00650BF4 /* frg_demo */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = frg_demo; sourceTree = BUILT_PRODUCTS_DIR; };
-		80AEDF85175D40D900650BF4 /* frg_demo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = frg_demo.cpp; path = ../../frg_demo.cpp; sourceTree = "<group>"; };
+		80AEDF85175D40D900650BF4 /* frg_demo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = frg_demo.cpp; path = ../frg_demo.cpp; sourceTree = "<group>"; };
 		D6BA8CD81773C08A002ED18C /* frg_color_base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = frg_color_base.h; sourceTree = "<group>"; };
 		D6BA8CD91773C08A002ED18C /* frg_color_table.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = frg_color_table.cpp; sourceTree = "<group>"; };
 		D6BA8CDA1773C08A002ED18C /* frg_color_table.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = frg_color_table.h; sourceTree = "<group>"; };

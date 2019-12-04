@@ -1,5 +1,6 @@
 .DS_Store
 xcuserdata
+xcshareddata
 *.depend
 *.layout
 demo/builds/codeblocks/bin
