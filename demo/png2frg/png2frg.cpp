@@ -20,9 +20,14 @@ typedef unsigned char TByte;
 
 #define check(v) do{ if (!(v)) { throw std::runtime_error(#v); } }while(0)
 
-void   decodePngImage(const TByte* pngCode,const TByte* pngCode_end,frg::TFrgPixels32Ref& out_image);
-void   encodePngImage(std::vector<TByte>& out_pngCode,const frg::TFrgPixels32Ref& image);
-double getNowTime_s();
+double  clock_s();
+void    writeFile(const std::vector<TByte>& srcData,const char* dstFileName);
+void    readFile(std::vector<TByte>& out_data,const char* srcFileName);
+
+void    decodeFrgImage(const TByte* frgCode,const TByte* frgCode_end,frg::TFrgPixels32Ref& out_image);
+#define encodeFrgImage  frg::writeFrgImage
+void    decodePngImage(const TByte* pngCode,const TByte* pngCode_end,frg::TFrgPixels32Ref& out_image);
+void    encodePngImage(std::vector<TByte>& out_frgCode,const frg::TFrgPixels32Ref& image);
 
 struct TAutoFileClose {
     inline explicit TAutoFileClose(FILE* _file):file(_file){}
@@ -45,64 +50,21 @@ private:
     frg::TFrgPixels32Ref* ppixels;
 };
 
-void writeFile(const std::vector<TByte>& srcData,const char* dstFileName){
-    FILE* file=fopen(dstFileName, "wb");
-    check(file!=0);
-    TAutoFileClose _autoFileClose(file);
-    if (!srcData.empty())
-        check(srcData.size()==fwrite(srcData.data(),1,srcData.size(),file));
-}
-
-void readFile(std::vector<TByte>& out_data,const char* srcFileName){
-    FILE* file=fopen(srcFileName, "rb");
-    check(file!=0);
-    TAutoFileClose _autoFileClose(file);
-    check(0==fseek(file,0,SEEK_END));
-    long file_length = (long)ftell(file);
-    assert((file_length>=0)&&((size_t)file_length)==(unsigned long)file_length);
-    check(0==fseek(file,0,SEEK_SET));
-    out_data.resize((size_t)file_length);
-    if (!out_data.empty())
-        check(out_data.size()==fread(out_data.data(),1,out_data.size(),file));
-}
-
-void decodeFrgImage(const TByte* frgCode,const TByte* frgCode_end,frg::TFrgPixels32Ref& out_image){
-    frg_TFrgImageInfo frgInfo;
-    check(readFrgImageInfo(frgCode,frgCode_end,&frgInfo));
-    check(out_image.pColor==0);
-    size_t pixelsCount=(size_t)frgInfo.imageWidth*(size_t)frgInfo.imageHeight;
-    out_image.pColor=(frg::TFrgBGRA32*)malloc(pixelsCount*sizeof(frg::TFrgBGRA32));
-    check((out_image.pColor!=0)||(pixelsCount==0));
-    out_image.width=frgInfo.imageWidth;
-    out_image.height=frgInfo.imageHeight;
-    out_image.byte_width=frgInfo.imageWidth*sizeof(frg::TFrgBGRA32);
-    
-    TByte* tempMemory=(TByte*)malloc(frgInfo.decoder_tempMemoryByteSize);
-    check((tempMemory!=0)||(frgInfo.decoder_tempMemoryByteSize==0));
-    TAutoMemFree _autoMemFree(tempMemory);
-    frg_TPixelsRef bmpImage;
-    assert(sizeof(frg::TFrgBGRA32)==kFrg_outColor_size);
-    *(frg::TFrgPixels32Ref*)&bmpImage=out_image;
-    bmpImage.colorType=kFrg_ColorType_32bit_A8R8G8B8;
-    check(readFrgImage(frgCode,frgCode_end,&bmpImage,
-                       tempMemory,tempMemory+frgInfo.decoder_tempMemoryByteSize,0));
-}
-
 enum TConvertType {
     cv_unknown = 0,
     cv_png2frg,
     cv_frg2png
 };
 
-#define RunSpeedTest(time,runner)       \
+#define RunSpeedTest(time,runner)   \
     double time=0;  \
-    {   double time0=getNowTime_s();    \
-        double time1=time0;             \
-        long runLoopCount=0;            \
-        while (time1-time0<0.3) {       \
+    {   double time0=clock_s();     \
+        double time1=time0;         \
+        long runLoopCount=0;        \
+        while (time1-time0<0.3) {   \
             runner; \
-            ++runLoopCount;             \
-            time1=getNowTime_s();       \
+            ++runLoopCount;         \
+            time1=clock_s();        \
         }           \
        time=(time1-time0)/runLoopCount; \
     }
@@ -128,7 +90,7 @@ void convertImageType(const char* srcFile,const char* dstFile,
     std::vector<TByte> dstCode;
     RunSpeedTest(encodeDstTime_s,isPngSrc?
                  encodePngImage(dstCode,srcImage)
-                 :writeFrgImage(dstCode,srcImage,frg_encode_parameter));
+                :encodeFrgImage(dstCode,srcImage,frg_encode_parameter));
     printf("%s byte size  : %d \n",dstType,(int)dstCode.size());
     printf("%s encode time: %.3f ms\n",dstType,encodeDstTime_s*1000);
     writeFile(dstCode,dstFile); //save dst
@@ -165,8 +127,9 @@ bool isFileType(const char* fileName,const char* type){
 
 int main(int argc, const char * argv[]){
     if ((argc<3)||(argc>5)) {
-        printUsage();
-        return (argc==1)?0:1;
+        int result=(argc==1)?0:1;
+        if (result!=0) printf("parameter count error!\n\n");
+        printUsage(); return result;
     }
     const char* srcFile=argv[1];
     const char* dstFile=argv[2];
@@ -179,22 +142,81 @@ int main(int argc, const char * argv[]){
         if(argc>=5) compressSize=(float)atof(argv[4]);
     }else if (isFileType(srcFile,".frg")&&isFileType(dstFile,".png")){
         cvType=cv_frg2png;
-        if (argc!=3) { printUsage(); return 2; }
+        if (argc!=3) { printf("parameter count error!\n\n"); printUsage(); return 2; }
     }else{
-        printUsage(); return 3;
+        printf("unknown image file type error!\n\n"); printUsage(); return 3;
     }
     
     convertImageType(srcFile,dstFile,cvType,quality,compressSize);
     return 0;
 }
 
+//  #include <time.h>
+//  double clock_s(){ return clock()*1.0/CLOCKS_PER_SEC; }
+#ifdef _WIN32
+#include <windows.h>
+double clock_s(){ return GetTickCount()/1000.0; }
+#else
+//Unix-like system
+#include <sys/time.h>
+#include <assert.h>
+double clock_s(){
+    struct timeval t={0,0};
+    int ret=gettimeofday(&t,0);
+    assert(ret==0);
+    if (ret==0)
+        return t.tv_sec + t.tv_usec/1000000.0;
+    else
+        return 0;
+}
+#endif
 
-double getNowTime_s(){
-    //todo:
-    check(0);
-    return 0;
+void writeFile(const std::vector<TByte>& srcData,const char* dstFileName){
+    FILE* file=fopen(dstFileName, "wb");
+    check(file!=0);
+    TAutoFileClose _autoFileClose(file);
+    if (!srcData.empty())
+        check(srcData.size()==fwrite(srcData.data(),1,srcData.size(),file));
 }
 
+void readFile(std::vector<TByte>& out_data,const char* srcFileName){
+    FILE* file=fopen(srcFileName, "rb");
+    check(file!=0);
+    TAutoFileClose _autoFileClose(file);
+    check(0==fseek(file,0,SEEK_END));
+    long file_length = (long)ftell(file);
+    assert((file_length>=0)&&((size_t)file_length)==(unsigned long)file_length);
+    check(0==fseek(file,0,SEEK_SET));
+    out_data.resize((size_t)file_length);
+    if (!out_data.empty())
+        check(out_data.size()==fread(out_data.data(),1,out_data.size(),file));
+}
+
+
+void decodeFrgImage(const TByte* frgCode,const TByte* frgCode_end,frg::TFrgPixels32Ref& out_image){
+    frg_TFrgImageInfo frgInfo;
+    check(readFrgImageInfo(frgCode,frgCode_end,&frgInfo));
+    check(out_image.pColor==0);
+    size_t pixelsCount=(size_t)frgInfo.imageWidth*(size_t)frgInfo.imageHeight;
+    out_image.pColor=(frg::TFrgBGRA32*)malloc(pixelsCount*sizeof(frg::TFrgBGRA32));
+    check((out_image.pColor!=0)||(pixelsCount==0));
+    out_image.width=frgInfo.imageWidth;
+    out_image.height=frgInfo.imageHeight;
+    out_image.byte_width=frgInfo.imageWidth*sizeof(frg::TFrgBGRA32);
+    
+    TByte* tempMemory=(TByte*)malloc(frgInfo.decoder_tempMemoryByteSize);
+    check((tempMemory!=0)||(frgInfo.decoder_tempMemoryByteSize==0));
+    TAutoMemFree _autoMemFree(tempMemory);
+    frg_TPixelsRef bmpImage;
+    assert(sizeof(frg::TFrgBGRA32)==kFrg_outColor_size);
+    *(frg::TFrgPixels32Ref*)&bmpImage=out_image;
+    bmpImage.colorType=kFrg_ColorType_32bit_A8R8G8B8;
+    check(readFrgImage(frgCode,frgCode_end,&bmpImage,
+                       tempMemory,tempMemory+frgInfo.decoder_tempMemoryByteSize,0));
+}
+
+//png
+//#include "png.h" //
 void decodePngImage(const TByte* pngCode,const TByte* pngCode_end,frg::TFrgPixels32Ref& out_image){
     //todo:
     check(0);
