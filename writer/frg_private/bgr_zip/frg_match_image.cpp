@@ -332,9 +332,9 @@ namespace frg{
         const int subX0=nodeX*kFrg_ClipWidth;
         const int subY0=nodeY*kFrg_ClipHeight;
         bool isFindedMatch=false;
+        frg_TMatchType best_matchType=(frg_TMatchType)(-1);
         int bestX0=-1;
         int bestY0=-1;
-        frg_TMatchType best_matchType;
         for (;it!=itEnd;++it){
             int cur_x0=unpackMatchX(it->second);
             int cur_y0=unpackMatchY(it->second);
