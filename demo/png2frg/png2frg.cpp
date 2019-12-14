@@ -84,13 +84,13 @@ void convertImageType(const char* srcFile,const char* dstFile,
                 decodePngImage(srcCode.data(),srcCode.data()+srcCode.size(),srcImage)
                :decodeFrgImage(srcCode.data(),srcCode.data()+srcCode.size(),srcImage));
     printf("%s decode time: %.3f ms\n",srcType,decodeSrcTime_s*1000);
-    printf("image pixels  : %d * %d\n",srcImage.width,srcImage.height);
+    printf("image pixels   : %d * %d\n",srcImage.width,srcImage.height);
     
     //encode
     std::vector<TByte> dstCode;
     RunSpeedTest(encodeDstTime_s,isPngSrc?
-                 encodePngImage(dstCode,srcImage)
-                :encodeFrgImage(dstCode,srcImage,frg_encode_parameter));
+                 encodeFrgImage(dstCode,srcImage,frg_encode_parameter)
+                :encodePngImage(dstCode,srcImage));
     printf("%s byte size  : %d \n",dstType,(int)dstCode.size());
     printf("%s encode time: %.3f ms\n",dstType,encodeDstTime_s*1000);
     writeFile(dstCode,dstFile); //save dst
@@ -196,10 +196,12 @@ void readFile(std::vector<TByte>& out_data,const char* srcFileName){
 void decodeFrgImage(const TByte* frgCode,const TByte* frgCode_end,frg::TFrgPixels32Ref& out_image){
     frg_TFrgImageInfo frgInfo;
     check(readFrgImageInfo(frgCode,frgCode_end,&frgInfo));
-    check(out_image.pColor==0);
     size_t pixelsCount=(size_t)frgInfo.imageWidth*(size_t)frgInfo.imageHeight;
-    out_image.pColor=(frg::TFrgBGRA32*)malloc(pixelsCount*sizeof(frg::TFrgBGRA32));
-    check((out_image.pColor!=0)||(pixelsCount==0));
+    if ((out_image.pColor==0)||((size_t)out_image.width*(size_t)out_image.height<pixelsCount)){
+        if (out_image.pColor!=0) { void* p=out_image.pColor; out_image.pColor=0; free(p); }
+        out_image.pColor=(frg::TFrgBGRA32*)malloc(pixelsCount*sizeof(frg::TFrgBGRA32));
+        check((out_image.pColor!=0)||(pixelsCount==0));
+    }
     out_image.width=frgInfo.imageWidth;
     out_image.height=frgInfo.imageHeight;
     out_image.byte_width=frgInfo.imageWidth*sizeof(frg::TFrgBGRA32);
@@ -216,13 +218,113 @@ void decodeFrgImage(const TByte* frgCode,const TByte* frgCode_end,frg::TFrgPixel
 }
 
 //png
-//#include "png.h" //
+#include "png.h"  // http://www.libpng.org  https://github.com/glennrp/libpng
+#include "zlib.h" // http://zlib.net  https://github.com/madler/zlib
+//http://www.libpng.org/pub/png/libpng-manual.txt
+
+struct TAutoPngDestroy {
+    inline explicit TAutoPngDestroy(png_structp _png,png_infopp _pinfo,bool _isread)
+    :png(_png),pinfo(_pinfo),isread(_isread){}
+    inline ~TAutoPngDestroy() {
+        if (!png) return;
+        if (isread) png_destroy_read_struct(&png,pinfo,0);
+        else png_destroy_write_struct(&png,pinfo); }
+private:
+    png_structp png;
+    png_infopp  pinfo;
+    bool        isread;
+};
+
+struct TPngCode {
+    const TByte* cur;
+    const TByte* end;
+};
+
+void read_png_code(png_structp png, png_bytep dst, size_t size){
+    TPngCode& code=*(TPngCode*)png_get_io_ptr(png);
+    check(size<=code.end-code.cur);
+    memcpy(dst,code.cur,size);
+    code.cur+=size;
+}
+
 void decodePngImage(const TByte* pngCode,const TByte* pngCode_end,frg::TFrgPixels32Ref& out_image){
-    //todo:
-    check(0);
+    //only demo
+    check(0==png_sig_cmp(pngCode,0,pngCode_end-pngCode)); //is png code?
+    
+    png_infop info=0;
+    png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING,0,0,0);
+    check(png!=0);
+    TAutoPngDestroy _autoPngDestroy(png,&info,true);
+    info = png_create_info_struct(png);
+    check(info!=0);
+    if (setjmp(png_jmpbuf(png))) { check(false); return; }//on error
+    TPngCode _code={pngCode,pngCode_end};
+    png_set_read_fn(png,&_code, (png_rw_ptr)read_png_code);
+    
+    png_read_info(png,info);
+    png_uint_32 width,height=0;
+    int bit_depth,color_type,interlace_type=0;
+    png_get_IHDR(png,info,&width,&height,&bit_depth,&color_type,&interlace_type,0,0);
+    if (color_type == PNG_COLOR_TYPE_PALETTE)
+        png_set_palette_to_rgb(png);
+    if (bit_depth < 8)
+        png_set_packing(png);
+    if ((color_type==PNG_COLOR_TYPE_GRAY)||(color_type==PNG_COLOR_TYPE_GRAY_ALPHA))
+        png_set_gray_to_rgb(png);
+    if(png_get_valid(png,info, PNG_INFO_tRNS))
+        png_set_tRNS_to_alpha(png);
+    if (bit_depth==16)
+        png_set_strip_16(png);
+    png_set_bgr(png);
+    if ((color_type&PNG_COLOR_MASK_ALPHA)==0)
+        png_set_filler(png,0xff,PNG_FILLER_AFTER);
+    png_read_update_info(png,info);
+    check(png_get_channels(png,info)==4);
+
+    size_t pixelsCount=(size_t)width*height;
+    if ((out_image.pColor==0)||((size_t)out_image.width*(size_t)out_image.height<pixelsCount)){
+        if (out_image.pColor!=0) { void* p=out_image.pColor; out_image.pColor=0; free(p); }
+        out_image.pColor=(frg::TFrgBGRA32*)malloc(pixelsCount*sizeof(frg::TFrgBGRA32));
+        check((out_image.pColor!=0)||(pixelsCount==0));
+    }
+    out_image.width=width;
+    out_image.height=height;
+    out_image.byte_width=width*sizeof(frg::TFrgBGRA32);
+    
+    for (int y = 0; y < out_image.height; y++){
+        png_bytep row_pointer=(png_bytep)out_image.pColor +y*out_image.byte_width;
+        png_read_row(png,row_pointer,0);
+    }
+    png_read_end(png,info);
+}
+
+void write_png_code(png_structp png, png_bytep src,size_t size){
+    std::vector<TByte>& code=*(std::vector<TByte>*)png_get_io_ptr(png);
+    code.insert(code.end(),src,src+size);
 }
 
 void encodePngImage(std::vector<TByte>& out_pngCode,const frg::TFrgPixels32Ref& image){
-    //todo:
-    check(0);
+    //only demo
+    png_infop info=0;
+    png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING,0,0,0);
+    check(png!=0);
+    TAutoPngDestroy _autoPngDestroy(png,&info,false);
+    info = png_create_info_struct(png);
+    check(info!=0);
+    if (setjmp(png_jmpbuf(png))) { check(false); return; }//on error
+    out_pngCode.resize(0);
+    png_set_write_fn(png,&out_pngCode,write_png_code,0);
+
+    png_set_IHDR(png,info,image.width,image.height,8,PNG_COLOR_TYPE_RGB_ALPHA,
+                 PNG_INTERLACE_NONE,PNG_COMPRESSION_TYPE_DEFAULT,PNG_FILTER_TYPE_DEFAULT);
+    png_set_compression_level(png,Z_BEST_COMPRESSION);
+    png_set_bgr(png);
+    
+    //png_write_sig(png);
+    png_write_info(png,info);
+    for (int y = 0; y < image.height; y++){
+        png_const_bytep row_pointer=(png_const_bytep)image.pColor +y*image.byte_width;
+        png_write_row(png,row_pointer);
+    }
+    png_write_end(png,info);
 }

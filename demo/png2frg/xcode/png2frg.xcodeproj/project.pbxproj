@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D614A271239AA35B00E8A0AE /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = D614A270239AA35B00E8A0AE /* libz.tbd */; };
+		D6253F0B23A22FF200775AAA /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D6253F0423A20FB000775AAA /* libpng16.a */; };
 		D65DAA792398CC0300C1825B /* png2frg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D65DAA782398CC0300C1825B /* png2frg.cpp */; };
 		D65DAA9823994D5300C1825B /* frg_draw.c in Sources */ = {isa = PBXBuildFile; fileRef = D65DAA7F23994D5300C1825B /* frg_draw.c */; };
 		D65DAA9923994D5300C1825B /* frg_reader.c in Sources */ = {isa = PBXBuildFile; fileRef = D65DAA8023994D5300C1825B /* frg_reader.c */; };
@@ -34,6 +36,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D614A270239AA35B00E8A0AE /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		D614A275239AA3B400E8A0AE /* png.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = png.h; path = ../../../../libpng/png.h; sourceTree = "<group>"; };
+		D6253F0423A20FB000775AAA /* libpng16.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpng16.a; path = ../../../../libpng/libpng16.a; sourceTree = "<group>"; };
 		D65DAA6E2398CBDF00C1825B /* png2frg */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = png2frg; sourceTree = BUILT_PRODUCTS_DIR; };
 		D65DAA782398CC0300C1825B /* png2frg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = png2frg.cpp; path = ../png2frg.cpp; sourceTree = "<group>"; };
 		D65DAA7D23994D5300C1825B /* frg_draw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = frg_draw.h; sourceTree = "<group>"; };
@@ -71,19 +76,40 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D6253F0B23A22FF200775AAA /* libpng16.a in Frameworks */,
+				D614A271239AA35B00E8A0AE /* libz.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		D614A26E239AA2AC00E8A0AE /* libpng */ = {
+			isa = PBXGroup;
+			children = (
+				D614A275239AA3B400E8A0AE /* png.h */,
+			);
+			name = libpng;
+			sourceTree = "<group>";
+		};
+		D614A26F239AA35B00E8A0AE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				D6253F0423A20FB000775AAA /* libpng16.a */,
+				D614A270239AA35B00E8A0AE /* libz.tbd */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		D65DAA652398CBDF00C1825B = {
 			isa = PBXGroup;
 			children = (
 				D65DAA782398CC0300C1825B /* png2frg.cpp */,
 				D65DAA7B23994D3C00C1825B /* libfrg */,
 				D65DAAA123994D7500C1825B /* lz4 */,
+				D614A26E239AA2AC00E8A0AE /* libpng */,
 				D65DAA6F2398CBDF00C1825B /* Products */,
+				D614A26F239AA35B00E8A0AE /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -296,6 +322,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ../../../../libpng;
+				LIBRARY_SEARCH_PATHS = ../../../../libpng;
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -350,6 +378,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = ../../../../libpng;
+				LIBRARY_SEARCH_PATHS = ../../../../libpng;
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
