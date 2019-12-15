@@ -320,8 +320,9 @@ void encodePngImage(std::vector<TByte>& out_pngCode,const frg::TFrgPixels32Ref& 
 
     png_set_IHDR(png,info,image.width,image.height,8,PNG_COLOR_TYPE_RGB_ALPHA,
                  PNG_INTERLACE_NONE,PNG_COMPRESSION_TYPE_DEFAULT,PNG_FILTER_TYPE_DEFAULT);
-    png_set_compression_level(png,Z_BEST_COMPRESSION);
     png_set_bgr(png);
+    png_set_compression_level(png,Z_BEST_COMPRESSION);
+    png_set_compression_mem_level(png,MAX_MEM_LEVEL);
     
     png_write_info(png,info);
     for (int y = 0; y < image.height; y++){
