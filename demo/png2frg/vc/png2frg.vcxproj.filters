@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\png2frg.cpp" />
+    <ClCompile Include="..\..\..\..\lz4\lib\lz4.c">
+      <Filter>lz4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\lz4\lib\lz4hc.c">
+      <Filter>lz4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\reader\frg_draw.c">
+      <Filter>libfrg\reader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\reader\frg_reader.c">
+      <Filter>libfrg\reader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\writer\frg_writer.cpp">
+      <Filter>libfrg\writer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\writer\frg_private\bytes_rle.cpp">
+      <Filter>libfrg\writer\frg_private</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\writer\frg_private\frg_color_tools.cpp">
+      <Filter>libfrg\writer\frg_private</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\writer\frg_private\bgr_zip\frg_color_table.cpp">
+      <Filter>libfrg\writer\frg_private\brg_zip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\writer\frg_private\bgr_zip\frg_color_zip.cpp">
+      <Filter>libfrg\writer\frg_private\brg_zip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\writer\frg_private\bgr_zip\frg_match_image.cpp">
+      <Filter>libfrg\writer\frg_private\brg_zip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\writer\frg_private\bgr_zip\frg_match_table.cpp">
+      <Filter>libfrg\writer\frg_private\brg_zip</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="lz4">
+      <UniqueIdentifier>{1e5d5809-6f49-4fdd-be46-1a58d0a4d34a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libfrg">
+      <UniqueIdentifier>{165c4d3b-70f3-4a1f-9957-1757d3f69883}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libfrg\reader">
+      <UniqueIdentifier>{bf03e0b6-20ea-4c29-8312-200524fa48b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libfrg\writer">
+      <UniqueIdentifier>{0001b71e-ddbf-4568-b1a2-a9182fc0c70a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libfrg\writer\frg_private">
+      <UniqueIdentifier>{c9f7c383-1111-4356-99ab-8d832894c220}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libfrg\writer\frg_private\brg_zip">
+      <UniqueIdentifier>{0b40dc3a-4022-417f-996f-d64c6fd8778f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\lz4\lib\lz4.h">
+      <Filter>lz4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\lz4\lib\lz4hc.h">
+      <Filter>lz4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\reader\frg_draw.h">
+      <Filter>libfrg\reader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\reader\frg_private_reader_base.h">
+      <Filter>libfrg\reader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\reader\frg_reader.h">
+      <Filter>libfrg\reader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\writer\frg_writer.h">
+      <Filter>libfrg\writer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\writer\frg_private\bytes_rle.h">
+      <Filter>libfrg\writer\frg_private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\writer\frg_private\calc_color.h">
+      <Filter>libfrg\writer\frg_private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\writer\frg_private\color_error_diffuse.h">
+      <Filter>libfrg\writer\frg_private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\writer\frg_private\frg_color_tools.h">
+      <Filter>libfrg\writer\frg_private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\writer\frg_private\frg_writer_base.h">
+      <Filter>libfrg\writer\frg_private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\writer\frg_private\pack_uint.h">
+      <Filter>libfrg\writer\frg_private</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\writer\frg_private\bgr_zip\frg_color_base.h">
+      <Filter>libfrg\writer\frg_private\brg_zip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\writer\frg_private\bgr_zip\frg_color_table.h">
+      <Filter>libfrg\writer\frg_private\brg_zip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\writer\frg_private\bgr_zip\frg_color_zip.h">
+      <Filter>libfrg\writer\frg_private\brg_zip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\writer\frg_private\bgr_zip\frg_match_image.h">
+      <Filter>libfrg\writer\frg_private\brg_zip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\writer\frg_private\bgr_zip\frg_match_table.h">
+      <Filter>libfrg\writer\frg_private\brg_zip</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

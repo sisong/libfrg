@@ -1,6 +1,6 @@
 libfrg
 ========
-Version  1.3.3   
+Version  1.3.5   
 libfrg: C\C++ codec of FRG image format.  
 
 ---

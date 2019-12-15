@@ -56,7 +56,7 @@
     <ClCompile Include="..\..\..\..\lz4\lib\lz4.c">
       <Filter>lz4</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\frg_demo.cpp" />
+    <ClCompile Include="..\frg_demo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\writer\frg_writer.h">

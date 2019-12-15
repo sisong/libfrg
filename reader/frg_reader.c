@@ -55,16 +55,14 @@ FRG_READER_STATIC frg_BOOL _bytesRle_load(TByte* out_data,TByte* out_dataEnd,con
 FRG_READER_STATIC frg_BOOL _colorUnZiper_loadColor(const struct frg_TPixelsRef* dst_image,const TByte* code,const TByte* code_end,const TByte* alpha,int alpha_byte_width,TByte* tempMemory,TByte* tempMemory_end);
 
 static /* inline */ frg_BOOL frgZip_decompress(unsigned char* out_data,unsigned char* out_data_end,
-                              const unsigned char* frgZip_code,const unsigned char* frgZip_code_end){
+                                               const unsigned char* frgZip_code,const unsigned char* frgZip_code_end){
+    int codeSize=(int)(frgZip_code_end-frgZip_code);
+    int dataSize=(int)(out_data_end-out_data);
     #ifdef __RUN_MEM_SAFE_CHECK
-        int codeSize=(int)(frgZip_code_end-frgZip_code);
-        int dataSize=(int)(out_data_end-out_data);
-        if ((codeSize<0)||((TUInt)codeSize!=(TUInt)(frgZip_code_end-frgZip_code))) return _frg_FALSE;
-        if ((dataSize<0)||((TUInt)dataSize!=(TUInt)(out_data_end-out_data))) return _frg_FALSE;
-        return 0<=LZ4_decompress_safe((const char*)frgZip_code,(char*)out_data,codeSize,dataSize);
-    #else
-        return 0<=LZ4_decompress_fast((const char*)frgZip_code,(char*)out_data,(int)(out_data_end-out_data));
+    if ((codeSize<0)||((TUInt)codeSize!=(TUInt)(frgZip_code_end-frgZip_code))) return _frg_FALSE;
+    if ((dataSize<0)||((TUInt)dataSize!=(TUInt)(out_data_end-out_data))) return _frg_FALSE;
     #endif
+    return 0<=LZ4_decompress_safe((const char*)frgZip_code,(char*)out_data,codeSize,dataSize);
 }
 
 ///////
