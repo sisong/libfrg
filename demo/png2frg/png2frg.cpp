@@ -211,7 +211,10 @@ void decodeFrgImage(const TByte* frgCode,const TByte* frgCode_end,frg::TFrgPixel
     TAutoMemFree _autoMemFree(tempMemory);
     frg_TPixelsRef bmpImage;
     assert(sizeof(frg::TFrgBGRA32)==kFrg_outColor_size);
-    *(frg::TFrgPixels32Ref*)&bmpImage=out_image;
+    bmpImage.pColor=out_image.pColor;
+    bmpImage.width=out_image.width;
+    bmpImage.height=out_image.height;
+    bmpImage.byte_width=out_image.byte_width;
     bmpImage.colorType=kFrg_ColorType_32bit_A8R8G8B8;
     check(readFrgImage(frgCode,frgCode_end,&bmpImage,
                        tempMemory,tempMemory+frgInfo.decoder_tempMemoryByteSize,0));
@@ -242,7 +245,7 @@ struct TPngCode {
 
 void read_png_code(png_structp png, png_bytep dst, size_t size){
     TPngCode& code=*(TPngCode*)png_get_io_ptr(png);
-    check(size<=code.end-code.cur);
+    check(size<=(size_t)(code.end-code.cur));
     memcpy(dst,code.cur,size);
     code.cur+=size;
 }
@@ -257,7 +260,7 @@ void decodePngImage(const TByte* pngCode,const TByte* pngCode_end,frg::TFrgPixel
     TAutoPngDestroy _autoPngDestroy(png,&info,true);
     info = png_create_info_struct(png);
     check(info!=0);
-    if (setjmp(png_jmpbuf(png))) { check(false); return; }//on error
+    //if (setjmp(png_jmpbuf(png))) { check(false); return; }//on error
     TPngCode _code={pngCode,pngCode_end};
     png_set_read_fn(png,&_code, (png_rw_ptr)read_png_code);
     
@@ -311,7 +314,7 @@ void encodePngImage(std::vector<TByte>& out_pngCode,const frg::TFrgPixels32Ref& 
     TAutoPngDestroy _autoPngDestroy(png,&info,false);
     info = png_create_info_struct(png);
     check(info!=0);
-    if (setjmp(png_jmpbuf(png))) { check(false); return; }//on error
+    //if (setjmp(png_jmpbuf(png))) { check(false); return; }//on error
     out_pngCode.resize(0);
     png_set_write_fn(png,&out_pngCode,write_png_code,0);
 
@@ -320,7 +323,6 @@ void encodePngImage(std::vector<TByte>& out_pngCode,const frg::TFrgPixels32Ref& 
     png_set_compression_level(png,Z_BEST_COMPRESSION);
     png_set_bgr(png);
     
-    //png_write_sig(png);
     png_write_info(png,info);
     for (int y = 0; y < image.height; y++){
         png_const_bytep row_pointer=(png_const_bytep)image.pColor +y*image.byte_width;

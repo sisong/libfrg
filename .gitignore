@@ -8,3 +8,4 @@ demo/builds/codeblocks/obj
 *.suo
 Debug
 Release
+demo/png2frg/codeblocks/obj/Release_x86
